@@ -13,21 +13,31 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+from typing import Optional
+
+from qgis.PyQt import sip
 from qgis.PyQt.QtCore import (
-    QCoreApplication
+    QObject,
+    QCoreApplication,
+    QTimer
 )
 from qgis.gui import (
     QgisInterface
 )
 
+from .core import OAuthWorkflow
 
-class FeltPlugin:
+
+class FeltPlugin(QObject):
     """
     Felt QGIS plugin
     """
 
     def __init__(self, iface: QgisInterface):
+        super().__init__()
         self.iface: QgisInterface = iface
+
+        self.oauth: Optional[OAuthWorkflow] = None
 
     # qgis plugin interface
     # pylint: disable=missing-function-docstring
@@ -35,8 +45,15 @@ class FeltPlugin:
     def initGui(self):
         print('loaded')
 
+        self.oauth = OAuthWorkflow()
+
+        self.oauth.finished.connect(self._auth_finished)
+        self.oauth.error_occurred.connect(self._auth_error_occurred)
+        self.oauth.start()
+
     def unload(self):
-        pass
+        if self.oauth:
+            self.oauth.force_stop()
 
     # pylint: enable=missing-function-docstring
 
@@ -54,3 +71,38 @@ class FeltPlugin:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
+
+    def _auth_finished(self, key):
+        if self.oauth and not sip.isdeleted(self.oauth):
+            self.oauth_close_timer = QTimer(self)
+            self.oauth_close_timer.setSingleShot(True)
+            self.oauth_close_timer.setInterval(1000)
+            self.oauth_close_timer.timeout.connect(self._close_auth_server)
+            self.oauth_close_timer.start()
+
+        if not key:
+            return
+
+        print(key)
+
+    def _auth_error_occurred(self, error: str):
+        print(error)
+
+    def _close_auth_server(self, force_close=False):
+        if self.oauth_close_timer and not sip.isdeleted(
+                self.oauth_close_timer):
+            self.oauth_close_timer.timeout.disconnect(
+                self._close_auth_server)
+            self.oauth_close_timer.deleteLater()
+        self.oauth_close_timer = None
+
+        if self.oauth and not sip.isdeleted(self.oauth):
+            if force_close:
+                self.oauth.force_stop()
+
+            self.oauth.close_server()
+            self.oauth.quit()
+            self.oauth.wait()
+            self.oauth.deleteLater()
+
+        self.oauth = None
