@@ -20,6 +20,19 @@ from enum import (
 )
 
 
+class UserType(Enum):
+    """
+    User types
+    """
+    User = auto()
+
+    @staticmethod
+    def from_string(string: str) -> 'UserType':
+        return {
+            'user': UserType.User
+        }[string]
+
+
 class AuthState(Enum):
     """
     Authentication states
