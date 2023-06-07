@@ -20,16 +20,18 @@ from enum import (
 )
 
 
-class UserType(Enum):
+class ObjectType(Enum):
     """
-    User types
+    Object types
     """
     User = auto()
+    Map = auto()
 
     @staticmethod
-    def from_string(string: str) -> 'UserType':
+    def from_string(string: str) -> 'ObjectType':
         return {
-            'user': UserType.User
+            'user': ObjectType.User,
+            'map': ObjectType.Map
         }[string]
 
 

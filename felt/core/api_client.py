@@ -13,9 +13,11 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import json
 from typing import (
     Dict,
-    Optional
+    Optional,
+    List
 )
 
 from qgis.PyQt.QtCore import (
@@ -36,6 +38,8 @@ class FeltApiClient:
 
     URL = 'https://felt.com/api/v1'
     USER_ENDPOINT = '/user'
+    CREATE_MAP_ENDPOINT = '/maps'
+    CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
 
     def __init__(self):
         # default headers to add to all requests
@@ -99,6 +103,55 @@ class FeltApiClient:
         """
         request = self._build_request(self.USER_ENDPOINT)
         return QgsNetworkAccessManager.instance().get(request)
+
+    def create_map(self,
+                   lat: float,
+                   lon: float,
+                   zoom: int,
+                   title: Optional[str]=None,
+                   basemap: Optional[str]=None,
+                   layer_urls: List[str]=[],
+                   ) -> QNetworkReply:
+        """
+        Creates a Felt map
+        """
+        request = self._build_request(self.CREATE_MAP_ENDPOINT,
+                                      {'Content-Type': 'application/json'})
+
+        request_params = {
+            'lat': lat,
+            'lon': lon,
+            'zoom': zoom
+        }
+        if title:
+            request_params['title'] = title
+        if basemap:
+            request_params['basemap'] = basemap
+        # TODO -- layer URLS!
+        json_data = json.dumps(request_params)
+        return QgsNetworkAccessManager.instance().post(request,
+                                                       json_data.encode())
+
+    def prepare_layer_upload(self,
+                             map_id: str,
+                             name: str,
+                             file_names: List[str]):
+        """
+        Prepares a layer upload
+        """
+        request = self._build_request(
+            self.CREATE_LAYER_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'}
+        )
+
+        request_params = {
+            'name': name,
+            'file_names': file_names
+        }
+        json_data = json.dumps(request_params)
+        return QgsNetworkAccessManager.instance().post(request,
+                                                       json_data.encode())
+
 
 
 API_CLIENT = FeltApiClient()

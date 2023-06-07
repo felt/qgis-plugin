@@ -64,7 +64,7 @@ CLIENT_ID = "8cb129bd-6962-4f65-8cc9-14b760e8436a"
 
 REDIRECT_PORT = 8989
 REDIRECT_URL = f"http://127.0.0.1:{REDIRECT_PORT}/"
-SCOPE = "map.write profile.read"
+SCOPE = "map.write profile.read layer.write"
 
 
 class _Handler(BaseHTTPRequestHandler):

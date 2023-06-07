@@ -29,9 +29,11 @@ from qgis.PyQt.QtTest import QSignalSpy
 
 from ..core import (
     OAuthWorkflow,
-    UserType,
+    ObjectType,
     FeltApiClient,
-    User
+    User,
+    Map,
+    S3UploadParameters
 )
 
 
@@ -137,8 +139,86 @@ class ApiClientTest(unittest.TestCase):
         user = User.from_json(reply.readAll().data().decode())
         self.assertEqual(user.name, 'Nyall Dawson')
         self.assertEqual(user.email, 'nyall.dawson@gmail.com')
-        self.assertEqual(user.type, UserType.User)
+        self.assertEqual(user.type, ObjectType.User)
         self.assertEqual(user.id, '7be58c2c-89b9-483d-aa04-d79cf97a2021')
+
+    def test_create_map(self):
+        """
+        Test create map
+        """
+        # an unauthenticated client
+        reply = FeltApiClient().create_map(0, 0, 10)
+        spy = QSignalSpy(reply.finished)
+        self.assertIsInstance(reply, QNetworkReply)
+        self.assertEqual(reply.request().url().toString(),
+                         'https://felt.com/api/v1/maps')
+
+        spy.wait()
+
+        self.assertEqual(reply.error(),
+                         QNetworkReply.AuthenticationRequiredError)
+
+        # an authenticated client
+        reply = ApiClientTest.client.create_map(
+            -24.962160, 153.311322, 10, title='Orchid Beach')
+        spy = QSignalSpy(reply.finished)
+        self.assertIsInstance(reply, QNetworkReply)
+        self.assertEqual(reply.request().url().toString(),
+                         'https://felt.com/api/v1/maps')
+
+        spy.wait()
+
+        self.assertEqual(reply.error(),
+                         QNetworkReply.NoError)
+
+        created_map = Map.from_json(reply.readAll().data().decode())
+        self.assertEqual(created_map.type, ObjectType.Map)
+        self.assertTrue(created_map.url)
+        self.assertTrue(created_map.id)
+
+    def test_create_layer(self):
+        """
+        Test create layer
+        """
+        reply = ApiClientTest.client.create_map(
+            -24.962160, 153.311322, 10, title='Orchid Beach')
+        spy = QSignalSpy(reply.finished)
+        spy.wait()
+
+        self.assertEqual(reply.error(),
+                         QNetworkReply.NoError)
+
+        created_map = Map.from_json(reply.readAll().data().decode())
+
+        self.assertEqual(created_map.type, ObjectType.Map)
+        self.assertTrue(created_map.url)
+        self.assertTrue(created_map.id)
+
+        reply = ApiClientTest.client.prepare_layer_upload(
+            created_map.id,
+            'test_layer', ['test.gpkg']
+        )
+        spy = QSignalSpy(reply.finished)
+        spy.wait()
+
+        #self.assertFalse(reply.errorString())
+
+        self.assertEqual(reply.error(),
+                         QNetworkReply.NoError)
+
+        params = S3UploadParameters.from_json(reply.readAll().data().decode())
+        self.assertEqual(params.type, 'presigned_upload')
+        self.assertTrue(params.aws_access_key_id, 'presigned_upload')
+        #self.assertTrue(params.acl)
+        self.assertTrue(params.key)
+        self.assertTrue(params.policy)
+        self.assertTrue(params.signature)
+        self.assertEqual(params.success_action_status, '204')
+        self.assertTrue(params.x_amz_meta_features_flags)
+        self.assertEqual(params.x_amz_meta_file_count, '1')
+        self.assertTrue(params.x_amz_security_token)
+        self.assertTrue(params.url)
+        self.assertTrue(params.layer_id)
 
 
 if __name__ == "__main__":

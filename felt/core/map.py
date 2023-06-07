@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Felt API User
+"""Felt API Map
 
 .. note:: This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,25 +23,23 @@ from .enums import ObjectType
 
 
 @dataclass
-class User:
+class Map:
     """
-    Represents a user
+    Represents a map
     """
 
-    name: Optional[str]
-    email: Optional[str]
+    url: Optional[str]
     id: Optional[str]
     type: Optional[ObjectType]
 
     @staticmethod
-    def from_json(jsons: str) -> 'User':
+    def from_json(jsons: str) -> 'Map':
         """
-        Creates a user from a JSON string
+        Creates a map from a JSON string
         """
         res = json.loads(jsons)
-        return User(
-            name=res.get('data', {}).get('attributes', {}).get('name'),
-            email=res.get('data', {}).get('attributes', {}).get('email'),
+        return Map(
+            url=res.get('data', {}).get('attributes', {}).get('url'),
             id=res.get('data', {}).get('id'),
             type=ObjectType.from_string(res.get('data', {}).get('type')),
         )
