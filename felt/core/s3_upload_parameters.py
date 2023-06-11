@@ -16,10 +16,9 @@ __revision__ = '$Format:%H$'
 import json
 from dataclasses import dataclass
 from typing import (
-    Optional
+    Optional,
+    Dict
 )
-
-from .enums import ObjectType
 
 
 @dataclass
@@ -40,6 +39,21 @@ class S3UploadParameters:
     url: Optional[str]
     layer_id: Optional[str]
     type: Optional[str]
+
+    def to_form_fields(self) -> Dict:
+        """
+        Returns the form fields required for the upload
+        """
+        return {
+            'AWSAccessKeyId': self.aws_access_key_id,
+            'key': self.key,
+            'policy': self.policy,
+            'signature': self.signature,
+            'success_action_status': self.success_action_status,
+            'x-amz-meta-feature-flags': self.x_amz_meta_features_flags,
+            'x-amz-meta-file-count': self.x_amz_meta_file_count,
+            'x-amz-security-token': self.x_amz_security_token,
+        }
 
     @staticmethod
     def from_json(jsons: str) -> 'S3UploadParameters':

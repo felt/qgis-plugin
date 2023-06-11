@@ -22,13 +22,15 @@ from typing import (
 
 from qgis.PyQt.QtCore import (
     QUrl,
-    QUrlQuery
+    QUrlQuery,
+    QByteArray
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkRequest,
     QNetworkReply
 )
 from qgis.core import QgsNetworkAccessManager
+from .s3_upload_parameters import S3UploadParameters
 
 
 class FeltApiClient:
@@ -40,6 +42,7 @@ class FeltApiClient:
     USER_ENDPOINT = '/user'
     CREATE_MAP_ENDPOINT = '/maps'
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
+    FINISH_LAYER_ENDPOINT = '/maps/{}/layers/{}/finish_upload'
 
     def __init__(self):
         # default headers to add to all requests
@@ -152,6 +155,68 @@ class FeltApiClient:
         return QgsNetworkAccessManager.instance().post(request,
                                                        json_data.encode())
 
+    def upload_file(self, filename: str, content: bytes, parameters: S3UploadParameters):
+        """
+        Triggers an upload
+        """
+        network_request = QNetworkRequest(QUrl(parameters.url))
+
+        network_request.setRawHeader(b'Host',
+                                     parameters.url[len('https://'):-1].encode())
+        network_request.setRawHeader(
+            b"Content-Type",
+            b"multipart/form-data; boundary=QGISFormBoundary2XCkqVRLJ5XMxfw5")
+
+        form_content = QByteArray()
+        for name, value in parameters.to_form_fields().items():
+            form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
+            form_content.append("Content-Disposition: form-data; ")
+            form_content.append(f"name=\"{name}\"")
+            form_content.append("\r\n")
+            form_content.append("\r\n")
+            form_content.append(value)
+            form_content.append("\r\n")
+
+        form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
+        form_content.append("Content-Disposition: ")
+        form_content.append(
+            f"form-data; name=\"file\"; filename=\"{filename}\"\r\n")
+        form_content.append(
+            "Content-Type: application/octet-stream\r\n")
+        form_content.append("\r\n")
+
+        form_content.append(content)
+
+        form_content.append("\r\n")
+        form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n")
+
+        content_length = form_content.length()
+        network_request.setRawHeader(
+            b"Content-Length",
+            str(content_length).encode()
+        )
+
+        return QgsNetworkAccessManager.instance().post(network_request,
+                                                       form_content)
+
+    def finalize_layer_upload(self,
+                              map_id: str,
+                              layer_id: str,
+                              filename: str):
+        """
+        Finalizes a layer upload
+        """
+        request = self._build_request(
+            self.FINISH_LAYER_ENDPOINT.format(map_id, layer_id),
+            {'Content-Type': 'application/json'}
+        )
+
+        request_params = {
+            'filename': filename
+        }
+        json_data = json.dumps(request_params)
+        return QgsNetworkAccessManager.instance().post(request,
+                                                       json_data.encode())
 
 
 API_CLIENT = FeltApiClient()

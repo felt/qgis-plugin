@@ -15,6 +15,7 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 import unittest
+from pathlib import Path
 
 from .utilities import get_qgis_app
 from qgis.PyQt.QtCore import (
@@ -38,6 +39,8 @@ from ..core import (
 
 
 QGIS_APP = get_qgis_app()
+
+TEST_DATA_PATH = Path(__file__).parent
 
 
 class ApiClientTest(unittest.TestCase):
@@ -181,7 +184,7 @@ class ApiClientTest(unittest.TestCase):
         Test create layer
         """
         reply = ApiClientTest.client.create_map(
-            -24.962160, 153.311322, 10, title='Orchid Beach')
+            -24.962160, 153.311322, 10, title='Orchid Beach 22')
         spy = QSignalSpy(reply.finished)
         spy.wait()
 
@@ -201,12 +204,11 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         spy.wait()
 
-        #self.assertFalse(reply.errorString())
-
         self.assertEqual(reply.error(),
                          QNetworkReply.NoError)
 
-        params = S3UploadParameters.from_json(reply.readAll().data().decode())
+        json_params = reply.readAll().data().decode()
+        params = S3UploadParameters.from_json(json_params)
         self.assertEqual(params.type, 'presigned_upload')
         self.assertTrue(params.aws_access_key_id, 'presigned_upload')
         #self.assertTrue(params.acl)
@@ -219,6 +221,35 @@ class ApiClientTest(unittest.TestCase):
         self.assertTrue(params.x_amz_security_token)
         self.assertTrue(params.url)
         self.assertTrue(params.layer_id)
+
+        file = str(TEST_DATA_PATH / 'points.gpkg')
+
+        with open(file, "rb") as f:
+            data = f.read()
+
+        reply = ApiClientTest.client.upload_file(
+            'test.gpkg', data, params
+        )
+        spy = QSignalSpy(reply.finished)
+        spy.wait()
+
+        self.assertEqual(reply.error(), QNetworkReply.NoError)
+
+        reply = ApiClientTest.client.finalize_layer_upload(
+            created_map.id,
+            params.layer_id,
+            'test.gpkg'
+        )
+        spy = QSignalSpy(reply.finished)
+        spy.wait()
+
+        self.assertEqual(reply.error(),
+                         QNetworkReply.NoError)
+
+        json_params = reply.readAll().data().decode()
+        print(json_params)
+
+
 
 
 if __name__ == "__main__":
