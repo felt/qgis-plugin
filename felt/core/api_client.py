@@ -18,7 +18,8 @@ from typing import (
     Dict,
     Optional,
     List,
-    Union
+    Union,
+    Tuple
 )
 
 from qgis.PyQt.QtCore import (
@@ -32,7 +33,8 @@ from qgis.PyQt.QtNetwork import (
 )
 from qgis.core import (
     QgsNetworkAccessManager,
-    QgsNetworkReplyContent
+    QgsNetworkReplyContent,
+    QgsBlockingNetworkRequest
 )
 
 from .s3_upload_parameters import S3UploadParameters
@@ -184,19 +186,20 @@ class FeltApiClient:
                 json_data.encode()
             )
 
-    def upload_file(self,
-                    filename: str,
-                    content: bytes,
-                    parameters: S3UploadParameters,
-                    blocking: bool = False) \
-            -> Union[QNetworkReply, QgsNetworkReplyContent]:
+    def create_upload_file_request(self,
+                                   filename: str,
+                                   content: bytes,
+                                   parameters: S3UploadParameters) \
+            -> Tuple[QNetworkRequest, QByteArray]:
         """
-        Triggers an upload
+        Prepares a network request for a file upload
         """
+
         network_request = QNetworkRequest(QUrl(parameters.url))
 
         network_request.setRawHeader(b'Host',
-                                     parameters.url[len('https://'):-1].encode())
+                                     parameters.url[
+                                     len('https://'):-1].encode())
         network_request.setRawHeader(
             b"Content-Type",
             b"multipart/form-data; boundary=QGISFormBoundary2XCkqVRLJ5XMxfw5")
@@ -228,6 +231,20 @@ class FeltApiClient:
         network_request.setRawHeader(
             b"Content-Length",
             str(content_length).encode()
+        )
+        return network_request, form_content
+
+    def upload_file(self,
+                    filename: str,
+                    content: bytes,
+                    parameters: S3UploadParameters,
+                    blocking: bool = False) \
+            -> Union[QNetworkReply, QgsNetworkReplyContent]:
+        """
+        Triggers an upload
+        """
+        network_request, form_content = self.create_upload_file_request(
+            filename, content, parameters
         )
 
         if blocking:

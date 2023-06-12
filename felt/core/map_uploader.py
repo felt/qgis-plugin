@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import math
 from typing import (
     Optional,
     List
@@ -35,7 +36,9 @@ from qgis.core import (
     QgsCsException,
     QgsTask,
     QgsVectorLayer,
-    QgsVectorFileWriter
+    QgsVectorFileWriter,
+    QgsFeedback,
+    QgsBlockingNetworkRequest
 )
 from qgis.utils import iface
 
@@ -55,7 +58,9 @@ class MapUploaderTask(QgsTask):
     def __init__(self,
                  project: Optional[QgsProject] = None,
                  layers: Optional[List[QgsMapLayer]] = None):
-        super().__init__()
+        super().__init__(
+            'Sharing Map'
+        )
         project = project or QgsProject.instance()
 
         if layers:
@@ -101,11 +106,12 @@ class MapUploaderTask(QgsTask):
         self.map_center = map_extent_4326.center()
 
         self.project_title = project.title()
-        # TODO -- can we determine this automatically?
         self.initial_zoom_level = 5
 
         self.created_map: Optional[Map] = None
         self.error_string: Optional[str] = None
+        self.feedback: Optional[QgsFeedback] = None
+        self.was_canceled = False
 
     def default_map_title(self):
         date_string = QDate.currentDate().toString('yyyy-MM-dd')
@@ -119,7 +125,14 @@ class MapUploaderTask(QgsTask):
             date_string
         )
 
+    def cancel(self):
+        self.was_canceled = True
+        if self.feedback:
+            self.feedback.cancel()
+        super().cancel()
+
     def run(self):
+        self.feedback = QgsFeedback()
         for layer in self.layers:
             layer.moveToThread(QThread.currentThread())
 
@@ -136,8 +149,12 @@ class MapUploaderTask(QgsTask):
             self.error_string = reply.errorString()
             return False
 
+        if self.was_canceled:
+            return False
+
         self.created_map = Map.from_json(reply.content().data().decode())
         self.status_changed.emit(self.tr('Successfully created map'))
+        self.setProgress(1)
 
         exporter = LayerExporter(
             self.transform_context
@@ -145,15 +162,20 @@ class MapUploaderTask(QgsTask):
 
         to_upload = {}
 
-        for layer in self.layers:
+        for layer_idx, layer in enumerate(self.layers):
+            if self.was_canceled:
+                return False
+
             self.status_changed.emit(
                 self.tr('Exporting {}').format(layer.name())
             )
             result = exporter.export_layer_for_felt(
-                layer
+                layer,
+                self.feedback
             )
             layer.moveToThread(None)
-            if result.result != QgsVectorFileWriter.NoError:
+            if result.result not in (QgsVectorFileWriter.NoError,
+                    QgsVectorFileWriter.Canceled):
                 self.status_changed.emit(
                     self.tr('Error occurred while exporting layer {}: {}').format(
                     layer.name(),
@@ -163,8 +185,15 @@ class MapUploaderTask(QgsTask):
                 return False
 
             to_upload[layer] = result.filename
+            self.setProgress(
+                1 + (layer_idx / len(self.layers)) * 20
+            )
 
+        layer_idx = 0
         for layer, filename in to_upload.items():
+            if self.was_canceled:
+                return False
+
             self.status_changed.emit(
                 self.tr('Uploading {}').format(layer.name())
             )
@@ -189,11 +218,26 @@ class MapUploaderTask(QgsTask):
             with open(filename, "rb") as f:
                 data = f.read()
 
-            reply = API_CLIENT.upload_file(
-                Path(filename).name, data, upload_params, blocking=True
+            request, form_content = API_CLIENT.create_upload_file_request(
+                Path(filename).name, data, upload_params
             )
-            if reply.error() != QNetworkReply.NoError:
-                self.error_string = reply.errorString()
+            blocking_request = QgsBlockingNetworkRequest()
+
+            def _upload_progress(sent, total):
+                if not sent or not total:
+                    return
+
+                self.setProgress(int(100*sent/total))
+
+            blocking_request.uploadProgress.connect(_upload_progress)
+
+            blocking_request.post(request, form_content, feedback=self.feedback)
+
+            if blocking_request.reply().error() != QNetworkReply.NoError:
+                self.error_string = blocking_request.reply().errorString()
+                return False
+
+            if self.was_canceled:
                 return False
 
             self.status_changed.emit(
@@ -210,5 +254,10 @@ class MapUploaderTask(QgsTask):
             if reply.error() != QNetworkReply.NoError:
                 self.error_string = reply.errorString()
                 return False
+
+            self.setProgress(
+                21 + (layer_idx / len(self.layers)) * 79
+            )
+            layer_idx += 1
 
         return True
