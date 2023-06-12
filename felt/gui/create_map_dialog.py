@@ -87,6 +87,8 @@ class CreateMapDialog(QDialog, WIDGET):
         self.map_title_edit.setText(self.map_uploader_task.default_map_title())
         self.map_title_edit.textChanged.connect(self._validate)
 
+        self.progress_bar.setValue(0)
+
         if AUTHORIZATION_MANAGER.user:
             self.label_user.setText(
                 self.tr('Signed in as: {}').format(

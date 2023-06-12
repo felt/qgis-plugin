@@ -46,6 +46,7 @@ from .api_client import API_CLIENT
 from .map import Map
 from .layer_exporter import LayerExporter
 from .s3_upload_parameters import S3UploadParameters
+from .multi_step_feedback import MultiStepFeedback
 
 
 class MapUploaderTask(QgsTask):
@@ -132,7 +133,19 @@ class MapUploaderTask(QgsTask):
         super().cancel()
 
     def run(self):
+        total_steps = (
+                1  # create map call
+                + len(self.layers)  # layer exports
+                + len(self.layers)  # layer uploads
+        )
+
         self.feedback = QgsFeedback()
+
+        multi_step_feedback = MultiStepFeedback(
+            total_steps, self.feedback
+        )
+        self.feedback.progressChanged.connect(self.setProgress)
+
         for layer in self.layers:
             layer.moveToThread(QThread.currentThread())
 
@@ -154,7 +167,7 @@ class MapUploaderTask(QgsTask):
 
         self.created_map = Map.from_json(reply.content().data().decode())
         self.status_changed.emit(self.tr('Successfully created map'))
-        self.setProgress(1)
+        multi_step_feedback.step_finished()
 
         exporter = LayerExporter(
             self.transform_context
@@ -162,7 +175,7 @@ class MapUploaderTask(QgsTask):
 
         to_upload = {}
 
-        for layer_idx, layer in enumerate(self.layers):
+        for  layer in self.layers:
             if self.was_canceled:
                 return False
 
@@ -171,25 +184,22 @@ class MapUploaderTask(QgsTask):
             )
             result = exporter.export_layer_for_felt(
                 layer,
-                self.feedback
+                multi_step_feedback
             )
             layer.moveToThread(None)
             if result.result not in (QgsVectorFileWriter.NoError,
                     QgsVectorFileWriter.Canceled):
                 self.status_changed.emit(
                     self.tr('Error occurred while exporting layer {}: {}').format(
-                    layer.name(),
+                        layer.name(),
                         result.error_message
                     )
                 )
                 return False
 
             to_upload[layer] = result.filename
-            self.setProgress(
-                1 + (layer_idx / len(self.layers)) * 20
-            )
+            multi_step_feedback.step_finished()
 
-        layer_idx = 0
         for layer, filename in to_upload.items():
             if self.was_canceled:
                 return False
@@ -227,7 +237,7 @@ class MapUploaderTask(QgsTask):
                 if not sent or not total:
                     return
 
-                self.setProgress(int(100*sent/total))
+                multi_step_feedback.setProgress(int(100*sent/total))
 
             blocking_request.uploadProgress.connect(_upload_progress)
 
@@ -255,9 +265,6 @@ class MapUploaderTask(QgsTask):
                 self.error_string = reply.errorString()
                 return False
 
-            self.setProgress(
-                21 + (layer_idx / len(self.layers)) * 79
-            )
-            layer_idx += 1
+            multi_step_feedback.step_finished()
 
         return True
