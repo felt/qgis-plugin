@@ -24,6 +24,8 @@ from qgis.PyQt.QtWidgets import (
     QDialogButtonBox
 )
 
+from ..core import MapUploader
+
 from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
@@ -60,6 +62,9 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
         self.footer_label.linkActivated.connect(self._link_activated)
+
+        self.map_uploader = MapUploader()
+        self.map_title_edit.setText(self.map_uploader.default_map_title())
 
         if AUTHORIZATION_MANAGER.user:
             self.label_user.setText(

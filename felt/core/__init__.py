@@ -14,3 +14,4 @@ from .api_client import (
     FeltApiClient,
     API_CLIENT
 )
+from .map_uploader import MapUploader
