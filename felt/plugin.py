@@ -31,9 +31,9 @@ from qgis.gui import (
 
 from .gui import (
     AUTHORIZATION_MANAGER,
-    CreateMapDialog
+    CreateMapDialog,
+    GuiUtils
 )
-from qgis.utils import iface
 
 
 class FeltPlugin(QObject):
@@ -47,6 +47,7 @@ class FeltPlugin(QObject):
         self.felt_web_menu: Optional[QMenu] = None
 
         self.create_map_action: Optional[QAction] = None
+        self.share_map_to_felt_action: Optional[QAction] = None
         self._create_map_dialogs = []
 
     # qgis plugin interface
@@ -71,14 +72,42 @@ class FeltPlugin(QObject):
         self.felt_web_menu.addAction(self.create_map_action)
         self.create_map_action.triggered.connect(self.create_map)
 
+        self.share_map_to_felt_action = QAction(self.tr('Share Map to Felt…'))
+        self.share_map_to_felt_action.triggered.connect(self.create_map)
+
+        try:
+            self.iface.addProjectExportAction(self.share_map_to_felt_action)
+        except AttributeError:
+            # addProjectExportAction was added in QGIS 3.30
+            import_export_menu = GuiUtils.get_project_import_export_menu()
+            if import_export_menu:
+                # find nice insertion point
+                export_separator = [a for a in import_export_menu.actions() if
+                                    a.isSeparator()]
+                if export_separator:
+                    import_export_menu.insertAction(
+                        export_separator[0],
+                        self.share_map_to_felt_action
+                    )
+                else:
+                    import_export_menu.addAction(
+                        self.share_map_to_felt_action
+                    )
+
     def unload(self):
         if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
             self.felt_web_menu.deleteLater()
         self.felt_web_menu = None
 
-        if self.create_map_action and not sip.isdeleted(self.create_map_action):
+        if self.create_map_action and \
+                not sip.isdeleted(self.create_map_action):
             self.create_map_action.deleteLater()
         self.create_map_action = None
+
+        if self.share_map_to_felt_action and \
+                not sip.isdeleted(self.share_map_to_felt_action):
+            self.share_map_to_felt_action.deleteLater()
+        self.share_map_to_felt_action = None
 
         for dialog in self._create_map_dialogs:
             if not sip.isdeleted(dialog):
@@ -123,7 +152,7 @@ class FeltPlugin(QObject):
             self._create_map_dialogs = [d for d in self._create_map_dialogs
                 if d != _dialog]
 
-        dialog = CreateMapDialog(iface.mainWindow())
+        dialog = CreateMapDialog(self.iface.mainWindow())
         dialog.show()
         dialog.rejected.connect(partial(_cleanup_dialog, dialog))
         self._create_map_dialogs.append(dialog)

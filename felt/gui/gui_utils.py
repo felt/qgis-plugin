@@ -29,10 +29,15 @@ from qgis.PyQt.QtGui import (
     QColor,
     QPainter
 )
+from qgis.PyQt.QtWidgets import (
+    QMenu
+)
 from qgis.PyQt.QtSvg import QSvgRenderer
 from qgis.core import (
     Qgis
 )
+from qgis.utils import iface
+
 
 FONT_FAMILIES = ""
 
@@ -190,3 +195,21 @@ class GuiUtils:
         installed_font = QFont(families[0])
         GuiUtils.APPLICATION_FONT_MAP[font] = installed_font
         return installed_font
+
+    @staticmethod
+    def get_project_import_export_menu() -> Optional[QMenu]:
+        """
+        Returns the application Project - Import/Export sub menu
+        """
+        try:
+            # requires QGIS 3.30+
+            return iface.projectImportExportMenu()
+        except AttributeError:
+            pass
+
+        project_menu = iface.projectMenu()
+        matches = [m for m in project_menu.children() if m.objectName() == 'menuImport_Export']
+        if matches:
+            return matches[0]
+
+        return None
