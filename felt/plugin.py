@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+from functools import partial
 from typing import Optional
 
 from qgis.PyQt import sip
@@ -79,6 +80,11 @@ class FeltPlugin(QObject):
             self.create_map_action.deleteLater()
         self.create_map_action = None
 
+        for dialog in self._create_map_dialogs:
+            if not sip.isdeleted(dialog):
+                dialog.deleteLater()
+        self._create_map_dialogs = []
+
         AUTHORIZATION_MANAGER.cleanup()
 
     # pylint: enable=missing-function-docstring
@@ -110,6 +116,14 @@ class FeltPlugin(QObject):
         """
         Shows the map creation dialog, after authorization completes
         """
+        def _cleanup_dialog(_dialog):
+            """
+            Remove references to outdated dialogs
+            """
+            self._create_map_dialogs = [d for d in self._create_map_dialogs
+                if d != _dialog]
+
         dialog = CreateMapDialog(iface.mainWindow())
         dialog.show()
+        dialog.rejected.connect(partial(_cleanup_dialog, dialog))
         self._create_map_dialogs.append(dialog)
