@@ -74,6 +74,7 @@ class FeltPlugin(QObject):
 
         self.share_map_to_felt_action = QAction(self.tr('Share Map to Felt…'))
         self.share_map_to_felt_action.triggered.connect(self.create_map)
+        self.iface.addWebToolBarIcon(self.share_map_to_felt_action)
 
         try:
             self.iface.addProjectExportAction(self.share_map_to_felt_action)
