@@ -38,6 +38,7 @@ from ..core import (
     OAuthWorkflow,
     API_CLIENT
 )
+from .authorize_dialog import AuthorizeDialog
 
 
 class AuthorizationManager(QObject):
@@ -95,7 +96,7 @@ class AuthorizationManager(QObject):
         Called when the login action is triggered
         """
         if self.status == AuthState.NotAuthorized:
-            self.start_authorization()
+            self.show_authorization_dialog()
         elif self.status == AuthState.Authorized:
             self.deauthorize()
 
@@ -118,6 +119,15 @@ class AuthorizationManager(QObject):
         """
         self._set_status(AuthState.NotAuthorized)
         API_CLIENT.set_token(None)
+
+    def show_authorization_dialog(self):
+        """
+        Shows the authorization dialog before commencing the authorization
+        process
+        """
+        dlg = AuthorizeDialog()
+        if dlg.exec_():
+            self.start_authorization()
 
     def start_authorization(self):
         """
@@ -177,7 +187,7 @@ class AuthorizationManager(QObject):
         )
 
         retry_button = QPushButton(self.tr("Try Again"))
-        retry_button.clicked.connect(self.start_authorization)
+        retry_button.clicked.connect(self.show_authorization_dialog)
         self._authorization_failed_message.layout().addWidget(retry_button)
 
         iface.messageBar().pushItem(self._authorization_failed_message)

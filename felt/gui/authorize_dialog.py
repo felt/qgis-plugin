@@ -1,0 +1,69 @@
+# -*- coding: utf-8 -*-
+"""Felt Authorization dialog
+
+.. note:: This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+"""
+
+__author__ = '(C) 2022 by Nyall Dawson'
+__date__ = '22/11/2022'
+__copyright__ = 'Copyright 2022, North Road'
+# This will get replaced with a git SHA1 when you do a git archive
+__revision__ = '$Format:%H$'
+
+from typing import Optional
+
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtWidgets import (
+    QWidget,
+    QDialog
+)
+
+from .gui_utils import GuiUtils
+
+WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('authorize.ui'))
+
+
+class AuthorizeDialog(QDialog, WIDGET):
+    """
+    Custom dialog for authorizing the client.
+
+    If the dialog is accepted then the authorization process should be
+    started.
+    """
+
+    SIGNUP_URL = 'https://felt.com/signup'
+    TOS_URL = 'https://felt.com/terms'
+    PRIVACY_POLICY_URL = 'https://felt.com/privacy'
+
+    def __init__(self, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+        self.sign_in_button.clicked.connect(self.accept)
+        self.sign_up_button.clicked.connect(self._sign_up)
+
+        self.footer_label.linkActivated.connect(self._link_activated)
+
+    def _sign_up(self):
+        """
+        Shows the signup form
+        """
+        QDesktopServices.openUrl(QUrl(self.SIGNUP_URL))
+
+    def _link_activated(self, link: str):
+        """
+        Called when a hyperlink is clicked in dialog labels
+        """
+        if link == 'privacy_policy':
+            url = QUrl(self.PRIVACY_POLICY_URL)
+        elif link == 'terms_of_use':
+            url = QUrl(self.TOS_URL)
+        else:
+            return
+
+        QDesktopServices.openUrl(url)
