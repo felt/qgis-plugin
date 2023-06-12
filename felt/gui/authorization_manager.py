@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+from functools import partial
 from typing import Optional
 
 from qgis.PyQt import sip
@@ -25,6 +26,8 @@ from qgis.PyQt.QtWidgets import (
     QAction,
     QPushButton
 )
+from qgis.PyQt.QtNetwork import QNetworkReply
+
 from qgis.core import (
     Qgis
 )
@@ -36,7 +39,8 @@ from qgis.utils import iface
 from ..core import (
     AuthState,
     OAuthWorkflow,
-    API_CLIENT
+    API_CLIENT,
+    User
 )
 from .authorize_dialog import AuthorizeDialog
 
@@ -61,6 +65,8 @@ class AuthorizationManager(QObject):
         self._authorization_failed_message = None
 
         self.queued_callbacks = []
+        self.user: Optional[User] = None
+        self._user_reply: Optional[QNetworkReply] = None
 
         self.login_action = QAction(self.tr('Sign In…'))
         self.login_action.triggered.connect(self._login_action_triggered)
@@ -78,9 +84,11 @@ class AuthorizationManager(QObject):
         if self.status == AuthState.NotAuthorized:
             self.login_action.setText(self.tr('Sign In…'))
             self.login_action.setEnabled(True)
+            self.user = None
         elif self.status == AuthState.Authorizing:
             self.login_action.setText(self.tr('Authorizing…'))
             self.login_action.setEnabled(False)
+            self.user = None
         elif self.status == AuthState.Authorized:
             self.login_action.setText(self.tr('Sign Out'))
             self.login_action.setEnabled(True)
@@ -111,7 +119,8 @@ class AuthorizationManager(QObject):
             return True
 
         self.queued_callbacks.append(callback)
-        return self.start_authorization()
+        self.show_authorization_dialog()
+        return False
 
     def deauthorize(self):
         """
@@ -128,6 +137,8 @@ class AuthorizationManager(QObject):
         dlg = AuthorizeDialog()
         if dlg.exec_():
             self.start_authorization()
+        else:
+            self.queued_callbacks = []
 
     def start_authorization(self):
         """
@@ -173,6 +184,7 @@ class AuthorizationManager(QObject):
         """
         Triggered when an authorization error occurs
         """
+        self.queued_callbacks = []
         self._cleanup_messages()
 
         self._clean_workflow()
@@ -207,18 +219,43 @@ class AuthorizationManager(QObject):
 
         self._clean_workflow()
 
+        self.authorized.emit()
+
+        self._user_reply = API_CLIENT.user()
+        self._user_reply.finished.connect(partial(self._set_user_details,
+                                                  self._user_reply))
+
+    def _set_user_details(self, reply: QNetworkReply):
+        """
+        Sets user details
+        """
+        if reply != self._user_reply:
+            # an outdated reply we don't care about anymore
+            return
+
+        if not self._user_reply or sip.isdeleted(self._user_reply):
+            self._user_reply = None
+            return
+
+        if self._user_reply.error() != QNetworkReply.NoError:
+            self._user_reply = None
+            return
+
+        self.user = User.from_json(reply.readAll().data().decode())
         callbacks = self.queued_callbacks
         self.queued_callbacks = []
         for callback in callbacks:
             callback()
-
-        self.authorized.emit()
 
     def cleanup(self):
         """
         Must be called when the authorization handler needs to be gracefully
         shutdown (e.g. on plugin unload)
         """
+        if self._user_reply and not sip.isdeleted(self._user_reply):
+            self._user_reply.deleteLater()
+        self._user_reply = None
+
         self._close_auth_server(force_close=True)
 
     def _clean_workflow(self):

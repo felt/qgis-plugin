@@ -28,7 +28,10 @@ from qgis.gui import (
     QgisInterface
 )
 
-from .gui import AUTHORIZATION_MANAGER
+from .gui import (
+    AUTHORIZATION_MANAGER,
+    CreateMapDialog
+)
 
 
 class FeltPlugin(QObject):
@@ -40,6 +43,8 @@ class FeltPlugin(QObject):
         super().__init__()
         self.iface: QgisInterface = iface
         self.felt_web_menu: Optional[QMenu] = None
+
+        self.create_map_action: Optional[QAction] = None
 
     # qgis plugin interface
     # pylint: disable=missing-function-docstring
@@ -59,12 +64,18 @@ class FeltPlugin(QObject):
 
         self.felt_web_menu.addAction(AUTHORIZATION_MANAGER.login_action)
 
-    #        AUTHORIZATION_MANAGER.start_authorization()
+        self.create_map_action = QAction(self.tr('Create Map…'))
+        self.felt_web_menu.addAction(self.create_map_action)
+        self.create_map_action.triggered.connect(self.create_map)
 
     def unload(self):
         if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
             self.felt_web_menu.deleteLater()
         self.felt_web_menu = None
+
+        if self.create_map_action and not sip.isdeleted(self.create_map_action):
+            self.create_map_action.deleteLater()
+        self.create_map_action = None
 
         AUTHORIZATION_MANAGER.cleanup()
 
@@ -84,3 +95,16 @@ class FeltPlugin(QObject):
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
+
+    def create_map(self):
+        """
+        Triggers the map creation process
+        """
+        AUTHORIZATION_MANAGER.authorization_callback(
+            self._create_map_authorized
+        )
+
+    def _create_map_authorized(self):
+        dialog = CreateMapDialog()
+        if not dialog.exec_():
+            return

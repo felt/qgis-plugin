@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Felt Authorization dialog
+"""Felt Create Map dialog
 
 .. note:: This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,22 +20,23 @@ from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QWidget,
-    QDialog
+    QDialog,
+    QDialogButtonBox
 )
+
 from .constants import (
     PRIVACY_POLICY_URL,
-    TOS_URL,
-    SIGNUP_URL
+    TOS_URL
 )
-
 from .gui_utils import GuiUtils
+from .authorization_manager import AUTHORIZATION_MANAGER
 
-WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('authorize.ui'))
+WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('create_map.ui'))
 
 
-class AuthorizeDialog(QDialog, WIDGET):
+class CreateMapDialog(QDialog, WIDGET):
     """
-    Custom dialog for authorizing the client.
+    Custom dialog for creating maps
 
     If the dialog is accepted then the authorization process should be
     started.
@@ -45,16 +46,27 @@ class AuthorizeDialog(QDialog, WIDGET):
         super().__init__(parent)
         self.setupUi(self)
 
-        self.sign_in_button.clicked.connect(self.accept)
-        self.sign_up_button.clicked.connect(self._sign_up)
+        self.button_box.button(QDialogButtonBox.Ok).setText(
+            self.tr('Add to Felt')
+        )
+        self.button_box.button(QDialogButtonBox.Ok).clicked.connect(
+            self.accept
+        )
+        self.button_box.button(QDialogButtonBox.Cancel).clicked.connect(
+            self.reject
+        )
+        self.button_box.button(QDialogButtonBox.Cancel).setText(
+            self.tr('Close')
+        )
 
         self.footer_label.linkActivated.connect(self._link_activated)
 
-    def _sign_up(self):
-        """
-        Shows the signup form
-        """
-        QDesktopServices.openUrl(QUrl(SIGNUP_URL))
+        if AUTHORIZATION_MANAGER.user:
+            self.label_user.setText(
+                self.tr('Signed in as: {}').format(
+                    AUTHORIZATION_MANAGER.user.name
+                )
+            )
 
     def _link_activated(self, link: str):
         """
