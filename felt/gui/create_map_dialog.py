@@ -27,9 +27,12 @@ from qgis.PyQt.QtWidgets import (
     QDialogButtonBox
 )
 
-from qgis.core import QgsMapLayer
+from qgis.core import (
+    QgsMapLayer,
+    QgsApplication
+)
 
-from ..core import MapUploader
+from ..core import MapUploaderTask
 
 from .constants import (
     PRIVACY_POLICY_URL,
@@ -55,7 +58,9 @@ class CreateMapDialog(QDialog, WIDGET):
         super().__init__(parent)
         self.setupUi(self)
 
-        print(layers)
+        self.stacked_widget.setCurrentIndex(0)
+
+        self.layers = layers
 
         self.button_box.button(QDialogButtonBox.Ok).setText(
             self.tr('Add to Felt')
@@ -72,8 +77,10 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.footer_label.linkActivated.connect(self._link_activated)
 
-        self.map_uploader = MapUploader()
-        self.map_title_edit.setText(self.map_uploader.default_map_title())
+        self.map_uploader_task = MapUploaderTask(
+            layers=self.layers
+        )
+        self.map_title_edit.setText(self.map_uploader_task.default_map_title())
         self.map_title_edit.textChanged.connect(self._validate)
 
         if AUTHORIZATION_MANAGER.user:
@@ -114,4 +121,28 @@ class CreateMapDialog(QDialog, WIDGET):
         return bool(self.map_title_edit.text().strip())
 
     def _start(self):
-        pass
+        """
+        Starts the map upload process
+        """
+        map_title = self.map_title_edit.text().strip()
+        self.map_title_label.setText(map_title)
+        self.map_uploader_task.project_title = map_title
+
+        self.stacked_widget.setCurrentIndex(1)
+        self.map_uploader_task.status_changed.connect(
+            self.progress_label.setText
+        )
+
+        self.map_uploader_task.taskCompleted.connect(self._upload_finished)
+        self.map_uploader_task.taskTerminated.connect(self._upload_terminated)
+
+        QgsApplication.taskManager().addTask(self.map_uploader_task)
+
+    def _upload_finished(self):
+        print(self.map_uploader_task.created_map.url)
+        self.map_uploader_task = None
+
+    def _upload_terminated(self):
+        self.map_uploader_task = None
+
+

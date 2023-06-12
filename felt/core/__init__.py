@@ -14,4 +14,8 @@ from .api_client import (
     FeltApiClient,
     API_CLIENT
 )
-from .map_uploader import MapUploader
+from .map_uploader import MapUploaderTask
+from .layer_exporter import (
+    LayerExporter,
+    ExportResult
+)

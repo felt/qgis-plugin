@@ -17,7 +17,8 @@ import json
 from typing import (
     Dict,
     Optional,
-    List
+    List,
+    Union
 )
 
 from qgis.PyQt.QtCore import (
@@ -29,7 +30,11 @@ from qgis.PyQt.QtNetwork import (
     QNetworkRequest,
     QNetworkReply
 )
-from qgis.core import QgsNetworkAccessManager
+from qgis.core import (
+    QgsNetworkAccessManager,
+    QgsNetworkReplyContent
+)
+
 from .s3_upload_parameters import S3UploadParameters
 
 
@@ -120,7 +125,8 @@ class FeltApiClient:
                    title: Optional[str]=None,
                    basemap: Optional[str]=None,
                    layer_urls: List[str]=[],
-                   ) -> QNetworkReply:
+                   blocking: bool = False
+                   ) -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Creates a Felt map
         """
@@ -138,13 +144,21 @@ class FeltApiClient:
             request_params['basemap'] = basemap
         # TODO -- layer URLS!
         json_data = json.dumps(request_params)
-        return QgsNetworkAccessManager.instance().post(request,
-                                                       json_data.encode())
+        if blocking:
+            return QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                json_data.encode()
+            )
+        else:
+            return QgsNetworkAccessManager.instance().post(request,
+                                                           json_data.encode())
 
     def prepare_layer_upload(self,
                              map_id: str,
                              name: str,
-                             file_names: List[str]):
+                             file_names: List[str],
+                             blocking: bool = False) \
+            -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Prepares a layer upload
         """
@@ -158,10 +172,24 @@ class FeltApiClient:
             'file_names': file_names
         }
         json_data = json.dumps(request_params)
-        return QgsNetworkAccessManager.instance().post(request,
-                                                       json_data.encode())
+        if blocking:
+            return QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                json_data.encode()
+            )
 
-    def upload_file(self, filename: str, content: bytes, parameters: S3UploadParameters):
+        else:
+            return QgsNetworkAccessManager.instance().post(
+                request,
+                json_data.encode()
+            )
+
+    def upload_file(self,
+                    filename: str,
+                    content: bytes,
+                    parameters: S3UploadParameters,
+                    blocking: bool = False) \
+            -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Triggers an upload
         """
@@ -202,13 +230,23 @@ class FeltApiClient:
             str(content_length).encode()
         )
 
-        return QgsNetworkAccessManager.instance().post(network_request,
-                                                       form_content)
+        if blocking:
+            return QgsNetworkAccessManager.instance().blockingPost(
+                network_request,
+                form_content
+            )
+        else:
+            return QgsNetworkAccessManager.instance().post(
+                network_request,
+                form_content
+            )
 
     def finalize_layer_upload(self,
                               map_id: str,
                               layer_id: str,
-                              filename: str):
+                              filename: str,
+                              blocking: bool = False) \
+            -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Finalizes a layer upload
         """
@@ -221,8 +259,17 @@ class FeltApiClient:
             'filename': filename
         }
         json_data = json.dumps(request_params)
-        return QgsNetworkAccessManager.instance().post(request,
-                                                       json_data.encode())
+        if blocking:
+            return QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                json_data.encode()
+            )
+
+        else:
+            return QgsNetworkAccessManager.instance().post(
+                request,
+                json_data.encode()
+            )
 
 
 API_CLIENT = FeltApiClient()
