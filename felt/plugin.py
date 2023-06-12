@@ -32,6 +32,7 @@ from .gui import (
     AUTHORIZATION_MANAGER,
     CreateMapDialog
 )
+from qgis.utils import iface
 
 
 class FeltPlugin(QObject):
@@ -45,6 +46,7 @@ class FeltPlugin(QObject):
         self.felt_web_menu: Optional[QMenu] = None
 
         self.create_map_action: Optional[QAction] = None
+        self._create_map_dialogs = []
 
     # qgis plugin interface
     # pylint: disable=missing-function-docstring
@@ -105,6 +107,9 @@ class FeltPlugin(QObject):
         )
 
     def _create_map_authorized(self):
-        dialog = CreateMapDialog()
-        if not dialog.exec_():
-            return
+        """
+        Shows the map creation dialog, after authorization completes
+        """
+        dialog = CreateMapDialog(iface.mainWindow())
+        dialog.show()
+        self._create_map_dialogs.append(dialog)

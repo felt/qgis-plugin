@@ -52,7 +52,7 @@ class CreateMapDialog(QDialog, WIDGET):
             self.tr('Add to Felt')
         )
         self.button_box.button(QDialogButtonBox.Ok).clicked.connect(
-            self.accept
+            self._start
         )
         self.button_box.button(QDialogButtonBox.Cancel).clicked.connect(
             self.reject
@@ -65,6 +65,7 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.map_uploader = MapUploader()
         self.map_title_edit.setText(self.map_uploader.default_map_title())
+        self.map_title_edit.textChanged.connect(self._validate)
 
         if AUTHORIZATION_MANAGER.user:
             self.label_user.setText(
@@ -72,6 +73,8 @@ class CreateMapDialog(QDialog, WIDGET):
                     AUTHORIZATION_MANAGER.user.name
                 )
             )
+
+        self._validate()
 
     def _link_activated(self, link: str):
         """
@@ -85,3 +88,21 @@ class CreateMapDialog(QDialog, WIDGET):
             return
 
         QDesktopServices.openUrl(url)
+
+    def _validate(self):
+        """
+        Validates the dialog
+        """
+        self.button_box.button(QDialogButtonBox.Ok).setEnabled(
+            self._is_valid()
+        )
+
+    def _is_valid(self) -> bool:
+        """
+        Returns True if the dialog contains valid settings to begin
+        the upload
+        """
+        return bool(self.map_title_edit.text().strip())
+
+    def _start(self):
+        pass
