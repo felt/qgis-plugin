@@ -39,6 +39,6 @@ class AuthState(Enum):
     """
     Authentication states
     """
-    LoggedOut = auto()
-    LoggingIn = auto()
-    LoggedIn = auto()
+    NotAuthorized = auto()
+    Authorizing = auto()
+    Authorized = auto()

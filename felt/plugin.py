@@ -18,14 +18,17 @@ from typing import Optional
 from qgis.PyQt import sip
 from qgis.PyQt.QtCore import (
     QObject,
-    QCoreApplication,
-    QTimer
+    QCoreApplication
+)
+from qgis.PyQt.QtWidgets import (
+    QMenu,
+    QAction
 )
 from qgis.gui import (
     QgisInterface
 )
 
-from .core import OAuthWorkflow
+from .gui import AUTHORIZATION_MANAGER
 
 
 class FeltPlugin(QObject):
@@ -36,24 +39,34 @@ class FeltPlugin(QObject):
     def __init__(self, iface: QgisInterface):
         super().__init__()
         self.iface: QgisInterface = iface
-
-        self.oauth: Optional[OAuthWorkflow] = None
+        self.felt_web_menu: Optional[QMenu] = None
 
     # qgis plugin interface
     # pylint: disable=missing-function-docstring
 
     def initGui(self):
-        print('loaded')
+        # little hack to ensure the web menu is visible before we try
+        # to add a submenu to it -- the public API expects plugins to only
+        # add individual actions to this menu, not submenus.
+        temp_action = QAction()
+        self.iface.addPluginToWebMenu('Felt', temp_action)
 
-        self.oauth = OAuthWorkflow()
+        web_menu = self.iface.webMenu()
+        self.felt_web_menu = QMenu(self.tr('Add to Felt'))
+        web_menu.addMenu(self.felt_web_menu)
 
-        self.oauth.finished.connect(self._auth_finished)
-        self.oauth.error_occurred.connect(self._auth_error_occurred)
-        self.oauth.start()
+        self.iface.removePluginWebMenu('Felt', temp_action)
+
+        self.felt_web_menu.addAction(AUTHORIZATION_MANAGER.login_action)
+
+    #        AUTHORIZATION_MANAGER.start_authorization()
 
     def unload(self):
-        if self.oauth:
-            self.oauth.force_stop()
+        if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
+            self.felt_web_menu.deleteLater()
+        self.felt_web_menu = None
+
+        AUTHORIZATION_MANAGER.cleanup()
 
     # pylint: enable=missing-function-docstring
 
@@ -71,38 +84,3 @@ class FeltPlugin(QObject):
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
-
-    def _auth_finished(self, key):
-        if self.oauth and not sip.isdeleted(self.oauth):
-            self.oauth_close_timer = QTimer(self)
-            self.oauth_close_timer.setSingleShot(True)
-            self.oauth_close_timer.setInterval(1000)
-            self.oauth_close_timer.timeout.connect(self._close_auth_server)
-            self.oauth_close_timer.start()
-
-        if not key:
-            return
-
-        print(key)
-
-    def _auth_error_occurred(self, error: str):
-        print(error)
-
-    def _close_auth_server(self, force_close=False):
-        if self.oauth_close_timer and not sip.isdeleted(
-                self.oauth_close_timer):
-            self.oauth_close_timer.timeout.disconnect(
-                self._close_auth_server)
-            self.oauth_close_timer.deleteLater()
-        self.oauth_close_timer = None
-
-        if self.oauth and not sip.isdeleted(self.oauth):
-            if force_close:
-                self.oauth.force_stop()
-
-            self.oauth.close_server()
-            self.oauth.quit()
-            self.oauth.wait()
-            self.oauth.deleteLater()
-
-        self.oauth = None

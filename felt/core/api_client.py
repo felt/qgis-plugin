@@ -51,12 +51,18 @@ class FeltApiClient:
         }
         self.token: Optional[str] = None
 
-    def set_token(self, token: str):
+    def set_token(self, token: Optional[str]):
         """
         Sets the access token
         """
         self.token = token
-        self.headers['authorization'] = f'Bearer {self.token}'
+        if self.token:
+            self.headers['authorization'] = f'Bearer {self.token}'
+        else:
+            try:
+                del self.headers['authorization']
+            except KeyError:
+                pass
 
     @staticmethod
     def build_url(endpoint: str) -> QUrl:

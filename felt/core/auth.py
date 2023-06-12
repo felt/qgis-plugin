@@ -206,5 +206,5 @@ class OAuthWorkflow(QThread):
 
         if err:
             self.error_occurred.emit(err)
-
-        self.finished.emit(access_token)
+        else:
+            self.finished.emit(access_token)
