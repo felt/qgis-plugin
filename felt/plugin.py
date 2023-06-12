@@ -14,7 +14,10 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 from functools import partial
-from typing import Optional
+from typing import (
+    Optional,
+    List
+)
 
 from qgis.PyQt import sip
 from qgis.PyQt.QtCore import (
@@ -24,6 +27,12 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtWidgets import (
     QMenu,
     QAction
+)
+
+from qgis.core import (
+    QgsLayerTreeLayer,
+    QgsMapLayerType,
+    QgsMapLayer
 )
 from qgis.gui import (
     QgisInterface
@@ -95,6 +104,13 @@ class FeltPlugin(QObject):
                         self.share_map_to_felt_action
                     )
 
+        try:
+            self.iface.layerTreeView().contextMenuAboutToShow.connect(
+                self._layer_tree_view_context_menu_about_to_show
+            )
+        except AttributeError:
+            pass
+
     def unload(self):
         if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
             self.felt_web_menu.deleteLater()
@@ -134,6 +150,14 @@ class FeltPlugin(QObject):
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
 
+    def _share_layer_to_felt(self, layer: QgsMapLayer):
+        """
+        Triggers creation of a map with a single layer only
+        """
+        AUTHORIZATION_MANAGER.authorization_callback(
+            partial(self._create_map_authorized, [layer])
+        )
+
     def create_map(self):
         """
         Triggers the map creation process
@@ -142,7 +166,8 @@ class FeltPlugin(QObject):
             self._create_map_authorized
         )
 
-    def _create_map_authorized(self):
+    def _create_map_authorized(self,
+                               layers: Optional[List[QgsMapLayer]] = None):
         """
         Shows the map creation dialog, after authorization completes
         """
@@ -153,7 +178,40 @@ class FeltPlugin(QObject):
             self._create_map_dialogs = [d for d in self._create_map_dialogs
                 if d != _dialog]
 
-        dialog = CreateMapDialog(self.iface.mainWindow())
+        dialog = CreateMapDialog(
+            self.iface.mainWindow(),
+            layers
+        )
         dialog.show()
         dialog.rejected.connect(partial(_cleanup_dialog, dialog))
         self._create_map_dialogs.append(dialog)
+
+    def _layer_tree_view_context_menu_about_to_show(self, menu: QMenu):
+        """
+        Triggered when the layer tree menu is about to show
+        """
+        if not menu:
+            return
+
+        current_node = self.iface.layerTreeView().currentNode()
+        if not isinstance(current_node, QgsLayerTreeLayer):
+            return
+
+        layer = current_node.layer()
+        if layer is None:
+            return
+
+        if layer.type() in (QgsMapLayerType.VectorLayer,):
+
+            menus = [action for action in menu.children() if
+                     isinstance(action, QMenu) and action.objectName() == 'exportMenu']
+            if not menus:
+                return
+
+            export_menu = menus[0]
+
+            share_to_felt_action = QAction(self.tr('Share Layer to Felt…'), menu)
+            export_menu.addAction(share_to_felt_action)
+            share_to_felt_action.triggered.connect(
+                partial(self._share_layer_to_felt, layer)
+            )

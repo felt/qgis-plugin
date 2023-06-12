@@ -13,7 +13,10 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-from typing import Optional
+from typing import (
+    Optional,
+    List
+)
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QUrl
@@ -23,6 +26,8 @@ from qgis.PyQt.QtWidgets import (
     QDialog,
     QDialogButtonBox
 )
+
+from qgis.core import QgsMapLayer
 
 from ..core import MapUploader
 
@@ -44,9 +49,13 @@ class CreateMapDialog(QDialog, WIDGET):
     started.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self,
+                 parent: Optional[QWidget] = None,
+                 layers: Optional[List[QgsMapLayer]] = None):
         super().__init__(parent)
         self.setupUi(self)
+
+        print(layers)
 
         self.button_box.button(QDialogButtonBox.Ok).setText(
             self.tr('Add to Felt')
