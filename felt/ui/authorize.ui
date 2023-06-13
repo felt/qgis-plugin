@@ -13,99 +13,103 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>170</y>
-     <width>291</width>
-     <height>81</height>
-    </rect>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>0</number>
    </property>
-   <property name="text">
-    <string>Login to your Felt account to get started</string>
+   <property name="topMargin">
+    <number>0</number>
    </property>
-   <property name="wordWrap">
-    <bool>true</bool>
+   <property name="rightMargin">
+    <number>0</number>
    </property>
-  </widget>
-  <widget class="QPushButton" name="sign_in_button">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>190</y>
-     <width>87</width>
-     <height>26</height>
-    </rect>
+   <property name="bottomMargin">
+    <number>0</number>
    </property>
-   <property name="text">
-    <string>Sign In</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>230</y>
-     <width>451</width>
-     <height>81</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>The next step opens Felt in your web browser and may require you to sign in to your Felt account.</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>340</y>
-     <width>451</width>
-     <height>81</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Need to create a free Felt ID?</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="sign_up_button">
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>360</y>
-     <width>87</width>
-     <height>26</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Sign Up</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="footer_label">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>440</y>
-     <width>451</width>
-     <height>81</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;privacy_policy&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Privacy Policy&lt;/span&gt;&lt;/a&gt; - &lt;a href=&quot;terms_of_use&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Terms of Use&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-   <property name="textInteractionFlags">
-    <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
-   </property>
-  </widget>
+   <item>
+    <widget class="QWidget" name="widget_logo" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout" columnstretch="5,1">
+     <property name="leftMargin">
+      <number>9</number>
+     </property>
+     <property name="topMargin">
+      <number>9</number>
+     </property>
+     <property name="rightMargin">
+      <number>9</number>
+     </property>
+     <property name="bottomMargin">
+      <number>9</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_login">
+       <property name="text">
+        <string>Login to your Felt account to get started</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="sign_in_button">
+       <property name="text">
+        <string>Sign In</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>The next step opens Felt in your web browser and may require you to sign in to your Felt account.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_create">
+       <property name="text">
+        <string>Need to create a free Felt ID?</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QPushButton" name="sign_up_button">
+       <property name="text">
+        <string>Sign Up</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="2">
+      <widget class="QLabel" name="footer_label">
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;privacy_policy&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Privacy Policy&lt;/span&gt;&lt;/a&gt; - &lt;a href=&quot;terms_of_use&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Terms of Use&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

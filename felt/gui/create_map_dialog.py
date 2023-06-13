@@ -24,7 +24,8 @@ from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QDialog,
-    QDialogButtonBox
+    QDialogButtonBox,
+    QVBoxLayout
 )
 
 from qgis.core import (
@@ -45,6 +46,7 @@ from .gui_utils import (
     GuiUtils,
     FELT_STYLESHEET
 )
+from .felt_dialog_header import FeltDialogHeader
 from .authorization_manager import AUTHORIZATION_MANAGER
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('create_map.ui'))
@@ -69,6 +71,12 @@ class CreateMapDialog(QDialog, WIDGET):
             FELT_STYLESHEET)
         self.button_box.button(QDialogButtonBox.Cancel).setStyleSheet(
             FELT_STYLESHEET)
+
+        vl = QVBoxLayout()
+        vl.setContentsMargins( 0, 0,0 ,0)
+        vl.addWidget(FeltDialogHeader())
+        self.widget_logo.setStyleSheet('background: solid #3d521e;')
+        self.widget_logo.setLayout(vl)
 
         self.setWindowTitle(self.tr('Create Felt Map'))
 

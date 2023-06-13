@@ -16,12 +16,20 @@ __revision__ = '$Format:%H$'
 from typing import Optional
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QUrl
-from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import (
+    QUrl,
+    QSize
+)
+from qgis.PyQt.QtGui import (
+    QDesktopServices,
+    QFontMetrics
+)
 from qgis.PyQt.QtWidgets import (
     QWidget,
-    QDialog
+    QDialog,
+    QVBoxLayout
 )
+from qgis.PyQt.QtSvg import QSvgWidget
 from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL,
@@ -32,6 +40,7 @@ from .gui_utils import (
     GuiUtils,
     FELT_STYLESHEET
 )
+from .felt_dialog_header import FeltDialogHeader
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('authorize.ui'))
 
@@ -49,6 +58,17 @@ class AuthorizeDialog(QDialog, WIDGET):
         self.setupUi(self)
 
         self.setStyleSheet(FELT_STYLESHEET)
+
+        vl = QVBoxLayout()
+        vl.setContentsMargins( 0, 0,0 ,0)
+        vl.addWidget(FeltDialogHeader())
+        self.widget_logo.setStyleSheet('background: solid #3d521e;')
+        self.widget_logo.setLayout(vl)
+
+        font = self.label_create.font()
+        font.setBold(True)
+        self.label_create.setFont(font)
+        self.label_login.setFont(font)
 
         self.setWindowTitle(self.tr('Authorize Felt'))
 
