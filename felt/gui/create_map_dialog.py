@@ -217,6 +217,12 @@ class CreateMapDialog(QDialog, WIDGET):
         self.button_box.button(QDialogButtonBox.Cancel).setText(
             self.tr('Close')
         )
+        self.button_box.button(QDialogButtonBox.Ok).setText(
+            self.tr('Upload Failed')
+        )
+        self.button_box.button(QDialogButtonBox.Ok).setEnabled(
+            False
+        )
 
     def _view_map(self):
         if not self.created_map:
