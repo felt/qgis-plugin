@@ -38,6 +38,10 @@ from qgis.gui import (
     QgisInterface
 )
 
+from .core import (
+    AuthState
+)
+
 from .gui import (
     AUTHORIZATION_MANAGER,
     CreateMapDialog,
@@ -120,6 +124,8 @@ class FeltPlugin(QObject):
         except AttributeError:
             pass
 
+        AUTHORIZATION_MANAGER.status_changed.connect(self._auth_state_changed)
+
     def unload(self):
         if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
             self.felt_web_menu.deleteLater()
@@ -158,6 +164,17 @@ class FeltPlugin(QObject):
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
+
+    def _auth_state_changed(self, state: AuthState):
+        """
+        Called when the plugin authorization state changes
+        """
+        if state == AuthState.Authorizing:
+            self.share_map_to_felt_action.setEnabled(False)
+            self.create_map_action.setEnabled(False)
+        else:
+            self.share_map_to_felt_action.setEnabled(True)
+            self.create_map_action.setEnabled(True)
 
     def _share_layer_to_felt(self, layer: QgsMapLayer):
         """
