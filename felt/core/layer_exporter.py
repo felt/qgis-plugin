@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from qgis.PyQt.QtCore import QVariant
+
 from qgis.core import (
     QgsFeedback,
     QgsMapLayer,
@@ -27,7 +29,8 @@ from qgis.core import (
     QgsCoordinateTransformContext,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
-    QgsWkbTypes
+    QgsWkbTypes,
+    QgsFieldConstraints
 )
 
 
@@ -98,6 +101,21 @@ class LayerExporter:
             'GEOMETRY_NAME=geom',
             'SPATIAL_INDEX=NO',
         ]
+
+        # check FID field compatibility with GPKG and remove non-compatible
+        # FID fields
+        fields = layer.fields()
+        fid_index = fields.lookupField('fid')
+        writer_options.attributes = fields.allAttributesList()
+        if fid_index >= 0:
+            fid_type = fields.field(fid_index).type()
+            if fid_type not in (QVariant.Int,
+                                QVariant.UInt,
+                                QVariant.LongLong,
+                                QVariant.ULongLong):
+                writer_options.attributes = [a for a in
+                                             writer_options.attributes if
+                                             a != fid_index]
 
         res, error_message, new_filename, new_layer_name = \
             QgsVectorFileWriter.writeAsVectorFormatV3(

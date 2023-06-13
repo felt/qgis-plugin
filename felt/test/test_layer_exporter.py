@@ -70,6 +70,26 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPoint)
 
+    def test_gml_conversion(self):
+        """
+        Test GML vector layer conversion
+        """
+        file = str(TEST_DATA_PATH / 'polys.gml')
+        layer = QgsVectorLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+
+        exporter = LayerExporter(
+            QgsCoordinateTransformContext()
+        )
+        result = exporter.export_layer_for_felt(layer)
+        self.assertEqual(result.result, QgsVectorFileWriter.NoError)
+        self.assertTrue(result.filename)
+
+        out_layer = QgsVectorLayer(result.filename, 'test')
+        self.assertTrue(out_layer.isValid())
+        self.assertEqual(out_layer.featureCount(), layer.featureCount())
+        self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
+
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(LayerExporterTest)
