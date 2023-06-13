@@ -29,7 +29,7 @@ class GuiUtilsTest(unittest.TestCase):
         Tests get_icon
         """
         self.assertFalse(
-            GuiUtils.get_icon('filter.svg').isNull())
+            GuiUtils.get_icon('icon.svg').isNull())
         self.assertTrue(GuiUtils.get_icon('not_an_icon.svg').isNull())
 
     def testGetIconSvg(self):
@@ -37,9 +37,9 @@ class GuiUtilsTest(unittest.TestCase):
         Tests get_icon svg path
         """
         self.assertTrue(
-            GuiUtils.get_icon_svg('filter.svg'))
-        self.assertIn('filter.svg',
-                      GuiUtils.get_icon_svg('filter.svg'))
+            GuiUtils.get_icon_svg('icon.svg'))
+        self.assertIn('icon.svg',
+                      GuiUtils.get_icon_svg('icon.svg'))
         self.assertFalse(GuiUtils.get_icon_svg('not_an_icon.svg'))
 
     def testGetUiFilePath(self):
