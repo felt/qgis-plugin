@@ -41,7 +41,10 @@ from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
 )
-from .gui_utils import GuiUtils
+from .gui_utils import (
+    GuiUtils,
+    FELT_STYLESHEET
+)
 from .authorization_manager import AUTHORIZATION_MANAGER
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('create_map.ui'))
@@ -60,6 +63,14 @@ class CreateMapDialog(QDialog, WIDGET):
                  layers: Optional[List[QgsMapLayer]] = None):
         super().__init__(parent)
         self.setupUi(self)
+
+        self.setStyleSheet(FELT_STYLESHEET)
+        self.button_box.button(QDialogButtonBox.Ok).setStyleSheet(
+            FELT_STYLESHEET)
+        self.button_box.button(QDialogButtonBox.Cancel).setStyleSheet(
+            FELT_STYLESHEET)
+
+        self.setWindowTitle(self.tr('Create Felt Map'))
 
         self.stacked_widget.setCurrentIndex(0)
 

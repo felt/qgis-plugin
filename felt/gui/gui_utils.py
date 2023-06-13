@@ -41,6 +41,19 @@ from qgis.utils import iface
 
 FONT_FAMILIES = ""
 
+FELT_STYLESHEET = """
+QDialog {
+    background-color: white;
+    color: black;
+}
+
+QPushButton {
+    background: solid #3d521e;
+    color: white;
+}
+
+"""
+
 
 class GuiUtils:
     """

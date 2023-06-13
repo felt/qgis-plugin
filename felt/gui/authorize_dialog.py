@@ -28,7 +28,10 @@ from .constants import (
     SIGNUP_URL
 )
 
-from .gui_utils import GuiUtils
+from .gui_utils import (
+    GuiUtils,
+    FELT_STYLESHEET
+)
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('authorize.ui'))
 
@@ -44,6 +47,10 @@ class AuthorizeDialog(QDialog, WIDGET):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.setupUi(self)
+
+        self.setStyleSheet(FELT_STYLESHEET)
+
+        self.setWindowTitle(self.tr('Authorize Felt'))
 
         self.sign_in_button.clicked.connect(self.accept)
         self.sign_up_button.clicked.connect(self._sign_up)
