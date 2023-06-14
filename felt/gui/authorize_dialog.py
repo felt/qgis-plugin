@@ -17,30 +17,28 @@ from typing import Optional
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import (
-    QUrl,
-    QSize
+    QUrl
 )
 from qgis.PyQt.QtGui import (
-    QDesktopServices,
-    QFontMetrics
+    QDesktopServices
 )
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QDialog,
     QVBoxLayout
 )
-from qgis.PyQt.QtSvg import QSvgWidget
+from qgis.gui import QgsGui
+
 from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL,
     SIGNUP_URL
 )
-
+from .felt_dialog_header import FeltDialogHeader
 from .gui_utils import (
     GuiUtils,
     FELT_STYLESHEET
 )
-from .felt_dialog_header import FeltDialogHeader
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('authorize.ui'))
 
@@ -57,10 +55,13 @@ class AuthorizeDialog(QDialog, WIDGET):
         super().__init__(parent)
         self.setupUi(self)
 
+        self.setObjectName('AuthorizeDialog')
+        QgsGui.enableAutoGeometryRestore(self)
+
         self.setStyleSheet(FELT_STYLESHEET)
 
         vl = QVBoxLayout()
-        vl.setContentsMargins( 0, 0,0 ,0)
+        vl.setContentsMargins(0, 0, 0, 0)
         vl.addWidget(FeltDialogHeader())
         self.widget_logo.setStyleSheet('background: solid #3d521e;')
         self.widget_logo.setLayout(vl)

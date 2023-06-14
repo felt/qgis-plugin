@@ -32,6 +32,7 @@ from qgis.core import (
     QgsMapLayer,
     QgsApplication
 )
+from qgis.gui import QgsGui
 
 from ..core import (
     MapUploaderTask,
@@ -65,6 +66,8 @@ class CreateMapDialog(QDialog, WIDGET):
                  layers: Optional[List[QgsMapLayer]] = None):
         super().__init__(parent)
         self.setupUi(self)
+        self.setObjectName('CreateMapDialog')
+        QgsGui.enableAutoGeometryRestore(self)
 
         self.setStyleSheet(FELT_STYLESHEET)
         self.button_box.button(QDialogButtonBox.Ok).setStyleSheet(
