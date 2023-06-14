@@ -86,7 +86,7 @@ class MapUploaderTask(QgsTask):
                 self.current_map_extent = view_settings.defaultViewExtent()
                 self.current_map_crs = view_settings.defaultViewExtent().crs()
             self.layers = [
-                l.clone() for _, l in project.mapLayers().items() if isinstance(l, (QgsVectorLayer, QgsRasterLayer))
+                l.clone() for _, l in project.mapLayers().items() if LayerExporter.can_export_layer(l)
             ]
 
         for layer in self.layers:

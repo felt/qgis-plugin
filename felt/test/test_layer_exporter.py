@@ -40,6 +40,24 @@ TEST_DATA_PATH = Path(__file__).parent
 class LayerExporterTest(unittest.TestCase):
     """Test layer exporting works."""
 
+    def test_can_export_layer(self):
+        """
+        Test determining if layers can be exported
+        """
+        file = str(TEST_DATA_PATH / 'points.gpkg')
+        layer = QgsVectorLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+        self.assertTrue(LayerExporter.can_export_layer(layer))
+
+        file = str(TEST_DATA_PATH / 'dem.tif')
+        layer = QgsRasterLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+        self.assertTrue(LayerExporter.can_export_layer(layer))
+
+        layer = QgsRasterLayer('crs=EPSG:3857&format&type=xyz&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0',
+                               'test', 'wms')
+        self.assertFalse(LayerExporter.can_export_layer(layer))
+
     def test_file_name(self):
         """
         Test building temporary file names

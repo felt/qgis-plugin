@@ -39,7 +39,8 @@ from qgis.gui import (
 )
 
 from .core import (
-    AuthState
+    AuthState,
+    LayerExporter
 )
 
 from .gui import (
@@ -227,10 +228,7 @@ class FeltPlugin(QObject):
         if layer is None:
             return
 
-        if layer.type() in (QgsMapLayerType.VectorLayer,
-                            QgsMapLayerType.RasterLayer,
-                            ):
-
+        if LayerExporter.can_export_layer(layer):
             menus = [action for action in menu.children() if
                      isinstance(action, QMenu) and action.objectName() == 'exportMenu']
             if not menus:

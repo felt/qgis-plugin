@@ -62,6 +62,19 @@ class LayerExporter(QObject):
     def __del__(self):
         self.temp_dir.cleanup()
 
+    @staticmethod
+    def can_export_layer(layer: QgsMapLayer) -> bool:
+        """
+        Returns True if a layer can be exported
+        """
+        if isinstance(layer, QgsVectorLayer):
+            return True
+
+        if isinstance(layer, QgsRasterLayer):
+            return layer.providerType() == 'gdal'
+
+        return False
+
     def generate_file_name(self, suffix: str) -> str:
         """
         Generates a temporary file name with the given suffix
