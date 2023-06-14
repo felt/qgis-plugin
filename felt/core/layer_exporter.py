@@ -256,6 +256,13 @@ class LayerExporter(QObject):
         writer.setOutputProviderKey('gdal')
         writer.setTiledMode(False)
 
+        # from https://github.com/felt/qgis-plugin/issues/6
+        writer.setCreateOptions([
+            'COMPRESS=DEFLATE',
+            'BIGTIFF=IF_SAFER',
+            'TILED=yes'
+        ])
+
         extent = layer.extent()
         raster_pipe = layer.pipe()
         projector = raster_pipe.projector()
