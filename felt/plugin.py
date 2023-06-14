@@ -63,6 +63,7 @@ class FeltPlugin(QObject):
         self.create_map_action: Optional[QAction] = None
         self.share_map_to_felt_action: Optional[QAction] = None
         self._create_map_dialogs = []
+        self._create_map_dialog: Optional[CreateMapDialog] = None
 
     # qgis plugin interface
     # pylint: disable=missing-function-docstring
@@ -198,20 +199,27 @@ class FeltPlugin(QObject):
         """
         Shows the map creation dialog, after authorization completes
         """
+
+        if self._create_map_dialog and not sip.isdeleted(self._create_map_dialog):
+            self._create_map_dialog.show()
+            self._create_map_dialog.raise_()
+            return
+
         def _cleanup_dialog(_dialog):
             """
             Remove references to outdated dialogs
             """
             self._create_map_dialogs = [d for d in self._create_map_dialogs
                 if d != _dialog]
+            self._create_map_dialog = None
 
-        dialog = CreateMapDialog(
+        self._create_map_dialog = CreateMapDialog(
             self.iface.mainWindow(),
             layers
         )
-        dialog.show()
-        dialog.rejected.connect(partial(_cleanup_dialog, dialog))
-        self._create_map_dialogs.append(dialog)
+        self._create_map_dialog.show()
+        self._create_map_dialog.rejected.connect(partial(_cleanup_dialog, self._create_map_dialog))
+        self._create_map_dialogs.append(self._create_map_dialog)
 
     def _layer_tree_view_context_menu_about_to_show(self, menu: QMenu):
         """
