@@ -19,7 +19,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import (
+    QVariant,
+    QObject
+)
 
 from qgis.core import (
     QgsFeedback,
@@ -30,8 +33,12 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsWkbTypes,
-    QgsFieldConstraints
+    QgsRasterLayer,
+    QgsRasterFileWriter,
+    QgsRasterBlockFeedback
 )
+
+from .enums import LayerExportResult
 
 
 @dataclass
@@ -40,14 +47,15 @@ class ExportResult:
     Export results
     """
     filename: str
-    result: QgsVectorFileWriter.WriterError
+    result: LayerExportResult
     error_message: str
 
 
-class LayerExporter:
+class LayerExporter(QObject):
 
     def __init__(self,
                  transform_context: QgsCoordinateTransformContext):
+        super().__init__()
         self.temp_dir = tempfile.TemporaryDirectory()
         self.transform_context = transform_context
 
@@ -71,6 +79,8 @@ class LayerExporter:
         """
         if isinstance(layer, QgsVectorLayer):
             return self.export_vector_layer(layer, feedback)
+        if isinstance(layer, QgsRasterLayer):
+            return self.export_raster_layer(layer, feedback)
         assert False
 
     def export_vector_layer(
@@ -124,8 +134,103 @@ class LayerExporter:
                 self.transform_context,
                 writer_options,
             )
+
+        layer_export_result = {
+            QgsVectorFileWriter.WriterError.NoError: LayerExportResult.Success,
+            QgsVectorFileWriter.WriterError.ErrDriverNotFound: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrCreateDataSource: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrCreateLayer: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrAttributeTypeUnsupported: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrAttributeCreationFailed: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrProjection: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrInvalidLayer: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrSavingMetadata: LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.Canceled: LayerExportResult.Canceled,
+        }[res]
         return ExportResult(
             filename=dest_file,
-            result=res,
+            result=layer_export_result,
+            error_message=error_message
+        )
+
+    def export_raster_layer(
+            self,
+            layer: QgsRasterLayer,
+            feedback: Optional[QgsFeedback] = None) -> ExportResult:
+        """
+        Exports a raster layer into a format acceptable for Felt
+        """
+
+        dest_file = self.generate_file_name('.tif')
+
+        writer = QgsRasterFileWriter(dest_file)
+        writer.setOutputFormat('GTiff')
+        writer.setOutputProviderKey('gdal')
+        writer.setTiledMode(False)
+
+        extent = layer.extent()
+        raster_pipe = layer.pipe()
+        projector = raster_pipe.projector()
+
+        if projector:
+            projector.setCrs(
+                layer.crs(),
+                QgsCoordinateReferenceSystem('EPSG:3857'),
+                self.transform_context
+            )
+
+            to_3857_transform = QgsCoordinateTransform(
+                layer.crs(),
+                QgsCoordinateReferenceSystem('EPSG:3857'),
+                self.transform_context
+            )
+            extent = to_3857_transform.transformBoundingBox(extent)
+
+        if feedback:
+            block_feedback = QgsRasterBlockFeedback()
+            block_feedback.progressChanged.connect(feedback.setProgress)
+            feedback.canceled.connect(block_feedback.cancel)
+        else:
+            block_feedback = None
+
+        res = writer.writeRaster(
+            raster_pipe,
+            layer.width(),
+            -1,
+            extent,
+            QgsCoordinateReferenceSystem('EPSG:3857'),
+            self.transform_context,
+            block_feedback)
+
+        error_message = {
+            QgsRasterFileWriter.WriterError.NoError: None,
+            QgsRasterFileWriter.WriterError.SourceProviderError:
+                self.tr('Source provider error'),
+            QgsRasterFileWriter.WriterError.DestProviderError:
+                self.tr('Destination provider error'),
+            QgsRasterFileWriter.WriterError.CreateDatasourceError:
+                self.tr('Dataset creation error'),
+            QgsRasterFileWriter.WriterError.WriteError:
+                self.tr('Dataset writing error'),
+            QgsRasterFileWriter.WriterError.NoDataConflict:
+                self.tr('Nodata conflict error'),
+            QgsRasterFileWriter.WriterError.WriteCanceled:
+                None,
+        }[res]
+
+        layer_export_result = {
+            QgsRasterFileWriter.WriterError.NoError: LayerExportResult.Success,
+            QgsRasterFileWriter.WriterError.SourceProviderError: LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.DestProviderError: LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.CreateDatasourceError: LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.WriteError: LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.NoDataConflict: LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.WriteCanceled: LayerExportResult.Canceled,
+        }[res]
+
+        return ExportResult(
+            filename=dest_file,
+            result=layer_export_result,
             error_message=error_message
         )

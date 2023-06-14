@@ -227,7 +227,9 @@ class FeltPlugin(QObject):
         if layer is None:
             return
 
-        if layer.type() in (QgsMapLayerType.VectorLayer,):
+        if layer.type() in (QgsMapLayerType.VectorLayer,
+                            QgsMapLayerType.RasterLayer,
+                            ):
 
             menus = [action for action in menu.children() if
                      isinstance(action, QMenu) and action.objectName() == 'exportMenu']

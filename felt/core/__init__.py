@@ -4,7 +4,8 @@ Felt core module
 
 from .enums import (
     AuthState,
-    ObjectType
+    ObjectType,
+    LayerExportResult
 )
 from .auth import OAuthWorkflow
 from .map import Map

@@ -42,3 +42,12 @@ class AuthState(Enum):
     NotAuthorized = auto()
     Authorizing = auto()
     Authorized = auto()
+
+
+class LayerExportResult(Enum):
+    """
+    Results of exporting a layer
+    """
+    Success = auto()
+    Canceled = auto()
+    Error = auto()

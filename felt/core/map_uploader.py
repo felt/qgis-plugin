@@ -35,6 +35,7 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsCsException,
     QgsTask,
+    QgsRasterLayer,
     QgsVectorLayer,
     QgsVectorFileWriter,
     QgsFeedback,
@@ -47,6 +48,7 @@ from .map import Map
 from .layer_exporter import LayerExporter
 from .s3_upload_parameters import S3UploadParameters
 from .multi_step_feedback import MultiStepFeedback
+from .enums import LayerExportResult
 
 
 class MapUploaderTask(QgsTask):
@@ -84,7 +86,7 @@ class MapUploaderTask(QgsTask):
                 self.current_map_extent = view_settings.defaultViewExtent()
                 self.current_map_crs = view_settings.defaultViewExtent().crs()
             self.layers = [
-                l.clone() for _, l in project.mapLayers().items() if isinstance(l, QgsVectorLayer)
+                l.clone() for _, l in project.mapLayers().items() if isinstance(l, (QgsVectorLayer, QgsRasterLayer))
             ]
 
         for layer in self.layers:
@@ -187,8 +189,7 @@ class MapUploaderTask(QgsTask):
                 multi_step_feedback
             )
             layer.moveToThread(None)
-            if result.result not in (QgsVectorFileWriter.NoError,
-                    QgsVectorFileWriter.Canceled):
+            if result.result == LayerExportResult.Error:
                 self.status_changed.emit(
                     self.tr('Error occurred while exporting layer {}: {}').format(
                         layer.name(),

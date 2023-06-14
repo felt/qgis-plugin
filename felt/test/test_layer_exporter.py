@@ -18,15 +18,18 @@ import unittest
 from pathlib import Path
 
 from qgis.core import (
+    Qgis,
     QgsVectorLayer,
+    QgsRasterLayer,
     QgsCoordinateTransformContext,
-    QgsVectorFileWriter,
+    QgsCoordinateReferenceSystem,
     QgsWkbTypes
 )
 
 from .utilities import get_qgis_app
 from ..core import (
-    LayerExporter
+    LayerExporter,
+    LayerExportResult
 )
 
 QGIS_APP = get_qgis_app()
@@ -62,7 +65,7 @@ class LayerExporterTest(unittest.TestCase):
             QgsCoordinateTransformContext()
         )
         result = exporter.export_layer_for_felt(layer)
-        self.assertEqual(result.result, QgsVectorFileWriter.NoError)
+        self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
 
         out_layer = QgsVectorLayer(result.filename, 'test')
@@ -82,13 +85,52 @@ class LayerExporterTest(unittest.TestCase):
             QgsCoordinateTransformContext()
         )
         result = exporter.export_layer_for_felt(layer)
-        self.assertEqual(result.result, QgsVectorFileWriter.NoError)
+        self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
 
         out_layer = QgsVectorLayer(result.filename, 'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
+
+    def test_raster_conversion(self):
+        """
+        Test raster layer conversion
+        """
+        file = str(TEST_DATA_PATH / 'dem.tif')
+        layer = QgsRasterLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+
+        exporter = LayerExporter(
+            QgsCoordinateTransformContext()
+        )
+        result = exporter.export_layer_for_felt(layer)
+        self.assertEqual(result.result, LayerExportResult.Success)
+        self.assertTrue(result.filename)
+
+        out_layer = QgsRasterLayer(result.filename, 'test')
+        self.assertTrue(out_layer.isValid())
+        self.assertEqual(out_layer.width(), 373)
+        self.assertEqual(out_layer.height(), 502)
+        self.assertEqual(out_layer.bandCount(), 4)
+        self.assertEqual(out_layer.dataProvider().dataType(1),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.dataProvider().dataType(2),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.dataProvider().dataType(3),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.dataProvider().dataType(4),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.crs(),
+                         QgsCoordinateReferenceSystem('EPSG:3857'))
+        self.assertAlmostEqual(out_layer.extent().xMinimum(),
+                         2077922, -3)
+        self.assertAlmostEqual(out_layer.extent().xMaximum(),
+                         2082074, -3)
+        self.assertAlmostEqual(out_layer.extent().yMinimum(),
+                         5744637, -3)
+        self.assertAlmostEqual(out_layer.extent().yMaximum(),
+                         5750225, -3)
 
 
 if __name__ == "__main__":
