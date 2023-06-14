@@ -109,6 +109,7 @@ class MapUploaderTask(QgsTask):
         self.map_center = map_extent_4326.center()
 
         self.project_title = project.title()
+        self.project_file_name = project.fileName()
         self.initial_zoom_level = 5
 
         self.created_map: Optional[Map] = None
@@ -121,6 +122,12 @@ class MapUploaderTask(QgsTask):
         if self.project_title:
             return self.tr('{} QGIS Map - {}').format(
                 self.project_title,
+                date_string
+            )
+        elif self.project_file_name:
+            file_name_part = Path(self.project_file_name).stem
+            return self.tr('{} QGIS Map - {}').format(
+                file_name_part,
                 date_string
             )
 
