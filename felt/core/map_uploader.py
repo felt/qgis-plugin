@@ -198,10 +198,10 @@ class MapUploaderTask(QgsTask):
                 )
                 return False
 
-            to_upload[layer] = result.filename
+            to_upload[layer] = result
             multi_step_feedback.step_finished()
 
-        for layer, filename in to_upload.items():
+        for layer, details in to_upload.items():
             if self.was_canceled:
                 return False
 
@@ -212,7 +212,8 @@ class MapUploaderTask(QgsTask):
             reply = API_CLIENT.prepare_layer_upload(
                 map_id=self.created_map.id,
                 name=layer.name(),
-                file_names=[Path(filename).name],
+                file_names=[Path(details.filename).name],
+                style=details.style,
                 blocking=True
             )
             if reply.error() != QNetworkReply.NoError:
@@ -226,11 +227,11 @@ class MapUploaderTask(QgsTask):
                 self.error_string = self.tr('Could not prepare layer upload')
                 return False
 
-            with open(filename, "rb") as f:
+            with open(details.filename, "rb") as f:
                 data = f.read()
 
             request, form_content = API_CLIENT.create_upload_file_request(
-                Path(filename).name, data, upload_params
+                Path(details.filename).name, data, upload_params
             )
             blocking_request = QgsBlockingNetworkRequest()
 
@@ -258,7 +259,7 @@ class MapUploaderTask(QgsTask):
             reply = API_CLIENT.finalize_layer_upload(
                 self.created_map.id,
                 upload_params.layer_id,
-                Path(filename).name,
+                Path(details.filename).name,
                 blocking=True
             )
 

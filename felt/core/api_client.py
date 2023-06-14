@@ -38,6 +38,7 @@ from qgis.core import (
 )
 
 from .s3_upload_parameters import S3UploadParameters
+from .layer_style import LayerStyle
 
 
 class FeltApiClient:
@@ -159,6 +160,7 @@ class FeltApiClient:
                              map_id: str,
                              name: str,
                              file_names: List[str],
+                             style: Optional[LayerStyle] = None,
                              blocking: bool = False) \
             -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
@@ -173,6 +175,11 @@ class FeltApiClient:
             'name': name,
             'file_names': file_names
         }
+        if style and style.fill_color and style.fill_color.isValid():
+            request_params['fill_color'] = style.fill_color.name()
+        if style and style.stroke_color and style.stroke_color.isValid():
+            request_params['stroke_color'] = style.stroke_color.name()
+
         json_data = json.dumps(request_params)
         if blocking:
             return QgsNetworkAccessManager.instance().blockingPost(

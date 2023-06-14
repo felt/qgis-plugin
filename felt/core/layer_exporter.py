@@ -23,6 +23,7 @@ from qgis.PyQt.QtCore import (
     QVariant,
     QObject
 )
+from qgis.PyQt.QtGui import QColor
 
 from qgis.core import (
     QgsFeedback,
@@ -35,10 +36,20 @@ from qgis.core import (
     QgsWkbTypes,
     QgsRasterLayer,
     QgsRasterFileWriter,
-    QgsRasterBlockFeedback
+    QgsRasterBlockFeedback,
+    QgsSingleSymbolRenderer,
+    QgsCategorizedSymbolRenderer,
+    QgsGraduatedSymbolRenderer,
+    QgsRuleBasedRenderer,
+    QgsSymbol,
+    QgsSimpleFillSymbolLayer,
+    QgsSimpleLineSymbolLayer,
+    QgsSimpleMarkerSymbolLayer,
+    QgsEllipseSymbolLayer
 )
 
 from .enums import LayerExportResult
+from .layer_style import LayerStyle
 
 
 @dataclass
@@ -49,6 +60,7 @@ class ExportResult:
     filename: str
     result: LayerExportResult
     error_message: str
+    style: Optional[LayerStyle] = None
 
 
 class LayerExporter(QObject):
@@ -74,6 +86,67 @@ class LayerExporter(QObject):
             return layer.providerType() == 'gdal'
 
         return False
+
+    @staticmethod
+    def representative_layer_style(layer: QgsVectorLayer) -> LayerStyle:
+        """
+        Returns a decent representative style for a layer
+        """
+        if not layer.isSpatial() or not layer.renderer():
+            return LayerStyle()
+
+        if isinstance(layer.renderer(), QgsSingleSymbolRenderer):
+            return LayerExporter.symbol_to_layer_style(
+                layer.renderer().symbol()
+            )
+        if isinstance(layer.renderer(), QgsCategorizedSymbolRenderer) and \
+                layer.renderer().categories():
+            first_category = layer.renderer().categories()[0]
+            return LayerExporter.symbol_to_layer_style(
+                first_category.symbol()
+            )
+        if isinstance(layer.renderer(), QgsGraduatedSymbolRenderer) and \
+                layer.renderer().ranges():
+            first_range = layer.renderer().ranges()[0]
+            return LayerExporter.symbol_to_layer_style(
+                first_range.symbol()
+            )
+        if isinstance(layer.renderer(), QgsRuleBasedRenderer) and \
+                layer.renderer().rootRule().children():
+            for child in layer.renderer().rootRule().children():
+                if child.symbol():
+                    return LayerExporter.symbol_to_layer_style(
+                        child.symbol()
+                    )
+
+        return LayerStyle()
+
+    @staticmethod
+    def symbol_to_layer_style(symbol: QgsSymbol) -> LayerStyle:
+        """
+        Tries to extract representative styling information from a symbol
+        """
+        for i in range(symbol.symbolLayerCount()):
+            symbol_layer = symbol.symbolLayer(i)
+            if isinstance(symbol_layer, QgsSimpleFillSymbolLayer):
+                return LayerStyle(
+                    fill_color=symbol_layer.fillColor(),
+                    stroke_color=symbol_layer.strokeColor()
+                )
+            elif isinstance(symbol_layer, QgsSimpleLineSymbolLayer):
+                return LayerStyle(
+                    fill_color=QColor(),
+                    stroke_color=symbol_layer.color()
+                )
+            elif isinstance(symbol_layer, (
+                    QgsEllipseSymbolLayer,
+                    QgsSimpleMarkerSymbolLayer)):
+                return LayerStyle(
+                    fill_color=symbol_layer.fillColor(),
+                    stroke_color=symbol_layer.strokeColor()
+                )
+
+        return LayerStyle()
 
     def generate_file_name(self, suffix: str) -> str:
         """
@@ -164,7 +237,8 @@ class LayerExporter(QObject):
         return ExportResult(
             filename=dest_file,
             result=layer_export_result,
-            error_message=error_message
+            error_message=error_message,
+            style=self.representative_layer_style(layer)
         )
 
     def export_raster_layer(
