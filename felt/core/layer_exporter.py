@@ -134,9 +134,9 @@ class LayerExporter(QObject):
                     stroke_color=symbol_layer.strokeColor()
                 )
             elif isinstance(symbol_layer, QgsSimpleLineSymbolLayer):
+                # line layers use fill color on Felt!
                 return LayerStyle(
-                    fill_color=QColor(),
-                    stroke_color=symbol_layer.color()
+                    fill_color=symbol_layer.color(),
                 )
             elif isinstance(symbol_layer, (
                     QgsEllipseSymbolLayer,
