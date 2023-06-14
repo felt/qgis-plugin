@@ -1,6 +1,6 @@
 ## Testing the Felt plugin beta
 
-First, download the release zip file from https://github.com/felt/qgis-plugin/releases/download/0.0.2/felt.zip
+First, download the release zip file from https://github.com/felt/qgis-plugin/releases/download/0.0.3/felt.zip
 and save the file locally.
 
 From within QGIS:
