@@ -212,14 +212,19 @@ class CreateMapDialog(QDialog, WIDGET):
                 self.tr('Canceled')
             )
             self.progress_label.setText(self.tr('Canceled'))
+            self.button_box.button(QDialogButtonBox.Ok).setText(
+                self.tr('Canceled')
+            )
+        else:
+            self.button_box.button(QDialogButtonBox.Ok).setText(
+                self.tr('Upload Failed')
+            )
 
         self.map_uploader_task = None
         self.button_box.button(QDialogButtonBox.Cancel).setText(
             self.tr('Close')
         )
-        self.button_box.button(QDialogButtonBox.Ok).setText(
-            self.tr('Upload Failed')
-        )
+
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(
             False
         )
