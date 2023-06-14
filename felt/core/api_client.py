@@ -34,7 +34,7 @@ from qgis.PyQt.QtNetwork import (
 from qgis.core import (
     QgsNetworkAccessManager,
     QgsNetworkReplyContent,
-    QgsBlockingNetworkRequest
+    QgsFeedback
 )
 
 from .s3_upload_parameters import S3UploadParameters
@@ -128,7 +128,8 @@ class FeltApiClient:
                    title: Optional[str]=None,
                    basemap: Optional[str]=None,
                    layer_urls: List[str]=[],
-                   blocking: bool = False
+                   blocking: bool = False,
+                   feedback: Optional[QgsFeedback] = None
                    ) -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Creates a Felt map
@@ -150,7 +151,8 @@ class FeltApiClient:
         if blocking:
             return QgsNetworkAccessManager.instance().blockingPost(
                 request,
-                json_data.encode()
+                json_data.encode(),
+                feedback=feedback
             )
         else:
             return QgsNetworkAccessManager.instance().post(request,
@@ -161,7 +163,8 @@ class FeltApiClient:
                              name: str,
                              file_names: List[str],
                              style: Optional[LayerStyle] = None,
-                             blocking: bool = False) \
+                             blocking: bool = False,
+                             feedback: Optional[QgsFeedback] = None) \
             -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Prepares a layer upload
@@ -184,7 +187,8 @@ class FeltApiClient:
         if blocking:
             return QgsNetworkAccessManager.instance().blockingPost(
                 request,
-                json_data.encode()
+                json_data.encode(),
+                feedback=feedback
             )
 
         else:
@@ -269,7 +273,8 @@ class FeltApiClient:
                               map_id: str,
                               layer_id: str,
                               filename: str,
-                              blocking: bool = False) \
+                              blocking: bool = False,
+                              feedback: Optional[QgsFeedback] = None) \
             -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Finalizes a layer upload
@@ -286,7 +291,8 @@ class FeltApiClient:
         if blocking:
             return QgsNetworkAccessManager.instance().blockingPost(
                 request,
-                json_data.encode()
+                json_data.encode(),
+                feedback=feedback
             )
 
         else:

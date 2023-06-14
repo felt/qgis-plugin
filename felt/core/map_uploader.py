@@ -135,6 +135,9 @@ class MapUploaderTask(QgsTask):
         super().cancel()
 
     def run(self):
+        if self.isCanceled():
+            return False
+
         total_steps = (
                 1  # create map call
                 + len(self.layers)  # layer exports
@@ -151,20 +154,24 @@ class MapUploaderTask(QgsTask):
         for layer in self.layers:
             layer.moveToThread(QThread.currentThread())
 
+        if self.isCanceled():
+            return False
+
         self.status_changed.emit(self.tr('Creating map'))
         reply = API_CLIENT.create_map(
             self.map_center.y(),
             self.map_center.x(),
             self.initial_zoom_level,
             self.project_title,
-            blocking=True
+            blocking=True,
+            feedback=self.feedback
             )
 
         if reply.error() != QNetworkReply.NoError:
             self.error_string = reply.errorString()
             return False
 
-        if self.was_canceled:
+        if self.isCanceled():
             return False
 
         self.created_map = Map.from_json(reply.content().data().decode())
@@ -175,10 +182,13 @@ class MapUploaderTask(QgsTask):
             self.transform_context
         )
 
+        if self.isCanceled():
+            return False
+
         to_upload = {}
 
-        for  layer in self.layers:
-            if self.was_canceled:
+        for layer in self.layers:
+            if self.isCanceled():
                 return False
 
             self.status_changed.emit(
@@ -201,8 +211,11 @@ class MapUploaderTask(QgsTask):
             to_upload[layer] = result
             multi_step_feedback.step_finished()
 
+        if self.isCanceled():
+            return False
+
         for layer, details in to_upload.items():
-            if self.was_canceled:
+            if self.isCanceled():
                 return False
 
             self.status_changed.emit(
@@ -214,10 +227,14 @@ class MapUploaderTask(QgsTask):
                 name=layer.name(),
                 file_names=[Path(details.filename).name],
                 style=details.style,
-                blocking=True
+                blocking=True,
+                feedback=self.feedback
             )
             if reply.error() != QNetworkReply.NoError:
                 self.error_string = reply.errorString()
+                return False
+
+            if self.isCanceled():
                 return False
 
             upload_params = S3UploadParameters.from_json(
@@ -227,8 +244,14 @@ class MapUploaderTask(QgsTask):
                 self.error_string = self.tr('Could not prepare layer upload')
                 return False
 
+            if self.isCanceled():
+                return False
+
             with open(details.filename, "rb") as f:
                 data = f.read()
+
+            if self.isCanceled():
+                return False
 
             request, form_content = API_CLIENT.create_upload_file_request(
                 Path(details.filename).name, data, upload_params
@@ -243,13 +266,15 @@ class MapUploaderTask(QgsTask):
 
             blocking_request.uploadProgress.connect(_upload_progress)
 
-            blocking_request.post(request, form_content, feedback=self.feedback)
+            blocking_request.post(request,
+                                  form_content,
+                                  feedback=self.feedback)
 
             if blocking_request.reply().error() != QNetworkReply.NoError:
                 self.error_string = blocking_request.reply().errorString()
                 return False
 
-            if self.was_canceled:
+            if self.isCanceled():
                 return False
 
             self.status_changed.emit(
@@ -260,7 +285,8 @@ class MapUploaderTask(QgsTask):
                 self.created_map.id,
                 upload_params.layer_id,
                 Path(details.filename).name,
-                blocking=True
+                blocking=True,
+                feedback=self.feedback
             )
 
             if reply.error() != QNetworkReply.NoError:
