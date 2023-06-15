@@ -267,20 +267,23 @@ class LayerExporter(QObject):
         raster_pipe = layer.pipe()
         projector = raster_pipe.projector()
 
-        if projector:
+        dest_crs = layer.crs()
+        if False:  # disable local reprojection for now - see #14
+            dest_crs = QgsCoordinateReferenceSystem('EPSG:3857')
             projector.setCrs(
                 layer.crs(),
-                QgsCoordinateReferenceSystem('EPSG:3857'),
+                dest_crs,
                 self.transform_context
             )
 
             to_3857_transform = QgsCoordinateTransform(
                 layer.crs(),
-                QgsCoordinateReferenceSystem('EPSG:3857'),
+                dest_crs,
                 self.transform_context
             )
             extent = to_3857_transform.transformBoundingBox(extent)
 
+        width = layer.width()
         if feedback:
             block_feedback = QgsRasterBlockFeedback()
             block_feedback.progressChanged.connect(feedback.setProgress)
@@ -290,10 +293,10 @@ class LayerExporter(QObject):
 
         res = writer.writeRaster(
             raster_pipe,
-            layer.width(),
+            width,
             -1,
             extent,
-            QgsCoordinateReferenceSystem('EPSG:3857'),
+            dest_crs,
             self.transform_context,
             block_feedback)
 
