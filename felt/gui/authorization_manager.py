@@ -90,7 +90,7 @@ class AuthorizationManager(QObject):
             self.login_action.setEnabled(False)
             self.user = None
         elif self.status == AuthState.Authorized:
-            self.login_action.setText(self.tr('Sign Out'))
+            self.login_action.setText(self.tr('Log Out'))
             self.login_action.setEnabled(True)
 
     def is_authorized(self) -> bool:

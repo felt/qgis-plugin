@@ -81,7 +81,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.widget_logo.setStyleSheet('background: solid #3d521e;')
         self.widget_logo.setLayout(vl)
 
-        self.setWindowTitle(self.tr('Create Felt Map'))
+        self.setWindowTitle(self.tr('Add to Felt'))
 
         self.stacked_widget.setCurrentIndex(0)
 

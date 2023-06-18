@@ -76,7 +76,7 @@ class FeltPlugin(QObject):
         self.iface.addPluginToWebMenu('Felt', temp_action)
 
         web_menu = self.iface.webMenu()
-        self.felt_web_menu = QMenu(self.tr('Add to Felt'))
+        self.felt_web_menu = QMenu(self.tr('Felt'))
         self.felt_web_menu.setIcon(
             GuiUtils.get_icon('icon.svg')
         )
@@ -86,14 +86,14 @@ class FeltPlugin(QObject):
 
         self.felt_web_menu.addAction(AUTHORIZATION_MANAGER.login_action)
 
-        self.create_map_action = QAction(self.tr('Create Map…'))
+        self.create_map_action = QAction(self.tr('Add to Felt…'))
         self.create_map_action.setIcon(
             GuiUtils.get_icon('create_map.svg')
         )
         self.felt_web_menu.addAction(self.create_map_action)
         self.create_map_action.triggered.connect(self.create_map)
 
-        self.share_map_to_felt_action = QAction(self.tr('Share Map to Felt…'))
+        self.share_map_to_felt_action = QAction(self.tr('Add to Felt…'))
         self.share_map_to_felt_action.setIcon(
             GuiUtils.get_icon('export_to_felt.svg')
         )
