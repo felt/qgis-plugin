@@ -76,6 +76,7 @@ class MapUploaderTask(QgsTask):
             self.layers = [
                 l.clone() for l in layers
             ]
+            self.unsupported_layers = []
         else:
             if iface is not None:
                 self.current_map_extent = iface.mapCanvas().extent()
@@ -88,6 +89,13 @@ class MapUploaderTask(QgsTask):
             self.layers = [
                 l.clone() for _, l in project.mapLayers().items() if LayerExporter.can_export_layer(l)
             ]
+            self.unsupported_layers = [
+                l.name() for _, l in project.mapLayers().items() if
+                not LayerExporter.can_export_layer(l)
+            ]
+            for layer_tree_layer in project.layerTreeRoot().findLayers():
+                if not layer_tree_layer.layer() and not layer_tree_layer.name() in self.unsupported_layers:
+                    self.unsupported_layers.append(layer_tree_layer.name())
 
         for layer in self.layers:
             layer.moveToThread(None)
@@ -134,6 +142,21 @@ class MapUploaderTask(QgsTask):
         return self.tr('Untitled QGIS Map - {}').format(
             date_string
         )
+
+    def warning_message(self) -> Optional[str]:
+        """
+        Returns a HTML formatted warning message, eg containing lists
+        of unsupported map layers or other properties which cannot be
+        exported
+        """
+        if not self.unsupported_layers:
+            return None
+
+        msg = '<p>' + self.tr('The following layers are not supported '
+                              'and won\'t be uploaded:') + '</p><ul><li>'
+        msg += '</li><li>'.join( self.unsupported_layers)
+        msg += '</ul>'
+        return msg
 
     def cancel(self):
         self.was_canceled = True

@@ -19,7 +19,10 @@ from typing import (
 )
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtCore import (
+    Qt,
+    QUrl
+)
 from qgis.PyQt.QtGui import (
     QDesktopServices,
     QFontMetrics
@@ -115,6 +118,20 @@ class CreateMapDialog(QDialog, WIDGET):
         self.created_map: Optional[Map] = None
         self.map_title_edit.setText(self.map_uploader_task.default_map_title())
         self.map_title_edit.textChanged.connect(self._validate)
+
+        self.warning_label.document().setDefaultStyleSheet(
+            'body, p {margin-left:0px; padding-left: 0px;}'
+        )
+        self.warning_label.setAttribute(Qt.WA_TranslucentBackground)
+        self.warning_label.setAttribute(Qt.WA_NoSystemBackground)
+        self.warning_label.setAttribute(Qt.WA_OpaquePaintEvent)
+        self.warning_label.document().setDocumentMargin(0)
+
+        warning = self.map_uploader_task.warning_message()
+        if warning:
+            self.warning_label.setHtml(warning)
+        else:
+            self.warning_label.hide()
 
         self.progress_bar.setValue(0)
 
