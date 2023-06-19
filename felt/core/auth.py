@@ -33,7 +33,7 @@ from qgis.core import (
 from .pkce import generate_pkce_pair
 
 AUTH_HANDLER_REDIRECT = "https://felt.com/oauth/success?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
-AUTH_HANDLER_REDIRECT_CANCELLED = ""
+AUTH_HANDLER_REDIRECT_CANCELLED = "https://felt.com/oauth/denied?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
 
 AUTH_HANDLER_RESPONSE = """\
 <html>
