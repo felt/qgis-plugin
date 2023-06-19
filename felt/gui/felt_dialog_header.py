@@ -55,8 +55,9 @@ class FeltDialogHeader(QWidget):
         svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
         svg_logo_widget.setStyleSheet('background: transparent !important;')
         vl = QVBoxLayout()
+        vl.addStretch(1)
         vl.setContentsMargins(12,
-                              font_metrics.height() * 2, 0, 0)
+                              0, 0, 19)
         vl.addWidget(svg_logo_widget)
         self.setLayout(vl)
 
