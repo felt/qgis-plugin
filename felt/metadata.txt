@@ -10,7 +10,7 @@
 name=Felt
 qgisMinimumVersion=3.22
 description=
-version=0.0.6
+version=0.0.7
 author=North Road
 email=nyall@north-road.com
 
@@ -23,7 +23,7 @@ repository=
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.0.6 Misc fixes
+changelog=0.0.7 Misc fixes
 
 # Tags are comma separated with spaces allowed
 tags=python
