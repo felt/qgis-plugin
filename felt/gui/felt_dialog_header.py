@@ -16,10 +16,13 @@ __revision__ = '$Format:%H$'
 from typing import Optional
 
 from qgis.PyQt.QtCore import (
-    QSize
+    QSize,
+    QRectF
 )
 from qgis.PyQt.QtGui import (
-    QFontMetrics
+    QFontMetrics,
+    QPainter,
+    QImage
 )
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt.QtWidgets import (
@@ -41,15 +44,37 @@ class FeltDialogHeader(QWidget):
         super().__init__(parent)
         font_metrics = QFontMetrics(self.font())
 
+        self._cached_image: Optional[QImage] = None
+
         self.setFixedHeight(font_metrics.height() * 10)
-        self.setStyleSheet('background: solid #3d521e;')
+        self.setStyleSheet('{ background: solid #3d521e; }')
         svg_logo_widget = QSvgWidget()
         fixed_size = QSize(int(font_metrics.height() * 7.150951),
                            font_metrics.height() * 4)
         svg_logo_widget.setFixedSize(fixed_size)
         svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
+        svg_logo_widget.setStyleSheet('background: transparent !important;')
         vl = QVBoxLayout()
         vl.setContentsMargins(font_metrics.height() * 2,
                               font_metrics.height() * 2, 0, 0)
         vl.addWidget(svg_logo_widget)
         self.setLayout(vl)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # image has 437 x 107 aspect ratio
+        if not self._cached_image or self._cached_image.size() != self.rect().size():
+            image_height = int(self.rect().width() / 437 * 107)
+
+            self._cached_image = GuiUtils.get_svg_as_image('felt_header.svg',
+                                                           self.rect().width(),
+                                                           image_height)
+
+        painter.drawImage(QRectF(0, 0,
+                                 self._cached_image.width(),
+                                 self._cached_image.height()),
+                          self._cached_image)
+
+        painter.end()
