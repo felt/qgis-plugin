@@ -47,12 +47,21 @@ QDialog {
     color: black;
 }
 QLabel {
-    color: black;
+    color: black !important;
     }
 
 QPushButton {
     background: solid #3d521e;
     color: white;
+}
+
+QLineEdit {
+    background: solid white;
+    color: black;
+}
+
+QProgressBar {
+    background: solid white;
 }
 
 """

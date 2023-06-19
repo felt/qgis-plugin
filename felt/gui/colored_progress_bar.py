@@ -37,9 +37,16 @@ class ColorBar(QProgressBar):
         option = QStyleOptionProgressBar()
         self.initStyleOption(option)
 
-        option.textAlignment = Qt.AlignHCenter;
+        option.textAlignment = Qt.AlignHCenter
         option.palette.setColor(QPalette.Highlight, QColor("#3d521e"))
-        option.palette.setColor(QPalette.HighlightedText,
-                                QColor(255,255,255))
+        if self.value() > 45:
+            option.palette.setColor(QPalette.HighlightedText,
+                                    QColor(255, 255, 255))
+        else:
+            option.palette.setColor(QPalette.Text,
+                                    QColor(0, 0, 0))
+            option.palette.setColor(QPalette.HighlightedText,
+                                    QColor(0, 0, 0))
+
         painter = QPainter(self)
         self.style().drawControl(QStyle.CE_ProgressBar, option, painter, self)

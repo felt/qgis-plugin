@@ -77,6 +77,8 @@ class CreateMapDialog(QDialog, WIDGET):
         QgsGui.enableAutoGeometryRestore(self)
 
         self.setStyleSheet(FELT_STYLESHEET)
+        self.page.setStyleSheet(FELT_STYLESHEET)
+        self.page_2.setStyleSheet(FELT_STYLESHEET)
         self.button_box.button(QDialogButtonBox.Ok).setStyleSheet(
             FELT_STYLESHEET)
         self.button_box.button(QDialogButtonBox.Cancel).setStyleSheet(
