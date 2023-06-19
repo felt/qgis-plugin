@@ -20,7 +20,10 @@ from typing import (
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QUrl
-from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import (
+    QDesktopServices,
+    QFontMetrics
+)
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QDialog,
@@ -83,6 +86,10 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.setWindowTitle(self.tr('Add to Felt'))
 
+        self.footer_label.setMinimumWidth(
+            QFontMetrics(self.footer_label.font()).width('x') * 40
+        )
+
         self.stacked_widget.setCurrentIndex(0)
 
         self.layers = layers
@@ -113,10 +120,11 @@ class CreateMapDialog(QDialog, WIDGET):
 
         if AUTHORIZATION_MANAGER.user:
             self.label_user.setText(
-                self.tr('Signed in as: {}').format(
+                self.tr('Logged in as: {} <a href="logout">Log out</a>').format(
                     AUTHORIZATION_MANAGER.user.name
                 )
             )
+        self.label_user.linkActivated.connect(self._link_activated)
 
         self.started = False
         self._validate()
@@ -138,6 +146,10 @@ class CreateMapDialog(QDialog, WIDGET):
             url = QUrl(PRIVACY_POLICY_URL)
         elif link == 'terms_of_use':
             url = QUrl(TOS_URL)
+        elif link == 'logout':
+            AUTHORIZATION_MANAGER.deauthorize()
+            self.close()
+            return
         else:
             return
 
@@ -172,7 +184,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
 
         map_title = self.map_title_edit.text().strip()
-        self.map_title_label.setText(map_title)
+        self.map_title_label.setText(self.tr('Uploading — {}').format(map_title))
         self.map_uploader_task.project_title = map_title
 
         self.stacked_widget.setCurrentIndex(1)
@@ -195,6 +207,10 @@ class CreateMapDialog(QDialog, WIDGET):
 
     def _upload_finished(self):
         self.created_map = self.map_uploader_task.created_map
+        self.map_title_label.setText(self.tr('Upload complete — {}').format(
+            self.map_title_edit.text().strip())
+        )
+        self.progress_label.hide()
         self.map_uploader_task = None
         self.started = False
 
@@ -210,17 +226,26 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
     def _upload_terminated(self):
+        self.progress_bar.hide()
         if self.map_uploader_task.was_canceled:
+            self.map_title_label.setText(
+                self.tr('Upload canceled — {}').format(
+                    self.map_title_edit.text().strip())
+            )
             self.button_box.button(QDialogButtonBox.Ok).setText(
                 self.tr('Canceled')
             )
-            self.progress_label.setText(self.tr('Canceled'))
-            self.button_box.button(QDialogButtonBox.Ok).setText(
-                self.tr('Canceled')
-            )
+            self.progress_label.hide()
         else:
-            self.button_box.button(QDialogButtonBox.Ok).setText(
-                self.tr('Upload Failed')
+            self.progress_label.setStyleSheet('color: red')
+            self.map_title_label.setStyleSheet('color: red')
+
+            self.map_title_label.setText(
+                self.tr('Upload failed — {}').format(
+                    self.map_title_edit.text().strip())
+            )
+            self.progress_label.setText(
+                self.tr('Our engineers have been notified')
             )
 
         self.map_uploader_task = None
@@ -231,6 +256,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(
             False
         )
+        self.button_box.button(QDialogButtonBox.Ok).hide()
 
     def _view_map(self):
         if not self.created_map:
