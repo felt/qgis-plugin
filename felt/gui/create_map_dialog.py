@@ -55,6 +55,7 @@ from .gui_utils import (
 )
 from .felt_dialog_header import FeltDialogHeader
 from .authorization_manager import AUTHORIZATION_MANAGER
+from .colored_progress_bar import ColorBar
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('create_map.ui'))
 
@@ -111,6 +112,9 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
         self.footer_label.linkActivated.connect(self._link_activated)
+        self.footer_label.setText(
+            GuiUtils.set_link_color(self.footer_label.text())
+        )
 
         self.map_uploader_task = MapUploaderTask(
             layers=self.layers
@@ -122,23 +126,30 @@ class CreateMapDialog(QDialog, WIDGET):
         self.warning_label.document().setDefaultStyleSheet(
             'body, p {margin-left:0px; padding-left: 0px;}'
         )
-        self.warning_label.setAttribute(Qt.WA_TranslucentBackground)
-        self.warning_label.setAttribute(Qt.WA_NoSystemBackground)
-        self.warning_label.setAttribute(Qt.WA_OpaquePaintEvent)
         self.warning_label.document().setDocumentMargin(0)
 
         warning = self.map_uploader_task.warning_message()
         if warning:
             self.warning_label.setHtml(warning)
         else:
-            self.warning_label.hide()
+            self.warning_label.setPlainText('')
+        self.warning_label.setStyleSheet("background-color: #ececec;")
 
+        self.progress_bar = ColorBar()
+        vl = QVBoxLayout()
+        vl.setContentsMargins(0, 0, 0, 0)
+        vl.addWidget(self.progress_bar)
+        self.progress_container.setLayout(vl)
         self.progress_bar.setValue(0)
 
         if AUTHORIZATION_MANAGER.user:
             self.label_user.setText(
-                self.tr('Logged in as: {} <a href="logout">Log out</a>').format(
-                    AUTHORIZATION_MANAGER.user.name
+                GuiUtils.set_link_color(
+                    self.tr(
+                        'Logged in as: {} <a href="logout">Log out</a>').format(
+                        AUTHORIZATION_MANAGER.user.name
+                    ),
+                    wrap_color=False
                 )
             )
         self.label_user.linkActivated.connect(self._link_activated)

@@ -73,6 +73,9 @@ class AuthorizeDialog(QDialog, WIDGET):
         self.sign_up_button.clicked.connect(self._sign_up)
 
         self.footer_label.linkActivated.connect(self._link_activated)
+        self.footer_label.setText(
+            GuiUtils.set_link_color(self.footer_label.text())
+        )
 
         self.footer_label.setMinimumWidth(
             QFontMetrics(self.footer_label.font()).width('x') * 40

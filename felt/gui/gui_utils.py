@@ -43,9 +43,12 @@ FONT_FAMILIES = ""
 
 FELT_STYLESHEET = """
 QDialog {
-    background-color: white;
+    background-color: #ececec;
     color: black;
 }
+QLabel {
+    color: black;
+    }
 
 QPushButton {
     background: solid #3d521e;
@@ -61,6 +64,18 @@ class GuiUtils:
     """
 
     APPLICATION_FONT_MAP = {}
+
+    @staticmethod
+    def set_link_color(html: str, wrap_color=True) -> str:
+        """
+        Adds style tags to links in a HTML string for the standard link color
+        """
+        res = re.sub(r'(<a href.*?)>',
+                      r'\1 style="color: rgba(0,0,0,.3);">',
+                      html)
+        if wrap_color:
+            res = '<span style="color: rgba(0,0,0,.3);">{}</span>'.format(res)
+        return res
 
     @staticmethod
     def get_icon(icon: str) -> QIcon:
