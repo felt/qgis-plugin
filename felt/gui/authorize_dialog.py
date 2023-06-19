@@ -20,7 +20,8 @@ from qgis.PyQt.QtCore import (
     QUrl
 )
 from qgis.PyQt.QtGui import (
-    QDesktopServices
+    QDesktopServices,
+    QFontMetrics
 )
 from qgis.PyQt.QtWidgets import (
     QWidget,
@@ -66,17 +67,16 @@ class AuthorizeDialog(QDialog, WIDGET):
         self.widget_logo.setStyleSheet('background: solid #3d521e;')
         self.widget_logo.setLayout(vl)
 
-        font = self.label_create.font()
-        font.setBold(True)
-        self.label_create.setFont(font)
-        self.label_login.setFont(font)
-
         self.setWindowTitle(self.tr('Authorize Felt'))
 
         self.sign_in_button.clicked.connect(self.accept)
         self.sign_up_button.clicked.connect(self._sign_up)
 
         self.footer_label.linkActivated.connect(self._link_activated)
+
+        self.footer_label.setMinimumWidth(
+            QFontMetrics(self.footer_label.font()).width('x') * 40
+        )
 
     def _sign_up(self):
         """
