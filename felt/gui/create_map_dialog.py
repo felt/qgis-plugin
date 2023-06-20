@@ -141,7 +141,9 @@ class CreateMapDialog(QDialog, WIDGET):
             self.warning_label.setHtml(warning)
         else:
             self.warning_label.setPlainText('')
-        self.warning_label.setStyleSheet("background-color: #ececec;")
+        self.warning_label.setStyleSheet(
+            "color: black; background-color: #ececec;"
+        )
 
         self.progress_bar = ColorBar()
         vl = QVBoxLayout()
