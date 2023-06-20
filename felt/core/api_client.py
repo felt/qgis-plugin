@@ -39,6 +39,9 @@ from qgis.core import (
 
 from .s3_upload_parameters import S3UploadParameters
 from .layer_style import LayerStyle
+from .meta import PLUGIN_METADATA_PARSER
+
+PLUGIN_VERSION = "0.7.0"
 
 
 class FeltApiClient:
@@ -55,7 +58,8 @@ class FeltApiClient:
     def __init__(self):
         # default headers to add to all requests
         self.headers = {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'x-qgis-add-to-felt-version': PLUGIN_METADATA_PARSER.get_version()
         }
         self.token: Optional[str] = None
 

@@ -21,3 +21,5 @@ from .layer_exporter import (
     ExportResult
 )
 from .multi_step_feedback import MultiStepFeedback
+from .meta import PLUGIN_METADATA_PARSER
+
