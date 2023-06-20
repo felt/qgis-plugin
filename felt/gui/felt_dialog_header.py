@@ -27,7 +27,8 @@ from qgis.PyQt.QtGui import (
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt.QtWidgets import (
     QWidget,
-    QVBoxLayout
+    QVBoxLayout,
+    QSizePolicy
 )
 
 from .gui_utils import (
@@ -46,7 +47,11 @@ class FeltDialogHeader(QWidget):
 
         self._cached_image: Optional[QImage] = None
 
-        self.setFixedHeight(font_metrics.height() * 10)
+        self.setSizePolicy(
+            QSizePolicy.Minimum,
+            QSizePolicy.Fixed
+        )
+
         self.setStyleSheet('{ background: solid #3d521e; }')
         svg_logo_widget = QSvgWidget()
         fixed_size = QSize(int(font_metrics.height() * 7.150951),
@@ -55,11 +60,14 @@ class FeltDialogHeader(QWidget):
         svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
         svg_logo_widget.setStyleSheet('background: transparent !important;')
         vl = QVBoxLayout()
+        vl.setContentsMargins(12, 0, 0, 19)
         vl.addStretch(1)
-        vl.setContentsMargins(12,
-                              0, 0, 19)
         vl.addWidget(svg_logo_widget)
         self.setLayout(vl)
+
+    def sizeHint(self):
+        font_metrics = QFontMetrics(self.font())
+        return QSize(0, font_metrics.height() * 10)
 
     def paintEvent(self, event):
         painter = QPainter(self)
