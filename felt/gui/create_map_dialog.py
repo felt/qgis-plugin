@@ -25,7 +25,8 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtGui import (
     QDesktopServices,
-    QFontMetrics
+    QFontMetrics,
+    QColor
 )
 from qgis.PyQt.QtWidgets import (
     QWidget,
@@ -83,6 +84,11 @@ class CreateMapDialog(QDialog, WIDGET):
             FELT_STYLESHEET)
         self.button_box.button(QDialogButtonBox.Cancel).setStyleSheet(
             FELT_STYLESHEET)
+
+        self.progress_label.setTextInteractionFlags(
+            Qt.TextBrowserInteraction
+        )
+        self.progress_label.setOpenExternalLinks(True)
 
         vl = QVBoxLayout()
         vl.setContentsMargins( 0, 0,0 ,0)
@@ -275,7 +281,13 @@ class CreateMapDialog(QDialog, WIDGET):
                     self.map_title_edit.text().strip())
             )
             self.progress_label.setText(
-                self.tr('Our engineers have been notified')
+                GuiUtils.set_link_color(
+                    self.tr('There was an error uploading this file, please '
+                            'contact <a href="mailto:support@felt.com">'
+                            'support@felt.com</a> '
+                            'for help fixing the issue'), False,
+                    QColor('red')
+                )
             )
 
         self.map_uploader_task = None

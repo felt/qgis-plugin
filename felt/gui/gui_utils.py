@@ -75,15 +75,22 @@ class GuiUtils:
     APPLICATION_FONT_MAP = {}
 
     @staticmethod
-    def set_link_color(html: str, wrap_color=True) -> str:
+    def set_link_color(html: str,
+                       wrap_color=True,
+                       color: Optional[QColor] = None) -> str:
         """
         Adds style tags to links in a HTML string for the standard link color
         """
+        if color:
+            color_string = color.name()
+        else:
+            color_string = 'rgba(0,0,0,.3)'
         res = re.sub(r'(<a href.*?)>',
-                      r'\1 style="color: rgba(0,0,0,.3);">',
-                      html)
+                     r'\1 style="color: {};">'.format(color_string),
+                     html)
         if wrap_color:
-            res = '<span style="color: rgba(0,0,0,.3);">{}</span>'.format(res)
+            res = '<span style="color: {};">{}</span>'.format(color_string,
+                                                              res)
         return res
 
     @staticmethod
