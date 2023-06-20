@@ -4,31 +4,32 @@
 # embedding metadata in __init__.py will
 # is no longer supported since version 2.0.
 
-# This file should be included when you package your plugin.# Mandatory items:
+# This file should be included when you package your plugin.
+# Mandatory items:
 
 [general]
 name=Add to Felt
 qgisMinimumVersion=3.22
-description=
-version=0.0.7
-author=North Road
-email=nyall@north-road.com
+description=Create a collaborative Felt (felt.com) map from QGIS
+version=1.0.0
+author=Felt
+email=support@felt.com
 
-about=
+about=Export QGIS projects to new maps in Felt.com for easier sharing and collaboration with colleagues via the web.
 
-tracker=
-repository=
+tracker=https://github.com/felt/qgis-plugin/issues
+repository=https://github.com/felt/qgis-plugin
 # End of mandatory metadata
 
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.0.7 Misc fixes
+changelog=1.0.0 Initial plugin release
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=shared,collaboration,sharing,maps,publishing,public,comments,data,layers,realtime,cloud,media,browser,online,publication,webmapping,internet,webgis,capture,catalog
 
-homepage=
+homepage=https://felt.com/
 category=Plugins
 icon=icon.svg
 # experimental flag
