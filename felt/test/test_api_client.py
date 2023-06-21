@@ -45,6 +45,8 @@ TEST_DATA_PATH = Path(__file__).parent
 class ApiClientTest(unittest.TestCase):
     """Test API client work."""
 
+    # pylint: disable=protected-access
+
     @classmethod
     def setUpClass(cls):
         workflow = OAuthWorkflow()
@@ -247,6 +249,8 @@ class ApiClientTest(unittest.TestCase):
 
         json_params = reply.readAll().data().decode()
         print(json_params)
+
+    # pylint: enable=protected-access
 
 
 if __name__ == "__main__":

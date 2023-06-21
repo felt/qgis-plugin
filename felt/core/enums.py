@@ -29,6 +29,9 @@ class ObjectType(Enum):
 
     @staticmethod
     def from_string(string: str) -> 'ObjectType':
+        """
+        Converts string value to an object type
+        """
         return {
             'user': ObjectType.User,
             'map': ObjectType.Map

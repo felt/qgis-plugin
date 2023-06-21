@@ -164,6 +164,9 @@ class CreateMapDialog(QDialog, WIDGET):
         self._validate()
 
     def _create_map_uploader_task(self):
+        """
+        Creates a new map uploader task for the dialog's use
+        """
         self.map_uploader_task = MapUploaderTask(
             layers=self.layers
         )
@@ -257,9 +260,15 @@ class CreateMapDialog(QDialog, WIDGET):
         QgsApplication.taskManager().addTask(self.map_uploader_task)
 
     def set_progress(self, progress: float):
+        """
+        Sets the current progress value for the operation
+        """
         self.progress_bar.setValue(int(progress))
 
     def _upload_finished(self):
+        """
+        Called when the upload operation finishes
+        """
         self.created_map = self.map_uploader_task.created_map
         self.map_title_label.setText(self.tr('Upload complete — {}').format(
             self.map_title_edit.text().strip())
@@ -280,6 +289,9 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
     def _upload_terminated(self):
+        """
+        Called when the upload operation is terminated or canceled
+        """
         self.progress_bar.hide()
         if self.map_uploader_task.was_canceled:
             self.map_title_label.setText(
@@ -319,6 +331,9 @@ class CreateMapDialog(QDialog, WIDGET):
         self.button_box.button(QDialogButtonBox.Ok).hide()
 
     def _view_map(self):
+        """
+        Opens the uploaded map on Felt.com
+        """
         if not self.created_map:
             return
 

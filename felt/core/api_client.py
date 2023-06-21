@@ -131,7 +131,7 @@ class FeltApiClient:
                    zoom: int,
                    title: Optional[str] = None,
                    basemap: Optional[str] = None,
-                   layer_urls: List[str] = [],
+                   layer_urls: Optional[List[str]] = None,  # pylint: disable=unused-argument
                    blocking: bool = False,
                    feedback: Optional[QgsFeedback] = None
                    ) -> Union[QNetworkReply, QgsNetworkReplyContent]:
@@ -158,9 +158,9 @@ class FeltApiClient:
                 json_data.encode(),
                 feedback=feedback
             )
-        else:
-            return QgsNetworkAccessManager.instance().post(request,
-                                                           json_data.encode())
+
+        return QgsNetworkAccessManager.instance().post(request,
+                                                       json_data.encode())
 
     def prepare_layer_upload(self,
                              map_id: str,
@@ -195,11 +195,10 @@ class FeltApiClient:
                 feedback=feedback
             )
 
-        else:
-            return QgsNetworkAccessManager.instance().post(
-                request,
-                json_data.encode()
-            )
+        return QgsNetworkAccessManager.instance().post(
+            request,
+            json_data.encode()
+        )
 
     def create_upload_file_request(self,
                                    filename: str,
@@ -267,11 +266,11 @@ class FeltApiClient:
                 network_request,
                 form_content
             )
-        else:
-            return QgsNetworkAccessManager.instance().post(
-                network_request,
-                form_content
-            )
+
+        return QgsNetworkAccessManager.instance().post(
+            network_request,
+            form_content
+        )
 
     def finalize_layer_upload(self,
                               map_id: str,
@@ -299,11 +298,10 @@ class FeltApiClient:
                 feedback=feedback
             )
 
-        else:
-            return QgsNetworkAccessManager.instance().post(
-                request,
-                json_data.encode()
-            )
+        return QgsNetworkAccessManager.instance().post(
+            request,
+            json_data.encode()
+        )
 
 
 API_CLIENT = FeltApiClient()

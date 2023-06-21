@@ -33,7 +33,7 @@ class ColorBar(QProgressBar):
     A colored progress bar
     """
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # pylint: disable=missing-function-docstring,unused-argument
         option = QStyleOptionProgressBar()
         self.initStyleOption(option)
 

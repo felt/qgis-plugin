@@ -72,7 +72,9 @@ class _Handler(BaseHTTPRequestHandler):
     HTTP handle for OAuth workflows
     """
 
-    def log_request(self, format, *args):
+    # pylint: disable=missing-function-docstring
+
+    def log_request(self, _format, *args):  # pylint: disable=arguments-differ
         pass
 
     def do_GET(self):
@@ -145,6 +147,8 @@ class _Handler(BaseHTTPRequestHandler):
             else:
                 self.wfile.write(AUTH_HANDLER_RESPONSE.encode("utf-8"))
 
+    # pylint: enable=missing-function-docstring
+
 
 class OAuthWorkflow(QThread):
     """
@@ -180,7 +184,9 @@ class OAuthWorkflow(QThread):
         """
         # we have to dummy a dummy request in order to abort the
         # blocking handle_request() loop
+        # pylint: disable=missing-timeout
         requests.get("http://127.0.0.1:{}".format(REDIRECT_PORT))
+        # pylint: enable=missing-timeout
 
     def close_server(self):
         """
@@ -192,6 +198,9 @@ class OAuthWorkflow(QThread):
         self.server = None
 
     def run(self):
+        """
+        Starts the server thread
+        """
         self.server = HTTPServer(("127.0.0.1", REDIRECT_PORT), _Handler)
         self.server.code_verifier = self.code_verifier
         self.server.access_token = None

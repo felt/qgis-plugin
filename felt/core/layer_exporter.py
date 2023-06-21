@@ -62,11 +62,14 @@ class ExportResult:
 
 
 class LayerExporter(QObject):
+    """
+    Handles exports of layers to formats acceptable for Felt
+    """
 
     def __init__(self,
                  transform_context: QgsCoordinateTransformContext):
         super().__init__()
-        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.transform_context = transform_context
 
     def __del__(self):
@@ -131,12 +134,12 @@ class LayerExporter(QObject):
                     fill_color=symbol_layer.fillColor(),
                     stroke_color=symbol_layer.strokeColor()
                 )
-            elif isinstance(symbol_layer, QgsSimpleLineSymbolLayer):
+            if isinstance(symbol_layer, QgsSimpleLineSymbolLayer):
                 # line layers use fill color on Felt!
                 return LayerStyle(
                     fill_color=symbol_layer.color(),
                 )
-            elif isinstance(symbol_layer, (
+            if isinstance(symbol_layer, (
                     QgsEllipseSymbolLayer,
                     QgsSimpleMarkerSymbolLayer)):
                 return LayerStyle(
@@ -211,6 +214,7 @@ class LayerExporter(QObject):
                                              writer_options.attributes if
                                              a != fid_index]
 
+        # pylint: disable=unused-variable
         res, error_message, new_filename, new_layer_name = \
             QgsVectorFileWriter.writeAsVectorFormatV3(
                 layer,
@@ -218,6 +222,7 @@ class LayerExporter(QObject):
                 self.transform_context,
                 writer_options,
             )
+        # pylint: enable=unused-variable
 
         layer_export_result = {
             QgsVectorFileWriter.WriterError.NoError: LayerExportResult.Success,
@@ -266,7 +271,8 @@ class LayerExporter(QObject):
         projector = raster_pipe.projector()
 
         dest_crs = layer.crs()
-        if False:  # disable local reprojection for now - see #14
+        # disable local reprojection for now - see #14
+        if False:  # pylint: disable=using-constant-test
             dest_crs = QgsCoordinateReferenceSystem('EPSG:3857')
             projector.setCrs(
                 layer.crs(),

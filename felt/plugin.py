@@ -31,7 +31,6 @@ from qgis.PyQt.QtWidgets import (
 
 from qgis.core import (
     QgsLayerTreeLayer,
-    QgsMapLayerType,
     QgsMapLayer
 )
 from qgis.gui import (

@@ -121,14 +121,17 @@ class MapUploaderTask(QgsTask):
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
 
-    def default_map_title(self):
+    def default_map_title(self) -> str:
+        """
+        Returns an auto-generated title for a map
+        """
         date_string = QDate.currentDate().toString('yyyy-MM-dd')
         if self.project_title:
             return self.tr('{} QGIS Map - {}').format(
                 self.project_title,
                 date_string
             )
-        elif self.project_file_name:
+        if self.project_file_name:
             file_name_part = Path(self.project_file_name).stem
             return self.tr('{} QGIS Map - {}').format(
                 file_name_part,
@@ -154,13 +157,15 @@ class MapUploaderTask(QgsTask):
         msg += '</ul>'
         return msg
 
+    # QgsTask interface
+    # pylint: disable=missing-function-docstring
     def cancel(self):
         self.was_canceled = True
         if self.feedback:
             self.feedback.cancel()
         super().cancel()
 
-    def run(self):
+    def run(self):  # pylint: disable=too-many-locals,too-many-return-statements,too-many-branches,too-many-statements
         if self.isCanceled():
             return False
 
@@ -323,3 +328,5 @@ class MapUploaderTask(QgsTask):
             multi_step_feedback.step_finished()
 
         return True
+
+    # pylint: enable=missing-function-docstring

@@ -65,11 +65,14 @@ class FeltDialogHeader(QWidget):
         vl.addWidget(svg_logo_widget)
         self.setLayout(vl)
 
+    # QWidget interface
+    # pylint: disable=missing-function-docstring
+
     def sizeHint(self):
         font_metrics = QFontMetrics(self.font())
         return QSize(0, font_metrics.height() * 10)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # pylint: disable=unused-argument
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, True)
 
@@ -87,3 +90,5 @@ class FeltDialogHeader(QWidget):
                           self._cached_image)
 
         painter.end()
+
+    # pylint: enable=missing-function-docstring
