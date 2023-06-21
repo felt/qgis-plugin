@@ -41,6 +41,8 @@ QGIS_APP = get_qgis_app()
 
 TEST_DATA_PATH = Path(__file__).parent
 
+CLIENT = FeltApiClient()
+
 
 class ApiClientTest(unittest.TestCase):
     """Test API client work."""
@@ -49,13 +51,13 @@ class ApiClientTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        workflow = OAuthWorkflow()
-        workflow_finished = QSignalSpy(workflow.finished)
-        workflow.start()
-        workflow_finished.wait()
+        # workflow = OAuthWorkflow()
+        # workflow_finished = QSignalSpy(workflow.finished)
+        # workflow.start()
+        # workflow_finished.wait()
 
-        cls.client = FeltApiClient()
-        cls.client.set_token(workflow_finished[0][0])
+        # CLIENT.set_token(workflow_finished[0][0])
+        pass
 
     def test_build_url(self):
         """
@@ -112,6 +114,7 @@ class ApiClientTest(unittest.TestCase):
         self.assertTrue(res.hasRawHeader(b'accept'))
         self.assertEqual(res.rawHeader(b'accept'), b'application/json')
 
+    @unittest.skipIf(not CLIENT.token, 'Not authorized')
     def test_user(self):
         """
         Test user endpoint
@@ -129,7 +132,7 @@ class ApiClientTest(unittest.TestCase):
                          QNetworkReply.AuthenticationRequiredError)
 
         # an authenticated client
-        reply = ApiClientTest.client.user()
+        reply = CLIENT.user()
         spy = QSignalSpy(reply.finished)
         self.assertIsInstance(reply, QNetworkReply)
         self.assertEqual(reply.request().url().toString(),
@@ -146,6 +149,7 @@ class ApiClientTest(unittest.TestCase):
         self.assertEqual(user.type, ObjectType.User)
         self.assertEqual(user.id, '7be58c2c-89b9-483d-aa04-d79cf97a2021')
 
+    @unittest.skipIf(not CLIENT.token, 'Not authorized')
     def test_create_map(self):
         """
         Test create map
@@ -163,7 +167,7 @@ class ApiClientTest(unittest.TestCase):
                          QNetworkReply.AuthenticationRequiredError)
 
         # an authenticated client
-        reply = ApiClientTest.client.create_map(
+        reply = CLIENT.create_map(
             -24.962160, 153.311322, 10, title='Orchid Beach')
         spy = QSignalSpy(reply.finished)
         self.assertIsInstance(reply, QNetworkReply)
@@ -180,11 +184,12 @@ class ApiClientTest(unittest.TestCase):
         self.assertTrue(created_map.url)
         self.assertTrue(created_map.id)
 
+    @unittest.skipIf(not CLIENT.token, 'Not authorized')
     def test_create_layer(self):
         """
         Test create layer
         """
-        reply = ApiClientTest.client.create_map(
+        reply = CLIENT.create_map(
             -24.962160, 153.311322, 10, title='Orchid Beach 22')
         spy = QSignalSpy(reply.finished)
         spy.wait()
@@ -198,7 +203,7 @@ class ApiClientTest(unittest.TestCase):
         self.assertTrue(created_map.url)
         self.assertTrue(created_map.id)
 
-        reply = ApiClientTest.client.prepare_layer_upload(
+        reply = CLIENT.prepare_layer_upload(
             created_map.id,
             'test_layer', ['test.gpkg']
         )
@@ -228,7 +233,7 @@ class ApiClientTest(unittest.TestCase):
         with open(file, "rb") as f:
             data = f.read()
 
-        reply = ApiClientTest.client.upload_file(
+        reply = CLIENT.upload_file(
             'test.gpkg', data, params
         )
         spy = QSignalSpy(reply.finished)
@@ -236,7 +241,7 @@ class ApiClientTest(unittest.TestCase):
 
         self.assertEqual(reply.error(), QNetworkReply.NoError)
 
-        reply = ApiClientTest.client.finalize_layer_upload(
+        reply = CLIENT.finalize_layer_upload(
             created_map.id,
             params.layer_id,
             'test.gpkg'

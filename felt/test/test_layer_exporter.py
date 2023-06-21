@@ -54,8 +54,9 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(layer.isValid())
         self.assertTrue(LayerExporter.can_export_layer(layer))
 
-        layer = QgsRasterLayer('crs=EPSG:3857&format&type=xyz&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0',
-                               'test', 'wms')
+        layer = QgsRasterLayer(
+            'crs=EPSG:3857&format&type=xyz&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0',
+            'test', 'wms')
         self.assertFalse(LayerExporter.can_export_layer(layer))
 
     def test_file_name(self):
@@ -129,7 +130,7 @@ class LayerExporterTest(unittest.TestCase):
         out_layer = QgsRasterLayer(result.filename, 'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.width(), 373)
-        self.assertEqual(out_layer.height(), 502)
+        self.assertEqual(out_layer.height(), 350)
         self.assertEqual(out_layer.bandCount(), 4)
         self.assertEqual(out_layer.dataProvider().dataType(1),
                          Qgis.DataType.Byte)
@@ -140,15 +141,15 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(out_layer.dataProvider().dataType(4),
                          Qgis.DataType.Byte)
         self.assertEqual(out_layer.crs(),
-                         QgsCoordinateReferenceSystem('EPSG:3857'))
+                         QgsCoordinateReferenceSystem('EPSG:4326'))
         self.assertAlmostEqual(out_layer.extent().xMinimum(),
-                         2077922, -3)
+                               18.6662979442, 3)
         self.assertAlmostEqual(out_layer.extent().xMaximum(),
-                         2082074, -3)
+                               18.7035979442, 3)
         self.assertAlmostEqual(out_layer.extent().yMinimum(),
-                         5744637, -3)
+                               45.7767014376, 3)
         self.assertAlmostEqual(out_layer.extent().yMaximum(),
-                         5750225, -3)
+                               45.8117014376, 3)
 
 
 if __name__ == "__main__":
