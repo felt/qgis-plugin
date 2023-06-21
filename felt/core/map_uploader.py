@@ -13,12 +13,11 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-import math
+from pathlib import Path
 from typing import (
     Optional,
     List
 )
-from pathlib import Path
 
 from qgis.PyQt.QtCore import (
     QDate,
@@ -26,7 +25,6 @@ from qgis.PyQt.QtCore import (
     QThread
 )
 from qgis.PyQt.QtNetwork import QNetworkReply
-
 from qgis.core import (
     QgsMapLayer,
     QgsMapLayerUtils,
@@ -35,20 +33,17 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsCsException,
     QgsTask,
-    QgsRasterLayer,
-    QgsVectorLayer,
-    QgsVectorFileWriter,
     QgsFeedback,
     QgsBlockingNetworkRequest
 )
 from qgis.utils import iface
 
 from .api_client import API_CLIENT
-from .map import Map
-from .layer_exporter import LayerExporter
-from .s3_upload_parameters import S3UploadParameters
-from .multi_step_feedback import MultiStepFeedback
 from .enums import LayerExportResult
+from .layer_exporter import LayerExporter
+from .map import Map
+from .multi_step_feedback import MultiStepFeedback
+from .s3_upload_parameters import S3UploadParameters
 
 
 class MapUploaderTask(QgsTask):
@@ -74,7 +69,7 @@ class MapUploaderTask(QgsTask):
                 project.transformContext()
             )
             self.layers = [
-                l.clone() for l in layers
+                layer.clone() for layer in layers
             ]
             self.unsupported_layers = []
         else:
@@ -87,11 +82,12 @@ class MapUploaderTask(QgsTask):
                 self.current_map_extent = view_settings.defaultViewExtent()
                 self.current_map_crs = view_settings.defaultViewExtent().crs()
             self.layers = [
-                l.clone() for _, l in project.mapLayers().items() if LayerExporter.can_export_layer(l)
+                layer.clone() for _, layer in project.mapLayers().items() if
+                LayerExporter.can_export_layer(layer)
             ]
             self.unsupported_layers = [
-                l.name() for _, l in project.mapLayers().items() if
-                not LayerExporter.can_export_layer(l)
+                layer.name() for _, layer in project.mapLayers().items() if
+                not LayerExporter.can_export_layer(layer)
             ]
             for layer_tree_layer in project.layerTreeRoot().findLayers():
                 if not layer_tree_layer.layer() and not layer_tree_layer.name() in self.unsupported_layers:
@@ -154,7 +150,7 @@ class MapUploaderTask(QgsTask):
 
         msg = '<p>' + self.tr('The following layers are not supported '
                               'and won\'t be uploaded:') + '</p><ul><li>'
-        msg += '</li><li>'.join( self.unsupported_layers)
+        msg += '</li><li>'.join(self.unsupported_layers)
         msg += '</ul>'
         return msg
 
@@ -169,9 +165,9 @@ class MapUploaderTask(QgsTask):
             return False
 
         total_steps = (
-                1  # create map call
-                + len(self.layers)  # layer exports
-                + len(self.layers)  # layer uploads
+                1 +  # create map call
+                len(self.layers) +  # layer exports
+                len(self.layers)  # layer uploads
         )
 
         self.feedback = QgsFeedback()
@@ -195,7 +191,7 @@ class MapUploaderTask(QgsTask):
             self.project_title,
             blocking=True,
             feedback=self.feedback
-            )
+        )
 
         if reply.error() != QNetworkReply.NoError:
             self.error_string = reply.errorString()
@@ -231,7 +227,8 @@ class MapUploaderTask(QgsTask):
             layer.moveToThread(None)
             if result.result == LayerExportResult.Error:
                 self.status_changed.emit(
-                    self.tr('Error occurred while exporting layer {}: {}').format(
+                    self.tr(
+                        'Error occurred while exporting layer {}: {}').format(
                         layer.name(),
                         result.error_message
                     )
@@ -292,7 +289,7 @@ class MapUploaderTask(QgsTask):
                 if not sent or not total:
                     return
 
-                multi_step_feedback.setProgress(int(100*sent/total))
+                multi_step_feedback.setProgress(int(100 * sent / total))
 
             blocking_request.uploadProgress.connect(_upload_progress)
 

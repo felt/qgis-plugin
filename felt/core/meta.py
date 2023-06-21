@@ -8,9 +8,9 @@ the Free Software Foundation; either version 2 of the License, or
 """
 
 import configparser
+import re
 from pathlib import Path
 from typing import Tuple
-import re
 
 
 class PluginMetadataParser:

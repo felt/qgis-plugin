@@ -37,9 +37,9 @@ from qgis.core import (
     QgsFeedback
 )
 
-from .s3_upload_parameters import S3UploadParameters
 from .layer_style import LayerStyle
 from .meta import PLUGIN_METADATA_PARSER
+from .s3_upload_parameters import S3UploadParameters
 
 PLUGIN_VERSION = "0.7.0"
 
@@ -129,9 +129,9 @@ class FeltApiClient:
                    lat: float,
                    lon: float,
                    zoom: int,
-                   title: Optional[str]=None,
-                   basemap: Optional[str]=None,
-                   layer_urls: List[str]=[],
+                   title: Optional[str] = None,
+                   basemap: Optional[str] = None,
+                   layer_urls: List[str] = [],
                    blocking: bool = False,
                    feedback: Optional[QgsFeedback] = None
                    ) -> Union[QNetworkReply, QgsNetworkReplyContent]:

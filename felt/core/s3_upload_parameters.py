@@ -63,8 +63,8 @@ class S3UploadParameters:
         res = json.loads(jsons)
         return S3UploadParameters(
             type=res.get('data', {}).get('type'),
-            aws_access_key_id=
-                res.get('data', {}).get('attributes', {}).get('presigned_attributes', {}).get('AWSAccessKeyId'),
+            aws_access_key_id=res.get('data', {}).get('attributes', {}).get(
+                'presigned_attributes', {}).get('AWSAccessKeyId'),
             acl=res.get('data', {}).get('attributes', {}).get(
                 'presigned_attributes', {}).get('acl'),
             key=res.get('data', {}).get('attributes', {}).get(
@@ -73,17 +73,18 @@ class S3UploadParameters:
                 'presigned_attributes', {}).get('policy'),
             signature=res.get('data', {}).get('attributes', {}).get(
                 'presigned_attributes', {}).get('signature'),
-            success_action_status=res.get('data', {}).get('attributes', {}).get(
+            success_action_status=res.get('data', {}).get('attributes',
+                                                          {}).get(
                 'presigned_attributes', {}).get('success_action_status'),
             x_amz_meta_features_flags=res.get('data', {}).get('attributes',
-                                                          {}).get(
+                                                              {}).get(
                 'presigned_attributes', {}).get('x-amz-meta-feature-flags'),
             x_amz_meta_file_count=res.get('data', {}).get('attributes',
-                                                              {}).get(
+                                                          {}).get(
                 'presigned_attributes', {}).get('x-amz-meta-file-count'),
             x_amz_security_token=res.get('data', {}).get('attributes',
-                                                          {}).get(
+                                                         {}).get(
                 'presigned_attributes', {}).get('x-amz-security-token'),
-            url=res.get('data', {}).get('attributes', {}).get( 'url'),
+            url=res.get('data', {}).get('attributes', {}).get('url'),
             layer_id=res.get('data', {}).get('attributes', {}).get('layer_id'),
         )

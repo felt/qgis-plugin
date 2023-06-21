@@ -22,12 +22,11 @@ from qgis.PyQt.QtCore import (
     pyqtSignal,
     QTimer
 )
+from qgis.PyQt.QtNetwork import QNetworkReply
 from qgis.PyQt.QtWidgets import (
     QAction,
     QPushButton
 )
-from qgis.PyQt.QtNetwork import QNetworkReply
-
 from qgis.core import (
     Qgis
 )
@@ -36,13 +35,13 @@ from qgis.gui import (
 )
 from qgis.utils import iface
 
+from .authorize_dialog import AuthorizeDialog
 from ..core import (
     AuthState,
     OAuthWorkflow,
     API_CLIENT,
     User
 )
-from .authorize_dialog import AuthorizeDialog
 
 
 class AuthorizationManager(QObject):
@@ -290,7 +289,6 @@ class AuthorizationManager(QObject):
             self._workflow.deleteLater()
 
         self._workflow = None
-
 
 
 AUTHORIZATION_MANAGER = AuthorizationManager()

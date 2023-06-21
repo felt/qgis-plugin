@@ -17,7 +17,6 @@ __revision__ = '$Format:%H$'
 import unittest
 from pathlib import Path
 
-from .utilities import get_qgis_app
 from qgis.PyQt.QtCore import (
     QUrl,
     QUrlQuery
@@ -28,6 +27,7 @@ from qgis.PyQt.QtNetwork import (
 )
 from qgis.PyQt.QtTest import QSignalSpy
 
+from .utilities import get_qgis_app
 from ..core import (
     OAuthWorkflow,
     ObjectType,
@@ -36,7 +36,6 @@ from ..core import (
     Map,
     S3UploadParameters
 )
-
 
 QGIS_APP = get_qgis_app()
 
@@ -211,7 +210,7 @@ class ApiClientTest(unittest.TestCase):
         params = S3UploadParameters.from_json(json_params)
         self.assertEqual(params.type, 'presigned_upload')
         self.assertTrue(params.aws_access_key_id, 'presigned_upload')
-        #self.assertTrue(params.acl)
+        # self.assertTrue(params.acl)
         self.assertTrue(params.key)
         self.assertTrue(params.policy)
         self.assertTrue(params.signature)
@@ -248,8 +247,6 @@ class ApiClientTest(unittest.TestCase):
 
         json_params = reply.readAll().data().decode()
         print(json_params)
-
-
 
 
 if __name__ == "__main__":

@@ -34,7 +34,6 @@ from qgis.PyQt.QtWidgets import (
     QDialogButtonBox,
     QVBoxLayout
 )
-
 from qgis.core import (
     QgsMapLayer,
     QgsApplication,
@@ -42,22 +41,21 @@ from qgis.core import (
 )
 from qgis.gui import QgsGui
 
-from ..core import (
-    MapUploaderTask,
-    Map
-)
-
+from .authorization_manager import AUTHORIZATION_MANAGER
+from .colored_progress_bar import ColorBar
 from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
 )
+from .felt_dialog_header import FeltDialogHeader
 from .gui_utils import (
     GuiUtils,
     FELT_STYLESHEET
 )
-from .felt_dialog_header import FeltDialogHeader
-from .authorization_manager import AUTHORIZATION_MANAGER
-from .colored_progress_bar import ColorBar
+from ..core import (
+    MapUploaderTask,
+    Map
+)
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('create_map.ui'))
 
@@ -92,7 +90,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.progress_label.setOpenExternalLinks(True)
 
         vl = QVBoxLayout()
-        vl.setContentsMargins( 0, 0,0 ,0)
+        vl.setContentsMargins(0, 0, 0, 0)
         vl.addWidget(FeltDialogHeader())
         self.widget_logo.setStyleSheet('background: solid #3d521e;')
         self.widget_logo.setLayout(vl)
@@ -239,7 +237,8 @@ class CreateMapDialog(QDialog, WIDGET):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
 
         map_title = self.map_title_edit.text().strip()
-        self.map_title_label.setText(self.tr('Uploading — {}').format(map_title))
+        self.map_title_label.setText(
+            self.tr('Uploading — {}').format(map_title))
         self.map_uploader_task.project_title = map_title
 
         self.stacked_widget.setCurrentIndex(1)
@@ -324,4 +323,3 @@ class CreateMapDialog(QDialog, WIDGET):
             return
 
         QDesktopServices.openUrl(QUrl(self.created_map.url))
-

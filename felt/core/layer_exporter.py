@@ -23,8 +23,6 @@ from qgis.PyQt.QtCore import (
     QVariant,
     QObject
 )
-from qgis.PyQt.QtGui import QColor
-
 from qgis.core import (
     QgsFeedback,
     QgsMapLayer,
