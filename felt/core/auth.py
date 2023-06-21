@@ -32,8 +32,11 @@ from qgis.core import (
 
 from .pkce import generate_pkce_pair
 
-AUTH_HANDLER_REDIRECT = "https://felt.com/oauth/success?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
-AUTH_HANDLER_REDIRECT_CANCELLED = "https://felt.com/oauth/denied?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
+OAUTH_BASE = "https://felt.com/oauth"
+AUTH_HANDLER_REDIRECT = \
+    OAUTH_BASE + "/success?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
+AUTH_HANDLER_REDIRECT_CANCELLED = \
+    OAUTH_BASE + "/denied?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
 
 AUTH_HANDLER_RESPONSE = """\
 <html>
@@ -57,8 +60,8 @@ AUTH_HANDLER_RESPONSE_ERROR = """\
 </html>
 """
 
-AUTH_URL = "https://felt.com/oauth/consent"
-TOKEN_URL = "https://felt.com/oauth/token"
+AUTH_URL = OAUTH_BASE + "/consent"
+TOKEN_URL = OAUTH_BASE + "/token"
 
 CLIENT_ID = "8cb129bd-6962-4f65-8cc9-14b760e8436a"
 
@@ -101,9 +104,10 @@ class _Handler(BaseHTTPRequestHandler):
         network_request.setHeader(QNetworkRequest.ContentTypeHeader,
                                   'application/x-www-form-urlencoded')
 
-        if request.post(network_request,
-                        data=token_body,
-                        forceRefresh=True) != QgsBlockingNetworkRequest.NoError:
+        result_code = request.post(network_request,
+                                   data=token_body,
+                                   forceRefresh=True)
+        if result_code != QgsBlockingNetworkRequest.NoError:
             self.server.error = request.reply().content().data().decode() \
                                 or request.reply().errorString()
             self._send_response()

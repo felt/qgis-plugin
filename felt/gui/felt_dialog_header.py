@@ -77,7 +77,8 @@ class FeltDialogHeader(QWidget):
         painter.setRenderHint(QPainter.Antialiasing, True)
 
         # image has 437 x 107 aspect ratio
-        if not self._cached_image or self._cached_image.size() != self.rect().size():
+        if not self._cached_image or \
+                self._cached_image.size() != self.rect().size():
             image_height = int(self.rect().width() / 437 * 107)
 
             self._cached_image = GuiUtils.get_svg_as_image('felt_header.svg',

@@ -69,7 +69,9 @@ class LayerExporter(QObject):
     def __init__(self,
                  transform_context: QgsCoordinateTransformContext):
         super().__init__()
-        self.temp_dir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        # pylint: disable=consider-using-with
+        self.temp_dir = tempfile.TemporaryDirectory()
+        # pylint: enable=consider-using-with
         self.transform_context = transform_context
 
     def __del__(self):
@@ -225,17 +227,28 @@ class LayerExporter(QObject):
         # pylint: enable=unused-variable
 
         layer_export_result = {
-            QgsVectorFileWriter.WriterError.NoError: LayerExportResult.Success,
-            QgsVectorFileWriter.WriterError.ErrDriverNotFound: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrCreateDataSource: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrCreateLayer: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrAttributeTypeUnsupported: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrAttributeCreationFailed: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrProjection: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrInvalidLayer: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrSavingMetadata: LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.Canceled: LayerExportResult.Canceled,
+            QgsVectorFileWriter.WriterError.NoError:
+                LayerExportResult.Success,
+            QgsVectorFileWriter.WriterError.ErrDriverNotFound:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrCreateDataSource:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrCreateLayer:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrAttributeTypeUnsupported:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrAttributeCreationFailed:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrProjection:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrInvalidLayer:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.ErrSavingMetadata:
+                LayerExportResult.Error,
+            QgsVectorFileWriter.WriterError.Canceled:
+                LayerExportResult.Canceled,
         }[res]
         return ExportResult(
             filename=dest_file,
@@ -321,13 +334,20 @@ class LayerExporter(QObject):
         }[res]
 
         layer_export_result = {
-            QgsRasterFileWriter.WriterError.NoError: LayerExportResult.Success,
-            QgsRasterFileWriter.WriterError.SourceProviderError: LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.DestProviderError: LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.CreateDatasourceError: LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.WriteError: LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.NoDataConflict: LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.WriteCanceled: LayerExportResult.Canceled,
+            QgsRasterFileWriter.WriterError.NoError:
+                LayerExportResult.Success,
+            QgsRasterFileWriter.WriterError.SourceProviderError:
+                LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.DestProviderError:
+                LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.CreateDatasourceError:
+                LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.WriteError:
+                LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.NoDataConflict:
+                LayerExportResult.Error,
+            QgsRasterFileWriter.WriterError.WriteCanceled:
+                LayerExportResult.Canceled,
         }[res]
 
         return ExportResult(

@@ -82,8 +82,12 @@ def get_qgis_app(cleanup=True):
                 Gracefully closes the QgsApplication instance
                 """
                 try:
-                    QGISAPP.exitQgis()  # pylint: disable=used-before-assignment
-                    QGISAPP = None  # pylint: disable=redefined-outer-name
+                    # pylint: disable=used-before-assignment
+                    # pylint: disable=redefined-outer-name
+                    QGISAPP.exitQgis()  # noqa
+                    QGISAPP = None  # noqa
+                    # pylint: enable=used-before-assignment
+                    # pylint: enable=redefined-outer-name
                 except NameError:
                     pass
 

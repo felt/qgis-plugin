@@ -125,13 +125,14 @@ class FeltApiClient:
         request = self._build_request(self.USER_ENDPOINT)
         return QgsNetworkAccessManager.instance().get(request)
 
+    # pylint: disable=unused-argument
     def create_map(self,
                    lat: float,
                    lon: float,
                    zoom: int,
                    title: Optional[str] = None,
                    basemap: Optional[str] = None,
-                   layer_urls: Optional[List[str]] = None,  # pylint: disable=unused-argument
+                   layer_urls: Optional[List[str]] = None,
                    blocking: bool = False,
                    feedback: Optional[QgsFeedback] = None
                    ) -> Union[QNetworkReply, QgsNetworkReplyContent]:
@@ -161,6 +162,8 @@ class FeltApiClient:
 
         return QgsNetworkAccessManager.instance().post(request,
                                                        json_data.encode())
+
+    # pylint: enable=unused-argument
 
     def prepare_layer_upload(self,
                              map_id: str,
@@ -211,9 +214,10 @@ class FeltApiClient:
 
         network_request = QNetworkRequest(QUrl(parameters.url))
 
-        network_request.setRawHeader(b'Host',
-                                     parameters.url[
-                                     len('https://'):-1].encode())
+        network_request.setRawHeader(
+            b'Host',
+            parameters.url[len('https://'):-1].encode()
+        )
         network_request.setRawHeader(
             b"Content-Type",
             b"multipart/form-data; boundary=QGISFormBoundary2XCkqVRLJ5XMxfw5")

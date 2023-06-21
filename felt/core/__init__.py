@@ -2,23 +2,23 @@
 Felt core module
 """
 
-from .enums import (
+from .enums import (  # noqa
     AuthState,
     ObjectType,
     LayerExportResult
 )
-from .auth import OAuthWorkflow
-from .map import Map
-from .user import User
-from .s3_upload_parameters import S3UploadParameters
-from .api_client import (
+from .auth import OAuthWorkflow  # noqa
+from .map import Map  # noqa
+from .user import User  # noqa
+from .s3_upload_parameters import S3UploadParameters  # noqa
+from .api_client import (  # noqa
     FeltApiClient,
     API_CLIENT
 )
-from .map_uploader import MapUploaderTask
-from .layer_exporter import (
+from .map_uploader import MapUploaderTask  # noqa
+from .layer_exporter import (  # noqa
     LayerExporter,
     ExportResult
 )
-from .multi_step_feedback import MultiStepFeedback
-from .meta import PLUGIN_METADATA_PARSER
+from .multi_step_feedback import MultiStepFeedback  # noqa
+from .meta import PLUGIN_METADATA_PARSER  # noqa

@@ -18,6 +18,7 @@ def classFactory(iface):
     """
     Creates the plugin
     """
-    from felt.plugin import FeltPlugin  # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel
+    from felt.plugin import FeltPlugin
 
     return FeltPlugin(iface)

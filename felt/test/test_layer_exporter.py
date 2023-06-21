@@ -55,7 +55,9 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(LayerExporter.can_export_layer(layer))
 
         layer = QgsRasterLayer(
-            'crs=EPSG:3857&format&type=xyz&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0',
+            'crs=EPSG:3857&format&type=xyz&url='
+            'https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png'
+            '&zmax=19&zmin=0',
             'test', 'wms')
         self.assertFalse(LayerExporter.can_export_layer(layer))
 

@@ -199,7 +199,8 @@ class FeltPlugin(QObject):
         Shows the map creation dialog, after authorization completes
         """
 
-        if self._create_map_dialog and not sip.isdeleted(self._create_map_dialog):
+        if self._create_map_dialog and \
+                not sip.isdeleted(self._create_map_dialog):
             self._create_map_dialog.show()
             self._create_map_dialog.raise_()
             return
@@ -209,7 +210,7 @@ class FeltPlugin(QObject):
             Remove references to outdated dialogs
             """
             self._create_map_dialogs = [d for d in self._create_map_dialogs
-                if d != _dialog]
+                                        if d != _dialog]
             self._create_map_dialog = None
 
         self._create_map_dialog = CreateMapDialog(
@@ -217,7 +218,9 @@ class FeltPlugin(QObject):
             layers
         )
         self._create_map_dialog.show()
-        self._create_map_dialog.rejected.connect(partial(_cleanup_dialog, self._create_map_dialog))
+        self._create_map_dialog.rejected.connect(
+            partial(_cleanup_dialog, self._create_map_dialog)
+        )
         self._create_map_dialogs.append(self._create_map_dialog)
 
     def _layer_tree_view_context_menu_about_to_show(self, menu: QMenu):
@@ -237,13 +240,17 @@ class FeltPlugin(QObject):
 
         if LayerExporter.can_export_layer(layer):
             menus = [action for action in menu.children() if
-                     isinstance(action, QMenu) and action.objectName() == 'exportMenu']
+                     isinstance(action, QMenu) and
+                     action.objectName() == 'exportMenu']
             if not menus:
                 return
 
             export_menu = menus[0]
 
-            share_to_felt_action = QAction(self.tr('Share Layer to Felt…'), menu)
+            share_to_felt_action = QAction(
+                self.tr('Share Layer to Felt…'),
+                menu
+            )
             share_to_felt_action.setIcon(
                 GuiUtils.get_icon('export_to_felt.svg')
             )

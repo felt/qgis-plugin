@@ -252,7 +252,8 @@ class GuiUtils:
             pass
 
         project_menu = iface.projectMenu()
-        matches = [m for m in project_menu.children() if m.objectName() == 'menuImport_Export']
+        matches = [m for m in project_menu.children()
+                   if m.objectName() == 'menuImport_Export']
         if matches:
             return matches[0]
 

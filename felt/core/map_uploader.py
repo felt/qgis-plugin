@@ -90,7 +90,8 @@ class MapUploaderTask(QgsTask):
                 not LayerExporter.can_export_layer(layer)
             ]
             for layer_tree_layer in project.layerTreeRoot().findLayers():
-                if not layer_tree_layer.layer() and not layer_tree_layer.name() in self.unsupported_layers:
+                if not layer_tree_layer.layer() and \
+                        not layer_tree_layer.name() in self.unsupported_layers:
                     self.unsupported_layers.append(layer_tree_layer.name())
 
         for layer in self.layers:
@@ -165,7 +166,11 @@ class MapUploaderTask(QgsTask):
             self.feedback.cancel()
         super().cancel()
 
-    def run(self):  # pylint: disable=too-many-locals,too-many-return-statements,too-many-branches,too-many-statements
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
+    def run(self):
         if self.isCanceled():
             return False
 
@@ -329,4 +334,7 @@ class MapUploaderTask(QgsTask):
 
         return True
 
-    # pylint: enable=missing-function-docstring
+    # pylint: enable=too-many-locals
+    # pylint: enable=too-many-return-statements
+    # pylint: enable=too-many-branches
+    # pylint: enable=too-many-statements
