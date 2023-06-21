@@ -25,7 +25,7 @@ jobs:
 
       - name: Install packages
         run: |
-          pip install -r REQUIREMENTS_TESTING.txt
+          pip install -r requirements/testing.txt
           pip install pylint pycodestyle
 
       - name: flake8 Lint
