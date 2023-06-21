@@ -29,7 +29,7 @@ from qgis.PyQt.QtTest import QSignalSpy
 
 from .utilities import get_qgis_app
 from ..core import (
-    OAuthWorkflow,
+    # OAuthWorkflow,
     ObjectType,
     FeltApiClient,
     User,
