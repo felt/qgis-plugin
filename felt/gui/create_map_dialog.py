@@ -37,7 +37,8 @@ from qgis.PyQt.QtWidgets import (
 
 from qgis.core import (
     QgsMapLayer,
-    QgsApplication
+    QgsApplication,
+    QgsProject
 )
 from qgis.gui import QgsGui
 
@@ -124,9 +125,14 @@ class CreateMapDialog(QDialog, WIDGET):
             GuiUtils.set_link_color(self.footer_label.text())
         )
 
-        self.map_uploader_task = MapUploaderTask(
-            layers=self.layers
-        )
+        self.map_uploader_task: Optional[MapUploaderTask]
+        if self.layers is None:
+            QgsProject.instance().layersRemoved.connect(
+                self._create_map_uploader_task)
+            QgsProject.instance().layersAdded.connect(
+                self._create_map_uploader_task)
+        self._create_map_uploader_task()
+
         self.created_map: Optional[Map] = None
         self.map_title_edit.setText(self.map_uploader_task.default_map_title())
         self.map_title_edit.textChanged.connect(self._validate)
@@ -135,15 +141,6 @@ class CreateMapDialog(QDialog, WIDGET):
             'body, p {margin-left:0px; padding-left: 0px;}'
         )
         self.warning_label.document().setDocumentMargin(0)
-
-        warning = self.map_uploader_task.warning_message()
-        if warning:
-            self.warning_label.setHtml(warning)
-        else:
-            self.warning_label.setPlainText('')
-        self.warning_label.setStyleSheet(
-            "color: black; background-color: #ececec;"
-        )
 
         self.progress_bar = ColorBar()
         vl = QVBoxLayout()
@@ -167,6 +164,25 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.started = False
         self._validate()
+
+    def _create_map_uploader_task(self):
+        self.map_uploader_task = MapUploaderTask(
+            layers=self.layers
+        )
+        self._update_warning_label()
+
+    def _update_warning_label(self):
+        """
+        Updates the upload warning shown in the dialog
+        """
+        warning = self.map_uploader_task.warning_message()
+        if warning:
+            self.warning_label.setHtml(warning)
+        else:
+            self.warning_label.setPlainText('')
+        self.warning_label.setStyleSheet(
+            "color: black; background-color: #ececec;"
+        )
 
     def _cancel(self):
         """
