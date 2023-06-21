@@ -1,0 +1,35 @@
+name: Linting
+
+on:
+  push:
+    paths:
+    - "felt/**"
+    - ".github/workflows/lint.yaml"
+  pull_request:
+    types: [opened, synchronize, edited]
+
+
+jobs:
+
+  Check-code-quality:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Install Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.9'
+
+      - name: Check out source repository
+        uses: actions/checkout@v2
+
+      - name: Install packages
+        run: |
+          pip install -r REQUIREMENTS_TESTING.txt
+          pip install pylint pycodestyle
+
+      - name: flake8 Lint
+        uses: py-actions/flake8@v1
+
+      - name: Pycodestyle
+        run: make pycodestyle
