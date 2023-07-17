@@ -48,6 +48,7 @@ from qgis.core import (
 
 from .enums import LayerExportResult
 from .layer_style import LayerStyle
+from .exceptions import LayerPackagingException
 
 
 @dataclass
@@ -165,6 +166,7 @@ class LayerExporter(QObject):
     ) -> ExportResult:
         """
         Exports a layer into a format acceptable for Felt
+        :raises LayerPackagingException
         """
         if isinstance(layer, QgsVectorLayer):
             return self.export_vector_layer(layer, feedback)
@@ -226,30 +228,33 @@ class LayerExporter(QObject):
             )
         # pylint: enable=unused-variable
 
+        if res not in (QgsVectorFileWriter.WriterError.NoError,
+                       QgsVectorFileWriter.WriterError.Canceled):
+            raise LayerPackagingException(error_message)
+
         layer_export_result = {
             QgsVectorFileWriter.WriterError.NoError:
                 LayerExportResult.Success,
-            QgsVectorFileWriter.WriterError.ErrDriverNotFound:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrCreateDataSource:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrCreateLayer:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrAttributeTypeUnsupported:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrAttributeCreationFailed:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrProjection:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrInvalidLayer:
-                LayerExportResult.Error,
-            QgsVectorFileWriter.WriterError.ErrSavingMetadata:
-                LayerExportResult.Error,
             QgsVectorFileWriter.WriterError.Canceled:
                 LayerExportResult.Canceled,
         }[res]
+
+        # validate result
+        new_layer_uri = new_filename
+        if new_layer_name:
+            new_layer_uri += '|layername=' + new_layer_name
+        res_layer = QgsVectorLayer(
+            new_layer_uri, 'test', 'ogr'
+        )
+        if (layer.featureCount() > 0) and \
+                res_layer.featureCount() != layer.featureCount():
+            raise LayerPackagingException(
+                self.tr(
+                    'Packaged layer does not contain all features! '
+                    '(has {}, expected {})').format(
+                    res_layer.featureCount(), layer.featureCount())
+            )
+
         return ExportResult(
             filename=dest_file,
             result=layer_export_result,
@@ -332,20 +337,12 @@ class LayerExporter(QObject):
             QgsRasterFileWriter.WriterError.WriteCanceled:
                 None,
         }[res]
+        if error_message:
+            raise LayerPackagingException(error_message)
 
         layer_export_result = {
             QgsRasterFileWriter.WriterError.NoError:
                 LayerExportResult.Success,
-            QgsRasterFileWriter.WriterError.SourceProviderError:
-                LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.DestProviderError:
-                LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.CreateDatasourceError:
-                LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.WriteError:
-                LayerExportResult.Error,
-            QgsRasterFileWriter.WriterError.NoDataConflict:
-                LayerExportResult.Error,
             QgsRasterFileWriter.WriterError.WriteCanceled:
                 LayerExportResult.Canceled,
         }[res]

@@ -22,3 +22,4 @@ from .layer_exporter import (  # noqa
 )
 from .multi_step_feedback import MultiStepFeedback  # noqa
 from .meta import PLUGIN_METADATA_PARSER  # noqa
+from .exceptions import LayerPackagingException  # noqa
