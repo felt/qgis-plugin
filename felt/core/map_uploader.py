@@ -44,6 +44,7 @@ from .layer_exporter import LayerExporter
 from .map import Map
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
+from .exceptions import LayerPackagingException
 
 
 class MapUploaderTask(QgsTask):
@@ -231,21 +232,23 @@ class MapUploaderTask(QgsTask):
             self.status_changed.emit(
                 self.tr('Exporting {}').format(layer.name())
             )
-            result = exporter.export_layer_for_felt(
-                layer,
-                multi_step_feedback
-            )
-            layer.moveToThread(None)
-            if result.result == LayerExportResult.Error:
-                self.status_changed.emit(
-                    self.tr(
+            try:
+                result = exporter.export_layer_for_felt(
+                    layer,
+                    multi_step_feedback
+                )
+            except LayerPackagingException as e:
+                layer.moveToThread(None)
+                self.error_string = self.tr(
                         'Error occurred while exporting layer {}: {}').format(
                         layer.name(),
-                        result.error_message
+                        e
                     )
-                )
+                self.status_changed.emit(self.error_string)
+
                 return False
 
+            layer.moveToThread(None)
             to_upload[layer] = result
             multi_step_feedback.step_finished()
 

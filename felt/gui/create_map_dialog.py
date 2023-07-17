@@ -310,12 +310,21 @@ class CreateMapDialog(QDialog, WIDGET):
                 self.tr('Upload failed — {}').format(
                     self.map_title_edit.text().strip())
             )
-            self.progress_label.setText(
-                GuiUtils.set_link_color(
-                    self.tr('There was an error uploading this file, please '
+
+            error_message = \
+                self.tr('There was an error uploading this file, please '
                             'contact <a href="mailto:support@felt.com">'
                             'support@felt.com</a> '
-                            'for help fixing the issue'), False,
+                            'for help fixing the issue')
+
+            if self.map_uploader_task.error_string:
+                error_message += '<p><b>{}</b></p>'.format(
+                    self.map_uploader_task.error_string
+                )
+
+            self.progress_label.setText(
+                GuiUtils.set_link_color(
+                    error_message, False,
                     QColor('red')
                 )
             )

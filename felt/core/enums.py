@@ -53,4 +53,3 @@ class LayerExportResult(Enum):
     """
     Success = auto()
     Canceled = auto()
-    Error = auto()
