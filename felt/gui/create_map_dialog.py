@@ -313,9 +313,9 @@ class CreateMapDialog(QDialog, WIDGET):
 
             error_message = \
                 self.tr('There was an error uploading this file, please '
-                            'contact <a href="mailto:support@felt.com">'
-                            'support@felt.com</a> '
-                            'for help fixing the issue')
+                        'contact <a href="mailto:support@felt.com">'
+                        'support@felt.com</a> '
+                        'for help fixing the issue')
 
             if self.map_uploader_task.error_string:
                 error_message += '<p><b>{}</b></p>'.format(

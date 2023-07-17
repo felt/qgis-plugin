@@ -39,7 +39,6 @@ from qgis.core import (
 from qgis.utils import iface
 
 from .api_client import API_CLIENT
-from .enums import LayerExportResult
 from .layer_exporter import LayerExporter
 from .map import Map
 from .multi_step_feedback import MultiStepFeedback
