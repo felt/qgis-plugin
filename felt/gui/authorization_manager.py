@@ -138,14 +138,12 @@ class AuthorizationManager(QObject):
             api_token = (
                     QgsApplication.authManager().authSetting(
                         AUTH_CONFIG_ID, defaultValue="", decrypt=True
-                    )
-                    or None
+                    ) or None
             )
             token_expiry = (
                     QgsApplication.authManager().authSetting(
                         AUTH_CONFIG_EXPIRY, defaultValue="", decrypt=True
-                    )
-                    or None
+                    ) or None
             )
 
         if token_expiry:
