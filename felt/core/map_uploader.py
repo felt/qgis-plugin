@@ -82,7 +82,8 @@ class MapUploaderTask(QgsTask):
                 self.current_map_extent = view_settings.defaultViewExtent()
                 self.current_map_crs = view_settings.defaultViewExtent().crs()
             self.layers = [
-                layer.clone() for layer in reversed(project.layerTreeRoot().layerOrder()) if
+                layer.clone() for layer in
+                reversed(project.layerTreeRoot().layerOrder()) if
                 LayerExporter.can_export_layer(layer)
             ]
             self.unsupported_layers = [
