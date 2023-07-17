@@ -161,7 +161,7 @@ class OAuthWorkflow(QThread):
     When the thread is run either the finished or error_occurred signals
     will be emitted
     """
-    finished = pyqtSignal(str)
+    finished = pyqtSignal(str, int)
     error_occurred = pyqtSignal(str)
 
     def __init__(self):
@@ -216,8 +216,9 @@ class OAuthWorkflow(QThread):
 
         err = self.server.error
         access_token = self.server.access_token
+        expires_in = self.server.expires_in
 
         if err:
             self.error_occurred.emit(err)
         else:
-            self.finished.emit(access_token)
+            self.finished.emit(access_token, expires_in)
