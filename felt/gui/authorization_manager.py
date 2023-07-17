@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import platform
 from functools import partial
 from typing import Optional
 
@@ -20,7 +21,8 @@ from qgis.PyQt import sip
 from qgis.PyQt.QtCore import (
     QObject,
     pyqtSignal,
-    QTimer
+    QTimer,
+    QDate
 )
 from qgis.PyQt.QtNetwork import QNetworkReply
 from qgis.PyQt.QtWidgets import (
@@ -28,7 +30,9 @@ from qgis.PyQt.QtWidgets import (
     QPushButton
 )
 from qgis.core import (
-    Qgis
+    Qgis,
+    QgsSettings,
+    QgsApplication
 )
 from qgis.gui import (
     QgsMessageBarItem
@@ -42,6 +46,9 @@ from ..core import (
     API_CLIENT,
     User
 )
+
+AUTH_CONFIG_ID = "felt_auth_id"
+AUTH_CONFIG_EXPIRY = "felt_auth_expiry"
 
 
 class AuthorizationManager(QObject):
@@ -69,6 +76,84 @@ class AuthorizationManager(QObject):
 
         self.login_action = QAction(self.tr('Sign In…'))
         self.login_action.triggered.connect(self._login_action_triggered)
+
+    @staticmethod
+    def remove_api_token():
+        """
+        Remove stored API token
+        """
+        if platform.system() == "Darwin":
+            # remove stored plain text tokens on MacOS
+            QgsSettings().remove("felt/token", QgsSettings.Plugins)
+        else:
+            QgsApplication.authManager().removeAuthSetting(AUTH_CONFIG_ID)
+
+    @staticmethod
+    def store_api_token(token: str, expiry: int) -> bool:
+        """
+        Stores the API token in the secure QGIS password store, IF available
+
+        Returns True if the key could be stored
+        """
+        expiry_day = QDate.currentDate().addDays(int(expiry / 60 / 60 / 24))
+        if platform.system() == "Darwin":
+            # store tokens in plain text on MacOS as keychain isn't
+            # available due to MacOS security
+            QgsSettings().setValue(
+                "felt/token", token, QgsSettings.Plugins
+            )
+            QgsSettings().setValue(
+                "felt/token_expiry",
+                expiry_day.toString('yyyy-MM-dd'),
+                QgsSettings.Plugins
+            )
+        else:
+            QgsApplication.authManager().storeAuthSetting(
+                AUTH_CONFIG_ID, token, True
+            )
+            QgsApplication.authManager().storeAuthSetting(
+                AUTH_CONFIG_EXPIRY,
+                expiry_day.toString('yyyy-MM-dd'),
+                True
+            )
+        return True
+
+    @staticmethod
+    def retrieve_api_token() -> Optional[str]:
+        """
+        Retrieves a previously stored API token, if available
+
+        Returns None if no stored token is available
+        """
+        if platform.system() == "Darwin":
+            api_token = QgsSettings().value(
+                "felt/token", None, str, QgsSettings.Plugins
+            )
+            token_expiry = QgsSettings().value(
+                "felt/token_expiry", None, str, QgsSettings.Plugins
+            )
+            if not api_token:
+                api_token = None
+        else:
+            api_token = (
+                    QgsApplication.authManager().authSetting(
+                        AUTH_CONFIG_ID, defaultValue="", decrypt=True
+                    ) or None
+            )
+            token_expiry = (
+                    QgsApplication.authManager().authSetting(
+                        AUTH_CONFIG_EXPIRY, defaultValue="", decrypt=True
+                    ) or None
+            )
+
+        if token_expiry:
+            token_expiry_date = QDate.fromString(token_expiry, 'yyyy-MM-dd')
+            if token_expiry_date <= QDate.currentDate():
+                api_token = None
+        else:
+            api_token = None
+
+        return api_token
 
     def _set_status(self, status: AuthState):
         """
@@ -103,7 +188,7 @@ class AuthorizationManager(QObject):
         Called when the login action is triggered
         """
         if self.status == AuthState.NotAuthorized:
-            self.show_authorization_dialog()
+            self.attempt_authorize()
         elif self.status == AuthState.Authorized:
             self.deauthorize()
 
@@ -118,7 +203,7 @@ class AuthorizationManager(QObject):
             return True
 
         self.queued_callbacks.append(callback)
-        self.show_authorization_dialog()
+        self.attempt_authorize()
         return False
 
     def deauthorize(self):
@@ -127,6 +212,26 @@ class AuthorizationManager(QObject):
         """
         self._set_status(AuthState.NotAuthorized)
         API_CLIENT.set_token(None)
+        AuthorizationManager.remove_api_token()
+
+    def attempt_authorize(self):
+        """
+        Tries to authorize the client, using previously fetched token if
+        available. Otherwise shows the login dialog to the user.
+        """
+        previous_token = AuthorizationManager.retrieve_api_token()
+        if previous_token:
+            self._cleanup_messages()
+
+            self._set_status(AuthState.Authorized)
+            API_CLIENT.set_token(previous_token)
+            self.authorized.emit()
+            self._user_reply = API_CLIENT.user()
+            self._user_reply.finished.connect(partial(self._set_user_details,
+                                                      self._user_reply))
+            return
+
+        self.show_authorization_dialog()
 
     def show_authorization_dialog(self):
         """
@@ -135,17 +240,14 @@ class AuthorizationManager(QObject):
         """
         dlg = AuthorizeDialog()
         if dlg.exec_():
-            self.start_authorization()
+            self.start_authorization_workflow()
         else:
             self.queued_callbacks = []
 
-    def start_authorization(self):
+    def start_authorization_workflow(self):
         """
         Start an authorization process
         """
-        if self.status != AuthState.NotAuthorized:
-            return False
-
         assert not self._workflow
 
         self._cleanup_messages()
@@ -206,7 +308,7 @@ class AuthorizationManager(QObject):
         self.queued_callbacks = []
         self.authorization_failed.emit()
 
-    def _authorization_success(self, token: str):
+    def _authorization_success(self, token: str, expiry: int):
         """
         Triggered when an authorization succeeds
         """
@@ -215,6 +317,7 @@ class AuthorizationManager(QObject):
         self._set_status(AuthState.Authorized)
         iface.messageBar().pushSuccess(self.tr('Felt'), self.tr('Authorized'))
         API_CLIENT.set_token(token)
+        AuthorizationManager.store_api_token(token, expiry)
 
         self._clean_workflow()
 
