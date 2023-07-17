@@ -13,9 +13,9 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import platform
 from functools import partial
 from typing import Optional
-import platform
 
 from qgis.PyQt import sip
 from qgis.PyQt.QtCore import (
@@ -136,16 +136,16 @@ class AuthorizationManager(QObject):
                 api_token = None
         else:
             api_token = (
-                QgsApplication.authManager().authSetting(
-                    AUTH_CONFIG_ID, defaultValue="", decrypt=True
-                )
-                or None
+                    QgsApplication.authManager().authSetting(
+                        AUTH_CONFIG_ID, defaultValue="", decrypt=True
+                    )
+                    or None
             )
             token_expiry = (
-                QgsApplication.authManager().authSetting(
-                    AUTH_CONFIG_EXPIRY, defaultValue="", decrypt=True
-                )
-                or None
+                    QgsApplication.authManager().authSetting(
+                        AUTH_CONFIG_EXPIRY, defaultValue="", decrypt=True
+                    )
+                    or None
             )
 
         if token_expiry:
