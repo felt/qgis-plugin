@@ -22,7 +22,8 @@ from typing import (
 from qgis.PyQt.QtCore import (
     QDate,
     pyqtSignal,
-    QThread
+    QThread,
+    QSize
 )
 from qgis.PyQt.QtNetwork import QNetworkReply
 from qgis.core import (
@@ -34,7 +35,8 @@ from qgis.core import (
     QgsCsException,
     QgsTask,
     QgsFeedback,
-    QgsBlockingNetworkRequest
+    QgsBlockingNetworkRequest,
+    QgsReferencedRectangle
 )
 from qgis.utils import iface
 
@@ -44,6 +46,7 @@ from .map import Map
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
 from .exceptions import LayerPackagingException
+from .map_utils import MapUtils
 
 
 class MapUploaderTask(QgsTask):
@@ -116,7 +119,14 @@ class MapUploaderTask(QgsTask):
 
         self.project_title = project.title()
         self.project_file_name = project.fileName()
-        self.initial_zoom_level = 5
+        self.initial_zoom_level = \
+            MapUtils.calculate_leaflet_tile_zoom_for_extent(
+                QgsReferencedRectangle(
+                    self.current_map_extent,
+                    self.current_map_crs
+                ),
+                QSize(1024, 800)
+            )
 
         self.created_map: Optional[Map] = None
         self.error_string: Optional[str] = None
