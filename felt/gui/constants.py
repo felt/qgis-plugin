@@ -14,6 +14,6 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 
-SIGNUP_URL = 'https://felt.com/signup'
-TOS_URL = 'https://felt.com/terms'
-PRIVACY_POLICY_URL = 'https://felt.com/privacy'
+SIGNUP_URL = 'http://localhost:4000/signup'
+TOS_URL = 'http://localhost:4000/terms'
+PRIVACY_POLICY_URL = 'http://localhost:4000/privacy'

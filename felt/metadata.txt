@@ -29,7 +29,7 @@ changelog=changelog
 # Tags are comma separated with spaces allowed
 tags=shared,collaboration,sharing,maps,publishing,public,comments,data,layers,realtime,cloud,media,browser,online,publication,webmapping,internet,webgis,capture,catalog
 
-homepage=https://felt.com/
+homepage=http://localhost:4000/
 category=Plugins
 icon=icon.svg
 # experimental flag

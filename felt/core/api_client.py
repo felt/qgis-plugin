@@ -49,7 +49,7 @@ class FeltApiClient:
     Client for the Felt API
     """
 
-    URL = 'https://felt.com/api/v1'
+    URL = 'http://localhost:4000/api/v1'
     USER_ENDPOINT = '/user'
     CREATE_MAP_ENDPOINT = '/maps'
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'

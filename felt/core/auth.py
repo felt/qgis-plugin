@@ -32,11 +32,14 @@ from qgis.core import (
 
 from .pkce import generate_pkce_pair
 
-OAUTH_BASE = "https://felt.com/oauth"
+OAUTH_BASE = "http://localhost:4000/oauth"
+CLIENT_ID = "8cb129bd-6962-4f65-8cc9-14b760e8436a"
+# CLIENT_ID = "77e05a88-055b-43ee-88e4-c5c121a97882"
+
 AUTH_HANDLER_REDIRECT = \
-    OAUTH_BASE + "/success?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
+    OAUTH_BASE + "/success?client_id=" + CLIENT_ID
 AUTH_HANDLER_REDIRECT_CANCELLED = \
-    OAUTH_BASE + "/denied?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
+    OAUTH_BASE + "/denied?client_id=" + CLIENT_ID
 
 AUTH_HANDLER_RESPONSE = """\
 <html>
@@ -62,8 +65,6 @@ AUTH_HANDLER_RESPONSE_ERROR = """\
 
 AUTH_URL = OAUTH_BASE + "/consent"
 TOKEN_URL = OAUTH_BASE + "/token"
-
-CLIENT_ID = "8cb129bd-6962-4f65-8cc9-14b760e8436a"
 
 REDIRECT_PORT = 8989
 REDIRECT_URL = f"http://127.0.0.1:{REDIRECT_PORT}/"

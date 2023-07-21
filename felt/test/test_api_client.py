@@ -65,7 +65,7 @@ class ApiClientTest(unittest.TestCase):
         """
         self.assertEqual(
             FeltApiClient.build_url('/user'),
-            QUrl('https://felt.com/api/v1/user')
+            QUrl('http://localhost:4000/api/v1/user')
         )
 
     def test_to_url_query(self):
@@ -92,7 +92,7 @@ class ApiClientTest(unittest.TestCase):
         """
         res = FeltApiClient()._build_request('/test')
         self.assertIsInstance(res, QNetworkRequest)
-        self.assertEqual(res.url().toString(), 'https://felt.com/api/v1/test')
+        self.assertEqual(res.url().toString(), 'http://localhost:4000/api/v1/test')
         self.assertTrue(res.hasRawHeader(b'accept'))
         self.assertEqual(res.rawHeader(b'accept'), b'application/json')
 
@@ -100,7 +100,7 @@ class ApiClientTest(unittest.TestCase):
         res = FeltApiClient()._build_request('/test',
                                              {'custom': 'custom_header'})
         self.assertIsInstance(res, QNetworkRequest)
-        self.assertEqual(res.url().toString(), 'https://felt.com/api/v1/test')
+        self.assertEqual(res.url().toString(), 'http://localhost:4000/api/v1/test')
         self.assertTrue(res.hasRawHeader(b'accept'))
         self.assertEqual(res.rawHeader(b'accept'), b'application/json')
         self.assertTrue(res.hasRawHeader(b'custom'))
@@ -110,7 +110,7 @@ class ApiClientTest(unittest.TestCase):
         res = FeltApiClient()._build_request('/test', params={'a': 'b'})
         self.assertIsInstance(res, QNetworkRequest)
         self.assertEqual(res.url().toString(),
-                         'https://felt.com/api/v1/test?a=b')
+                         'http://localhost:4000/api/v1/test?a=b')
         self.assertTrue(res.hasRawHeader(b'accept'))
         self.assertEqual(res.rawHeader(b'accept'), b'application/json')
 
@@ -124,7 +124,7 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         self.assertIsInstance(reply, QNetworkReply)
         self.assertEqual(reply.request().url().toString(),
-                         'https://felt.com/api/v1/user')
+                         'http://localhost:4000/api/v1/user')
 
         spy.wait()
 
@@ -136,7 +136,7 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         self.assertIsInstance(reply, QNetworkReply)
         self.assertEqual(reply.request().url().toString(),
-                         'https://felt.com/api/v1/user')
+                         'http://localhost:4000/api/v1/user')
 
         spy.wait()
 
@@ -159,7 +159,7 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         self.assertIsInstance(reply, QNetworkReply)
         self.assertEqual(reply.request().url().toString(),
-                         'https://felt.com/api/v1/maps')
+                         'http://localhost:4000/api/v1/maps')
 
         spy.wait()
 
@@ -172,7 +172,7 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         self.assertIsInstance(reply, QNetworkReply)
         self.assertEqual(reply.request().url().toString(),
-                         'https://felt.com/api/v1/maps')
+                         'http://localhost:4000/api/v1/maps')
 
         spy.wait()
 
