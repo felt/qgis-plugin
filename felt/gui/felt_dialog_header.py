@@ -52,13 +52,13 @@ class FeltDialogHeader(QWidget):
             QSizePolicy.Fixed
         )
 
-        self.setStyleSheet('{ background: solid #3d521e; }')
+        self.setStyleSheet('background: solid #3d521e;')
         svg_logo_widget = QSvgWidget()
         fixed_size = QSize(int(font_metrics.height() * 7.150951),
                            font_metrics.height() * 4)
         svg_logo_widget.setFixedSize(fixed_size)
         svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
-        svg_logo_widget.setStyleSheet('background: transparent !important;')
+        svg_logo_widget.setStyleSheet('background: transparent;')
         vl = QVBoxLayout()
         vl.setContentsMargins(12, 0, 0, 19)
         vl.addStretch(1)
