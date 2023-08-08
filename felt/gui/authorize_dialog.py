@@ -96,6 +96,6 @@ class AuthorizeDialog(QDialog, WIDGET):
         elif link == 'terms_of_use':
             url = QUrl(TOS_URL)
         else:
-            return
+            url = QUrl(link)
 
         QDesktopServices.openUrl(url)
