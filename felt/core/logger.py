@@ -14,13 +14,20 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 import os
-import abc
 import pathlib
 from typing import Optional
-from enum import Enum, auto
-from inspect import currentframe, getframeinfo
+from inspect import (
+    currentframe,
+    getframeinfo
+)
 
-from qgis.PyQt.QtCore import QObject, pyqtSlot, QMetaObject, Qt, Q_ARG
+from qgis.PyQt.QtCore import (
+    QObject,
+    pyqtSlot,
+    QMetaObject,
+    Qt,
+    Q_ARG
+)
 
 from .api_client import API_CLIENT
 from .enums import UsageType
@@ -108,9 +115,9 @@ class LogToFeltLogger(Logger):
                                    start=plugin_install_path)
 
         message = '{}:{} ({}): {}\n'.format(filename,
-                                      frame.f_lineno,
-                                      getframeinfo(frame).function,
-                                      error)
+                                            frame.f_lineno,
+                                            getframeinfo(frame).function,
+                                            error)
 
         QMetaObject.invokeMethod(
             self,

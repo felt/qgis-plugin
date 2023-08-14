@@ -41,13 +41,13 @@ from qgis.core import (
 from qgis.utils import iface
 
 from .api_client import API_CLIENT
+from .exceptions import LayerPackagingException
 from .layer_exporter import LayerExporter
+from .logger import Logger
 from .map import Map
+from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
-from .exceptions import LayerPackagingException
-from .map_utils import MapUtils
-from .logger import Logger
 
 
 class MapUploaderTask(QgsTask):
@@ -255,10 +255,10 @@ class MapUploaderTask(QgsTask):
             except LayerPackagingException as e:
                 layer.moveToThread(None)
                 self.error_string = self.tr(
-                        'Error occurred while exporting layer {}: {}').format(
-                        layer.name(),
-                        e
-                    )
+                    'Error occurred while exporting layer {}: {}').format(
+                    layer.name(),
+                    e
+                )
                 self.status_changed.emit(self.error_string)
 
                 return False
@@ -289,7 +289,8 @@ class MapUploaderTask(QgsTask):
             if reply.error() != QNetworkReply.NoError:
                 self.error_string = reply.errorString()
                 Logger.instance().log_error(
-                    'Error preparing layer upload: {}'.format(self.error_string)
+                    'Error preparing layer upload: {}'.format(
+                        self.error_string)
                 )
                 return False
 
@@ -302,7 +303,8 @@ class MapUploaderTask(QgsTask):
             if not upload_params.url:
                 self.error_string = self.tr('Could not prepare layer upload')
                 Logger.instance().log_error(
-                    'Error retrieving upload parameters: {}'.format(self.error_string)
+                    'Error retrieving upload parameters: {}'.format(
+                        self.error_string)
                 )
                 return False
 
@@ -357,7 +359,8 @@ class MapUploaderTask(QgsTask):
             if reply.error() != QNetworkReply.NoError:
                 self.error_string = reply.errorString()
                 Logger.instance().log_error(
-                    'Error finalizing layer upload: {}'.format(self.error_string)
+                    'Error finalizing layer upload: {}'.format(
+                        self.error_string)
                 )
                 return False
 
