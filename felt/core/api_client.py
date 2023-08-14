@@ -40,6 +40,7 @@ from qgis.core import (
 from .layer_style import LayerStyle
 from .meta import PLUGIN_METADATA_PARSER
 from .s3_upload_parameters import S3UploadParameters
+from .enums import UsageType
 
 PLUGIN_VERSION = "0.7.0"
 
@@ -54,6 +55,7 @@ class FeltApiClient:
     CREATE_MAP_ENDPOINT = '/maps'
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
     FINISH_LAYER_ENDPOINT = '/maps/{}/layers/{}/finish_upload'
+    USAGE_ENDPOINT = '/internal/reports'
 
     def __init__(self):
         # default headers to add to all requests
@@ -301,6 +303,32 @@ class FeltApiClient:
                 json_data.encode(),
                 feedback=feedback
             )
+
+        return QgsNetworkAccessManager.instance().post(
+            request,
+            json_data.encode()
+        )
+
+    def report_usage(self,
+                     content: str,
+                     usage_type: UsageType = UsageType.Info) -> QNetworkReply:
+        """
+        Reports plugin usage.
+
+        This is a non-blocking call. It returns a QNetworkReply for the post
+        operation, but this can be safely ignored if no tracking of the
+        post is required.
+        """
+        request = self._build_request(
+            self.USAGE_ENDPOINT,
+            {'Content-Type': 'application/json'}
+        )
+
+        request_params = {
+            'type': usage_type.to_string(),
+            'content': content
+        }
+        json_data = json.dumps(request_params)
 
         return QgsNetworkAccessManager.instance().post(
             request,

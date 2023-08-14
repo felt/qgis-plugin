@@ -5,7 +5,8 @@ Felt core module
 from .enums import (  # noqa
     AuthState,
     ObjectType,
-    LayerExportResult
+    LayerExportResult,
+    UsageType
 )
 from .auth import OAuthWorkflow  # noqa
 from .map import Map  # noqa

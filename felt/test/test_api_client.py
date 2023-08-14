@@ -255,6 +255,23 @@ class ApiClientTest(unittest.TestCase):
         json_params = reply.readAll().data().decode()
         print(json_params)
 
+    @unittest.skipIf(not CLIENT.token, 'Not authorized')
+    def test_usage(self):
+        """
+        Test plugin usage api
+        """
+        reply = CLIENT.report_usage(
+            'test'
+        )
+        spy = QSignalSpy(reply.finished)
+        spy.wait()
+
+        # reply should be empty response
+        self.assertEqual(reply.error(),
+                         QNetworkReply.NoError)
+
+        self.assertFalse(reply.readAll())
+
     # pylint: enable=protected-access
 
 
