@@ -49,6 +49,7 @@ from qgis.core import (
 from .enums import LayerExportResult
 from .layer_style import LayerStyle
 from .exceptions import LayerPackagingException
+from .logger import Logger
 
 
 @dataclass
@@ -230,6 +231,9 @@ class LayerExporter(QObject):
 
         if res not in (QgsVectorFileWriter.WriterError.NoError,
                        QgsVectorFileWriter.WriterError.Canceled):
+            Logger.instance().log_error(
+                'Error packaging layer: {}'.format(error_message)
+            )
             raise LayerPackagingException(error_message)
 
         layer_export_result = {
@@ -248,6 +252,10 @@ class LayerExporter(QObject):
         )
         if (layer.featureCount() > 0) and \
                 res_layer.featureCount() != layer.featureCount():
+            Logger.instance().log_error(
+                'Error packaging layer: Packaged layer '
+                'does not contain all features'
+            )
             raise LayerPackagingException(
                 self.tr(
                     'Packaged layer does not contain all features! '
@@ -338,6 +346,9 @@ class LayerExporter(QObject):
                 None,
         }[res]
         if error_message:
+            Logger.instance().log_error(
+                'Error packaging layer: {}'.format(error_message)
+            )
             raise LayerPackagingException(error_message)
 
         layer_export_result = {
