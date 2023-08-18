@@ -176,7 +176,7 @@
        <item>
         <widget class="QLabel" name="footer_label">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;privacy_policy&quot;&gt;Privacy Policy&lt;/a&gt; •  &lt;a href=&quot;terms_of_use&quot;&gt;Terms of Use&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;privacy_policy&quot;&gt;Privacy&lt;/a&gt; •  &lt;a href=&quot;terms_of_use&quot;&gt;Terms&lt;/a&gt; •  &lt;a href=&quot;mailto:support@felt.com&quot;&gt;Contact us&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

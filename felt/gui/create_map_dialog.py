@@ -207,7 +207,7 @@ class CreateMapDialog(QDialog, WIDGET):
             self.close()
             return
         else:
-            return
+            url = QUrl(link)
 
         QDesktopServices.openUrl(url)
 
