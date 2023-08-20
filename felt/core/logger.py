@@ -13,12 +13,17 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import json
+
 import os
 import pathlib
-from typing import Optional
 from inspect import (
     currentframe,
     getframeinfo
+)
+from typing import (
+    Optional,
+    Dict
 )
 
 from qgis.PyQt.QtCore import (
@@ -42,15 +47,26 @@ class Logger(QObject):
 
     _instance: Optional['Logger'] = None
 
-    def __init__(self):
+    PACKAGING_RASTER = 'packaging_raster'
+    PACKAGING_VECTOR = 'packaging_vector'
+    MAP_EXPORT = 'map_export'
+    S3_UPLOAD = 's3_upload'
+
+    def __init__(self):  # pylint: disable=useless-parent-delegation
         super().__init__()
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> 'Logger':
+        """
+        Returns the singleton instance of the logger
+        """
         return cls._instance
 
     @classmethod
     def set_instance(cls, logger: 'Logger'):
+        """
+        Sets the singleton instance of the logger
+        """
         cls._instance = logger
 
     def log_message(self, message: str):
@@ -58,10 +74,31 @@ class Logger(QObject):
         Logs a messages
         """
 
+    def log_message_json(self, message: Dict):
+        """
+        Logs a message using a JSON dictionary value
+        """
+
     def log_error(self, error: str):
         """
         Logs an error
         """
+
+    def log_error_json(self, error: Dict):
+        """
+        Logs an error using a JSON dictionary value
+        """
+
+    @staticmethod
+    def anonymize_filename(filename: str) -> str:
+        """
+        Removes user-sensitive details from a filename, by making
+        it a relative filename to the plugin install directory
+        """
+        plugin_install_path = (
+            pathlib.Path(__file__).parent.parent.resolve())
+        return os.path.relpath(pathlib.Path(filename).resolve(),
+                               start=plugin_install_path)
 
 
 class LogToFeltLogger(Logger):
@@ -104,16 +141,18 @@ class LogToFeltLogger(Logger):
             Q_ARG(str, message),
             Q_ARG(str, UsageType.Info.to_string()))
 
+    def log_message_json(self, message: Dict):
+        message_str = json.dumps(message)
+        QMetaObject.invokeMethod(
+            self,
+            "_submit_usage",
+            Qt.QueuedConnection,
+            Q_ARG(str, message_str),
+            Q_ARG(str, UsageType.Info.to_string()))
+
     def log_error(self, error: str):
         frame = currentframe().f_back
-
-        # need to anonymize filename!
-        filename = getframeinfo(frame).filename
-        plugin_install_path = (
-            pathlib.Path(__file__).parent.parent.resolve())
-        filename = os.path.relpath(pathlib.Path(filename).resolve(),
-                                   start=plugin_install_path)
-
+        filename = self.anonymize_filename(getframeinfo(frame).filename)
         message = '{}:{} ({}): {}\n'.format(filename,
                                             frame.f_lineno,
                                             getframeinfo(frame).function,
@@ -124,6 +163,21 @@ class LogToFeltLogger(Logger):
             "_submit_usage",
             Qt.QueuedConnection,
             Q_ARG(str, message),
+            Q_ARG(str, UsageType.Error.to_string()))
+
+    def log_error_json(self, error: Dict):
+        frame = currentframe().f_back
+        filename = self.anonymize_filename(getframeinfo(frame).filename)
+
+        error['source_file'] = filename
+        error['source_line'] = frame.f_lineno
+        error['source_function'] = getframeinfo(frame).function
+
+        QMetaObject.invokeMethod(
+            self,
+            "_submit_usage",
+            Qt.QueuedConnection,
+            Q_ARG(str, json.dumps(error)),
             Q_ARG(str, UsageType.Error.to_string()))
 
 

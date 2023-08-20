@@ -219,9 +219,13 @@ class MapUploaderTask(QgsTask):
 
         if reply.error() != QNetworkReply.NoError:
             self.error_string = reply.errorString()
-            Logger.instance().log_error(
-                'Error creating map: {}'.format(self.error_string)
+            Logger.instance().log_error_json(
+                {
+                    'type': Logger.MAP_EXPORT,
+                    'error': 'Error creating map: {}'.format(self.error_string)
+                }
             )
+
             return False
 
         if self.isCanceled():
@@ -288,10 +292,14 @@ class MapUploaderTask(QgsTask):
             )
             if reply.error() != QNetworkReply.NoError:
                 self.error_string = reply.errorString()
-                Logger.instance().log_error(
-                    'Error preparing layer upload: {}'.format(
-                        self.error_string)
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error preparing layer upload: {}'.format(
+                            self.error_string)
+                    }
                 )
+
                 return False
 
             if self.isCanceled():
@@ -302,10 +310,14 @@ class MapUploaderTask(QgsTask):
             )
             if not upload_params.url:
                 self.error_string = self.tr('Could not prepare layer upload')
-                Logger.instance().log_error(
-                    'Error retrieving upload parameters: {}'.format(
-                        self.error_string)
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.S3_UPLOAD,
+                        'error': 'Error retrieving upload parameters: {}'.format(
+                            self.error_string)
+                    }
                 )
+
                 return False
 
             if self.isCanceled():
@@ -336,8 +348,12 @@ class MapUploaderTask(QgsTask):
 
             if blocking_request.reply().error() != QNetworkReply.NoError:
                 self.error_string = blocking_request.reply().errorString()
-                Logger.instance().log_error(
-                    'Error uploading layer: {}'.format(self.error_string)
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.S3_UPLOAD,
+                        'error': 'Error uploading layer: {}'.format(
+                            self.error_string)
+                    }
                 )
                 return False
 
@@ -358,9 +374,12 @@ class MapUploaderTask(QgsTask):
 
             if reply.error() != QNetworkReply.NoError:
                 self.error_string = reply.errorString()
-                Logger.instance().log_error(
-                    'Error finalizing layer upload: {}'.format(
-                        self.error_string)
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error finalizing layer upload: {}'.format(
+                            self.error_string)
+                    }
                 )
                 return False
 
