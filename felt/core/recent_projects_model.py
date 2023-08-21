@@ -173,7 +173,9 @@ class RecentMapsModel(QAbstractItemModel):
     def columnCount(self, parent=QModelIndex()):
         return 1
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self,  # pylint:disable=too-many-return-statements
+             index,
+             role=Qt.DisplayRole):
         if index.row() == 0 and not index.parent().isValid():
             # special "New map" item
             if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):

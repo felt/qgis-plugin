@@ -21,7 +21,8 @@ from qgis.PyQt.QtCore import (
     QModelIndex,
     QSize,
     QRectF,
-    QPointF
+    QPointF,
+    QItemSelectionModel
 )
 from qgis.PyQt.QtGui import (
     QFontMetrics,
@@ -41,7 +42,7 @@ from qgis.PyQt.QtWidgets import (
     QListView,
     QApplication,
     QStyle,
-    QVBoxLayout
+    QVBoxLayout,
 )
 from qgis.gui import QgsFilterLineEdit
 
@@ -116,8 +117,6 @@ class RecentMapDelegate(QStyledItemDelegate):
         # draw background for item (i.e. selection background)
         style.drawPrimitive(
             QStyle.PE_PanelItemViewItem, option, painter, option.widget)
-
-        _map: Map = index.data(RecentMapsModel.MapRole)
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -262,8 +261,20 @@ class RecentMapsWidget(QWidget):
 
         self._filter.textChanged.connect(self._view.set_filter_string)
 
+        self._view.selectionModel().select(
+            self._view.model().index(0, 0),
+            QItemSelectionModel.ClearAndSelect)
+
     def set_new_map_title(self, title: str):
         """
         Sets the title to use for the new map item
         """
         self._view.set_new_map_title(title)
+
+    def selected_map(self) -> Optional[Map]:
+        """
+        Returns the current selected map
+        """
+        return self._view.selectionModel().selectedIndexes()[0].data(
+            RecentMapsModel.MapRole
+        )

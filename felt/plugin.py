@@ -198,7 +198,6 @@ class FeltPlugin(QObject):
         """
         Shows the map creation dialog, after authorization completes
         """
-
         if self._create_map_dialog and \
                 not sip.isdeleted(self._create_map_dialog):
             self._create_map_dialog.show()

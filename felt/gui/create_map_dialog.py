@@ -68,7 +68,7 @@ class CreateMapDialog(QDialog, WIDGET):
     started.
     """
 
-    def __init__(self,
+    def __init__(self,  # pylint: disable=too-many-statements
                  parent: Optional[QWidget] = None,
                  layers: Optional[List[QgsMapLayer]] = None):
         super().__init__(parent)
@@ -123,7 +123,18 @@ class CreateMapDialog(QDialog, WIDGET):
             GuiUtils.set_link_color(self.footer_label.text())
         )
 
+        # pylint: disable=import-outside-toplevel
+        from .recent_maps_list_view import RecentMapsWidget
+        # pylint: enable=import-outside-toplevel
+        self.maps_widget = RecentMapsWidget()
+
+        maps_layout = QVBoxLayout()
+        maps_layout.setContentsMargins(0, 0, 0, 0)
+        maps_layout.addWidget(self.maps_widget)
+        self.maps_frame.setLayout(maps_layout)
+
         self.map_uploader_task: Optional[MapUploaderTask]
+        self._map_title: Optional[str] = None
         if self.layers is None:
             QgsProject.instance().layersRemoved.connect(
                 self._create_map_uploader_task)
@@ -132,8 +143,8 @@ class CreateMapDialog(QDialog, WIDGET):
         self._create_map_uploader_task()
 
         self.created_map: Optional[Map] = None
-        self.map_title_edit.setText(self.map_uploader_task.default_map_title())
-        self.map_title_edit.textChanged.connect(self._validate)
+        self.maps_widget.set_new_map_title(
+            self.map_uploader_task.default_map_title())
 
         self.warning_label.document().setDefaultStyleSheet(
             'body, p {margin-left:0px; padding-left: 0px;}'
@@ -179,8 +190,14 @@ class CreateMapDialog(QDialog, WIDGET):
         warning = self.map_uploader_task.warning_message()
         if warning:
             self.warning_label.setHtml(warning)
+            self.warning_label.document().adjustSize()
+            self.warning_label.setFixedHeight(
+                int(self.warning_label.document().size().height())
+            )
         else:
             self.warning_label.setPlainText('')
+            self.warning_label.setFixedHeight(0)
+
         self.warning_label.setStyleSheet(
             "color: black; background-color: #ececec;"
         )
@@ -224,7 +241,7 @@ class CreateMapDialog(QDialog, WIDGET):
         Returns True if the dialog contains valid settings to begin
         the upload
         """
-        return bool(self.map_title_edit.text().strip())
+        return True
 
     def _start(self):
         """
@@ -239,10 +256,14 @@ class CreateMapDialog(QDialog, WIDGET):
         )
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
 
-        map_title = self.map_title_edit.text().strip()
+        target_map = self.maps_widget.selected_map()
+
+        self._map_title = target_map.title if target_map else \
+            self.map_uploader_task.default_map_title()
+
         self.map_title_label.setText(
-            self.tr('Uploading — {}').format(map_title))
-        self.map_uploader_task.project_title = map_title
+            self.tr('Uploading — {}').format(self._map_title))
+        self.map_uploader_task.project_title = self._map_title
 
         self.stacked_widget.setCurrentIndex(1)
         self.map_uploader_task.status_changed.connect(
@@ -271,7 +292,7 @@ class CreateMapDialog(QDialog, WIDGET):
         """
         self.created_map = self.map_uploader_task.created_map
         self.map_title_label.setText(self.tr('Upload complete — {}').format(
-            self.map_title_edit.text().strip())
+            self._map_title)
         )
         self.progress_label.hide()
         self.map_uploader_task = None
@@ -296,7 +317,7 @@ class CreateMapDialog(QDialog, WIDGET):
         if self.map_uploader_task.was_canceled:
             self.map_title_label.setText(
                 self.tr('Upload canceled — {}').format(
-                    self.map_title_edit.text().strip())
+                    self._map_title)
             )
             self.button_box.button(QDialogButtonBox.Ok).setText(
                 self.tr('Canceled')
@@ -308,7 +329,7 @@ class CreateMapDialog(QDialog, WIDGET):
 
             self.map_title_label.setText(
                 self.tr('Upload failed — {}').format(
-                    self.map_title_edit.text().strip())
+                    self._map_title)
             )
 
             error_message = \
