@@ -187,6 +187,9 @@ class LayerExporter(QObject):
         with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             zipf.write(res.filename, Path(res.filename).name)
 
+            # add QGIS layer style xml also
+            zipf.writestr("qgis_style.xml", res.qgis_style_xml)
+
         res.filename = zip_file_path
         return res
 

@@ -107,6 +107,9 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(result.filename[-4:], '.zip')
         with zipfile.ZipFile(result.filename) as z:
             gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
+
+            qgis_style = z.read('qgis_style.xml')
+            self.assertEqual(qgis_style[:58], b"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>")
         self.assertEqual(len(gpkg_files), 1)
 
         self.assertEqual(
@@ -114,7 +117,9 @@ class LayerExporterTest(unittest.TestCase):
             "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
         )
 
-        out_layer = QgsVectorLayer(result.filename, 'test')
+        out_layer = QgsVectorLayer(
+            '/vsizip/{}/{}'.format(result.filename, gpkg_files[0]),
+            'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPoint)
@@ -138,7 +143,9 @@ class LayerExporterTest(unittest.TestCase):
             gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
         self.assertEqual(len(gpkg_files), 1)
 
-        out_layer = QgsVectorLayer(result.filename, 'test')
+        out_layer = QgsVectorLayer(
+            '/vsizip/{}/{}'.format(result.filename, gpkg_files[0]),
+            'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
@@ -166,7 +173,9 @@ class LayerExporterTest(unittest.TestCase):
             "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
         )
 
-        out_layer = QgsRasterLayer(result.filename, 'test')
+        out_layer = QgsRasterLayer(
+            '/vsizip/{}/{}'.format(result.filename, tif_files[0]),
+            'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.width(), 373)
         self.assertEqual(out_layer.height(), 350)
