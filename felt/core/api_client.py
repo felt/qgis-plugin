@@ -56,6 +56,7 @@ class FeltApiClient:
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
     FINISH_LAYER_ENDPOINT = '/maps/{}/layers/{}/finish_upload'
     USAGE_ENDPOINT = '/internal/reports'
+    RECENT_MAPS_ENDPOINT = '/maps/recent'
 
     def __init__(self):
         # default headers to add to all requests
@@ -125,6 +126,25 @@ class FeltApiClient:
         Returns information about the user
         """
         request = self._build_request(self.USER_ENDPOINT)
+        return QgsNetworkAccessManager.instance().get(request)
+
+    def recent_maps_async(self,
+                          cursor: Optional[str] = None,
+                          filter_string: Optional[str] = None) \
+            -> QNetworkReply:
+        """
+        Retrieve recent maps asynchronously
+        """
+        params = {}
+        if cursor:
+            params['cursor'] = cursor
+        if filter_string:
+            params['title'] = filter_string
+
+        request = self._build_request(
+            self.RECENT_MAPS_ENDPOINT,
+            params=params
+        )
         return QgsNetworkAccessManager.instance().get(request)
 
     # pylint: disable=unused-argument
