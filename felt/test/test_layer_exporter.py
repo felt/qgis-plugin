@@ -76,6 +76,7 @@ class LayerExporterTest(unittest.TestCase):
         file_name2 = exporter.generate_file_name('.gpkg')
         self.assertNotEqual(file_name, file_name2)
 
+    # pylint: disable=protected-access
     def test_layer_style(self):
         """
         Test retrieving original layer style XML
@@ -90,6 +91,7 @@ class LayerExporterTest(unittest.TestCase):
         )
         # should only be the layer's style, not the source information
         self.assertNotIn('points.gpkg', style)
+    # pylint: enable=protected-access
 
     def test_vector_conversion(self):
         """
@@ -109,7 +111,10 @@ class LayerExporterTest(unittest.TestCase):
             gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
 
             qgis_style = z.read('qgis_style.xml')
-            self.assertEqual(qgis_style[:58], b"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>")
+            self.assertEqual(
+                qgis_style[:58],
+                b"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+            )
         self.assertEqual(len(gpkg_files), 1)
 
         self.assertEqual(

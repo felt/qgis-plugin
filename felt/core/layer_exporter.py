@@ -183,7 +183,9 @@ class LayerExporter(QObject):
             assert False
 
         # package into zip
-        zip_file_path = (Path(str(self.temp_dir.name)) / (Path(res.filename).stem + '.zip')).as_posix()
+        zip_file_path = (
+            (Path(str(self.temp_dir.name)) /
+             (Path(res.filename).stem + '.zip')).as_posix())
         with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             zipf.write(res.filename, Path(res.filename).name)
 
