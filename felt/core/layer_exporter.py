@@ -15,6 +15,7 @@ __revision__ = '$Format:%H$'
 
 import tempfile
 import uuid
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -23,6 +24,10 @@ from qgis.PyQt.QtCore import (
     QVariant,
     QObject
 )
+from qgis.PyQt.QtXml import (
+    QDomDocument
+)
+
 from qgis.core import (
     QgsFeedback,
     QgsMapLayer,
@@ -43,7 +48,8 @@ from qgis.core import (
     QgsSimpleFillSymbolLayer,
     QgsSimpleLineSymbolLayer,
     QgsSimpleMarkerSymbolLayer,
-    QgsEllipseSymbolLayer
+    QgsEllipseSymbolLayer,
+    QgsReadWriteContext
 )
 
 from .enums import LayerExportResult
@@ -60,6 +66,7 @@ class ExportResult:
     filename: str
     result: LayerExportResult
     error_message: str
+    qgis_style_xml: str
     style: Optional[LayerStyle] = None
 
 
@@ -160,8 +167,8 @@ class LayerExporter(QObject):
         """
         Generates a temporary file name with the given suffix
         """
-        return (Path(str(self.temp_dir.name)) /
-                (uuid.uuid4().hex + suffix)).as_posix()
+        return (Path(str(self.temp_dir.name)) / ('qgis_export_' +
+                (uuid.uuid4().hex + suffix))).as_posix()
 
     def export_layer_for_felt(
             self,
@@ -173,10 +180,34 @@ class LayerExporter(QObject):
         :raises LayerPackagingException
         """
         if isinstance(layer, QgsVectorLayer):
-            return self.export_vector_layer(layer, feedback)
-        if isinstance(layer, QgsRasterLayer):
-            return self.export_raster_layer(layer, feedback)
-        assert False
+            res = self.export_vector_layer(layer, feedback)
+        elif isinstance(layer, QgsRasterLayer):
+            res = self.export_raster_layer(layer, feedback)
+        else:
+            assert False
+
+        # package into zip
+        zip_file_path = (
+            (Path(str(self.temp_dir.name)) /
+             (Path(res.filename).stem + '.zip')).as_posix())
+        with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(res.filename, Path(res.filename).name)
+
+            # add QGIS layer style xml also
+            zipf.writestr("qgis_style.xml", res.qgis_style_xml)
+
+        res.filename = zip_file_path
+        return res
+
+    @staticmethod
+    def _get_original_style_xml(layer: QgsMapLayer) -> str:
+        """
+        Returns the original QGIS xml styling content for a layer
+        """
+        doc = QDomDocument('qgis')
+        context = QgsReadWriteContext()
+        layer.exportNamedStyle(doc, context)
+        return doc.toString(2)
 
     def export_vector_layer(
             self,
@@ -278,6 +309,7 @@ class LayerExporter(QObject):
             filename=dest_file,
             result=layer_export_result,
             error_message=error_message,
+            qgis_style_xml=self._get_original_style_xml(layer),
             style=self.representative_layer_style(layer)
         )
 
@@ -375,5 +407,6 @@ class LayerExporter(QObject):
         return ExportResult(
             filename=dest_file,
             result=layer_export_result,
-            error_message=error_message
+            error_message=error_message,
+            qgis_style_xml=self._get_original_style_xml(layer)
         )

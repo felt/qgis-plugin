@@ -15,6 +15,7 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 import unittest
+import zipfile
 from pathlib import Path
 
 from qgis.core import (
@@ -70,9 +71,27 @@ class LayerExporterTest(unittest.TestCase):
         )
         file_name = exporter.generate_file_name('.gpkg')
         self.assertTrue(file_name)
+        self.assertIn('/qgis_export_', file_name)
         self.assertTrue(file_name.endswith('.gpkg'))
         file_name2 = exporter.generate_file_name('.gpkg')
         self.assertNotEqual(file_name, file_name2)
+
+    # pylint: disable=protected-access
+    def test_layer_style(self):
+        """
+        Test retrieving original layer style XML
+        """
+        file = str(TEST_DATA_PATH / "points.gpkg")
+        layer = QgsVectorLayer(file, "test")
+
+        style = LayerExporter._get_original_style_xml(layer)
+        self.assertEqual(
+            style[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
+        # should only be the layer's style, not the source information
+        self.assertNotIn('points.gpkg', style)
+    # pylint: enable=protected-access
 
     def test_vector_conversion(self):
         """
@@ -87,9 +106,25 @@ class LayerExporterTest(unittest.TestCase):
         )
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
-        self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
 
-        out_layer = QgsVectorLayer(result.filename, 'test')
+            qgis_style = z.read('qgis_style.xml')
+            self.assertEqual(
+                qgis_style[:58],
+                b"<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+            )
+        self.assertEqual(len(gpkg_files), 1)
+
+        self.assertEqual(
+            result.qgis_style_xml[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
+
+        out_layer = QgsVectorLayer(
+            '/vsizip/{}/{}'.format(result.filename, gpkg_files[0]),
+            'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPoint)
@@ -108,8 +143,14 @@ class LayerExporterTest(unittest.TestCase):
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
+        self.assertEqual(len(gpkg_files), 1)
 
-        out_layer = QgsVectorLayer(result.filename, 'test')
+        out_layer = QgsVectorLayer(
+            '/vsizip/{}/{}'.format(result.filename, gpkg_files[0]),
+            'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
@@ -128,8 +169,18 @@ class LayerExporterTest(unittest.TestCase):
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            tif_files = [f for f in z.namelist() if f.endswith('tif')]
+        self.assertEqual(len(tif_files), 1)
+        self.assertEqual(
+            result.qgis_style_xml[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
 
-        out_layer = QgsRasterLayer(result.filename, 'test')
+        out_layer = QgsRasterLayer(
+            '/vsizip/{}/{}'.format(result.filename, tif_files[0]),
+            'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.width(), 373)
         self.assertEqual(out_layer.height(), 350)
