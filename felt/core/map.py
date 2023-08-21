@@ -54,5 +54,5 @@ class Map:
             id=res.get('id'),
             title=res.get('attributes', {}).get('title'),
             type=ObjectType.from_string(res.get('type')),
-            thumbnail_url=res.get('thumbnail_url')
+            thumbnail_url=res.get('attributes', {}).get('thumbnail_url')
         )
