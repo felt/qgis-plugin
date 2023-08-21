@@ -156,8 +156,8 @@ class LayerExporter(QObject):
         """
         Generates a temporary file name with the given suffix
         """
-        return (Path(str(self.temp_dir.name)) /
-                (uuid.uuid4().hex + suffix)).as_posix()
+        return (Path(str(self.temp_dir.name)) / ('qgis_export_' +
+                (uuid.uuid4().hex + suffix))).as_posix()
 
     def export_layer_for_felt(
             self,

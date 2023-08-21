@@ -70,6 +70,7 @@ class LayerExporterTest(unittest.TestCase):
         )
         file_name = exporter.generate_file_name('.gpkg')
         self.assertTrue(file_name)
+        self.assertIn('/qgis_export_', file_name)
         self.assertTrue(file_name.endswith('.gpkg'))
         file_name2 = exporter.generate_file_name('.gpkg')
         self.assertNotEqual(file_name, file_name2)
