@@ -63,7 +63,7 @@ class MapUploaderTask(QgsTask):
     def __init__(self,
                  project: Optional[QgsProject] = None,
                  layers: Optional[List[QgsMapLayer]] = None,
-                 target_map: Optional[Map]=None):
+                 target_map: Optional[Map] = None):
         super().__init__(
             'Sharing Map'
         )
@@ -279,6 +279,7 @@ class MapUploaderTask(QgsTask):
 
             self.created_map = Map.from_json(reply.content().data().decode())
             self.status_changed.emit(self.tr('Successfully created map'))
+
         multi_step_feedback.step_finished()
 
         exporter = LayerExporter(
