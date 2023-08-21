@@ -53,3 +53,30 @@ class LayerExportResult(Enum):
     """
     Success = auto()
     Canceled = auto()
+
+
+class UsageType(Enum):
+    """
+    Usage types for reporting plugin usage
+    """
+    Error = auto()
+    Info = auto()
+
+    @staticmethod
+    def from_string(string: str) -> 'UsageType':
+        """
+        Returns a UsageType from a string value
+        """
+        return {
+            'error': UsageType.Error,
+            'info': UsageType.Info
+        }[string]
+
+    def to_string(self) -> str:
+        """
+        Converts usage type to a string for API usage
+        """
+        return {
+            UsageType.Error: 'error',
+            UsageType.Info: 'info'
+        }[self]
