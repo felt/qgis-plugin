@@ -1,9 +1,23 @@
+# -*- coding: utf-8 -*-
+"""Widgets for selection from Recent Maps
+
+.. note:: This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+"""
+
+__author__ = '(C) 2023 by Nyall Dawson'
+__date__ = '21/08/2023'
+__copyright__ = 'Copyright 2023, North Road'
+# This will get replaced with a git SHA1 when you do a git archive
+__revision__ = '$Format:%H$'
+
 import platform
 from typing import Optional
 
 from qgis.PyQt.QtCore import (
     Qt,
-    QObject,
     QModelIndex,
     QSize,
     QRectF,
@@ -45,19 +59,6 @@ class RecentMapDelegate(QStyledItemDelegate):
     THUMBNAIL_WIDTH = 125
     THUMBNAIL_MARGIN = 0
 
-    def __init__(self, parent: Optional[QObject] = None):
-        super().__init__(parent)
-
-    def sizeHint(self, option, index):
-        line_scale = 1
-        if platform.system() == "Darwin":
-            line_scale = 1.3
-
-        return QSize(
-            option.rect.width(),
-            int(QFontMetrics(option.font).height() * 4.5 * line_scale),
-        )
-
     def process_thumbnail(self, thumbnail: QImage, size: QSize) -> QImage:
         """
         Processes a raw thumbnail image, resizing to required size and
@@ -87,6 +88,19 @@ class RecentMapDelegate(QStyledItemDelegate):
         painter.end()
         return im_out
 
+    # QStyledItemDelegate interface
+    # pylint: disable=missing-function-docstring,unused-argument
+    def sizeHint(self, option, index):
+        line_scale = 1
+        if platform.system() == "Darwin":
+            line_scale = 1.3
+
+        return QSize(
+            option.rect.width(),
+            int(QFontMetrics(option.font).height() * 4.5 * line_scale),
+        )
+
+    # pylint: disable=too-many-locals
     def paint(
             self,
             painter: QPainter,
@@ -179,6 +193,9 @@ class RecentMapDelegate(QStyledItemDelegate):
         )
 
         painter.restore()
+    # pylint: enable=too-many-locals
+
+    # pylint: enable=missing-function-docstring,unused-argument
 
 
 class RecentMapsListView(QListView):
