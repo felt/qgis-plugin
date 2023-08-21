@@ -35,7 +35,6 @@ from qgis.PyQt.QtNetwork import (
 from .api_client import API_CLIENT
 from .map import Map
 from .thumbnail_manager import AsyncThumbnailManager
-from ..gui import GuiUtils
 
 
 class RecentMapsModel(QAbstractItemModel):
@@ -183,6 +182,7 @@ class RecentMapsModel(QAbstractItemModel):
             if role == self.SubTitleRole:
                 return self.tr('New map')
             if role in (self.ThumbnailRole, Qt.DecorationRole):
+                from ..gui import GuiUtils  # pylint: disable=import-outside-toplevel
                 return GuiUtils.get_svg_as_image('plus.svg', 16, 16)
 
             return None
