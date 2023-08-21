@@ -15,6 +15,7 @@ __revision__ = '$Format:%H$'
 
 import tempfile
 import uuid
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -175,10 +176,19 @@ class LayerExporter(QObject):
         :raises LayerPackagingException
         """
         if isinstance(layer, QgsVectorLayer):
-            return self.export_vector_layer(layer, feedback)
-        if isinstance(layer, QgsRasterLayer):
-            return self.export_raster_layer(layer, feedback)
-        assert False
+            res = self.export_vector_layer(layer, feedback)
+        elif isinstance(layer, QgsRasterLayer):
+            res = self.export_raster_layer(layer, feedback)
+        else:
+            assert False
+
+        # package into zip
+        zip_file_path = (Path(str(self.temp_dir.name)) / (Path(res.filename).stem + '.zip')).as_posix()
+        with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(res.filename, Path(res.filename).name)
+
+        res.filename = zip_file_path
+        return res
 
     @staticmethod
     def _get_original_style_xml(layer: QgsMapLayer) -> str:

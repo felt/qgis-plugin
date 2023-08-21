@@ -15,6 +15,7 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 import unittest
+import zipfile
 from pathlib import Path
 
 from qgis.core import (
@@ -103,7 +104,11 @@ class LayerExporterTest(unittest.TestCase):
         )
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
-        self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
+        self.assertEqual(len(gpkg_files), 1)
+
         self.assertEqual(
             result.qgis_style_xml[:58],
             "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
@@ -128,6 +133,10 @@ class LayerExporterTest(unittest.TestCase):
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            gpkg_files = [f for f in z.namelist() if f.endswith('gpkg')]
+        self.assertEqual(len(gpkg_files), 1)
 
         out_layer = QgsVectorLayer(result.filename, 'test')
         self.assertTrue(out_layer.isValid())
@@ -148,6 +157,10 @@ class LayerExporterTest(unittest.TestCase):
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            tif_files = [f for f in z.namelist() if f.endswith('tif')]
+        self.assertEqual(len(tif_files), 1)
         self.assertEqual(
             result.qgis_style_xml[:58],
             "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
