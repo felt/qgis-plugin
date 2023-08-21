@@ -35,6 +35,7 @@ from qgis.PyQt.QtNetwork import (
 from .api_client import API_CLIENT
 from .map import Map
 from .thumbnail_manager import AsyncThumbnailManager
+from ..gui import GuiUtils
 
 
 class RecentMapsModel(QAbstractItemModel):
@@ -47,6 +48,7 @@ class RecentMapsModel(QAbstractItemModel):
     ThumbnailRole = Qt.UserRole + 3
     IdRole = Qt.UserRole + 4
     MapRole = Qt.UserRole + 5
+    SubTitleRole = Qt.UserRole + 6
 
     LIMIT = 100
 
@@ -54,6 +56,7 @@ class RecentMapsModel(QAbstractItemModel):
         super().__init__(parent)
 
         self._current_reply = None
+        self._new_map_title: Optional[str] = None
         self._filter_string: Optional[str] = None
         self.maps: List[Map] = []
         self._next_page: Optional[str] = None
@@ -61,6 +64,13 @@ class RecentMapsModel(QAbstractItemModel):
 
         self._thumbnail_manager = AsyncThumbnailManager()
         self._thumbnail_manager.downloaded.connect(self._thumbnail_downloaded)
+
+    def set_new_map_title(self, title: str):
+        """
+        Sets the title to use for the new map item
+        """
+        self._new_map_title = title
+        self.dataChanged.emit(self.index(0, 0), self.index(0, 0))
 
     def set_filter_string(self, filter_string: str):
         """
@@ -119,8 +129,8 @@ class RecentMapsModel(QAbstractItemModel):
         else:
             self._next_page = next_page
 
-        self.beginInsertRows(QModelIndex(), len(self.maps),
-                             len(self.maps) + len(result) - 1)
+        self.beginInsertRows(QModelIndex(), 1 + len(self.maps),
+                             1 + len(self.maps) + len(result) - 1)
 
         thumbnail_urls = set()
         for map_json in result.get('data', []):
@@ -146,7 +156,7 @@ class RecentMapsModel(QAbstractItemModel):
         if column < 0 or column >= self.columnCount():
             return QModelIndex()
 
-        if not parent.isValid() and 0 <= row < len(self.maps):
+        if not parent.isValid() and 0 <= row < 1 + len(self.maps):
             return self.createIndex(row, column)
 
         return QModelIndex()
@@ -156,7 +166,7 @@ class RecentMapsModel(QAbstractItemModel):
 
     def rowCount(self, parent=QModelIndex()):
         if not parent.isValid():
-            return len(self.maps)
+            return 1 + len(self.maps)
         # no child items
         return 0
 
@@ -164,6 +174,17 @@ class RecentMapsModel(QAbstractItemModel):
         return 1
 
     def data(self, index, role=Qt.DisplayRole):
+        if index.row() == 0 and not index.parent().isValid():
+            # special "New map" item
+            if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):
+                return self._new_map_title
+            if role == self.SubTitleRole:
+                return self.tr('New map')
+            if role in (self.ThumbnailRole, Qt.DecorationRole):
+                return GuiUtils.get_svg_as_image('plus.svg', 16, 16)
+
+            return None
+
         _map = self.index2map(index)
         if _map:
             if role == self.MapRole:
@@ -203,11 +224,11 @@ class RecentMapsModel(QAbstractItemModel):
         """
         Returns the map at the given model index
         """
-        if not index.isValid() or index.row() < 0 or index.row() >= len(
+        if not index.isValid() or index.row() < 1 or index.row() >= 1 + len(
                 self.maps):
             return None
 
-        return self.maps[index.row()]
+        return self.maps[index.row() - 1]
 
     def _thumbnail_downloaded(self, url: str):
         """
@@ -215,5 +236,5 @@ class RecentMapsModel(QAbstractItemModel):
         """
         for row, _map in enumerate(self.maps):
             if _map.thumbnail_url == url:
-                index = self.index(row, 0)
+                index = self.index(1 + row, 0)
                 self.dataChanged.emit(index, index)

@@ -118,8 +118,6 @@ class RecentMapDelegate(QStyledItemDelegate):
             QStyle.PE_PanelItemViewItem, option, painter, option.widget)
 
         _map: Map = index.data(RecentMapsModel.MapRole)
-        if not _map:
-            return
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -160,9 +158,11 @@ class RecentMapDelegate(QStyledItemDelegate):
             )
 
         heading_font_size = 14
+        subheading_font_size = 12
         line_scale = 1
         if platform.system() == "Darwin":
             heading_font_size = 16
+            subheading_font_size = 14
             line_scale = 1.3
 
         font = QFont(option.font)
@@ -177,7 +177,7 @@ class RecentMapDelegate(QStyledItemDelegate):
                 self.HORIZONTAL_MARGIN * 2
         )
 
-        line_heights = [1.6 * line_scale]
+        line_heights = [1.6 * line_scale, 2.8 * line_scale]
 
         painter.setBrush(Qt.NoBrush)
         font_color = option.palette.color(
@@ -189,8 +189,22 @@ class RecentMapDelegate(QStyledItemDelegate):
                 left_text_edge,
                 inner_rect.top() + int(metrics.height() * line_heights[0]),
             ),
-            _map.title,
+            index.data(RecentMapsModel.TitleRole),
         )
+
+        sub_title = index.data(RecentMapsModel.SubTitleRole)
+        if sub_title:
+            font_color.setAlphaF(0.5)
+            painter.setPen(QPen(font_color))
+            font.setPointSizeF(subheading_font_size)
+            painter.setFont(font)
+            painter.drawText(
+                QPointF(
+                    left_text_edge,
+                    inner_rect.top() + int(metrics.height() * line_heights[1]),
+                ),
+                sub_title
+            )
 
         painter.restore()
     # pylint: enable=too-many-locals
@@ -219,6 +233,12 @@ class RecentMapsListView(QListView):
         """
         self._model.set_filter_string(filter_string)
 
+    def set_new_map_title(self, title: str):
+        """
+        Sets the title to use for the new map item
+        """
+        self._model.set_new_map_title(title)
+
 
 class RecentMapsWidget(QWidget):
     """
@@ -241,3 +261,9 @@ class RecentMapsWidget(QWidget):
         self.setLayout(vl)
 
         self._filter.textChanged.connect(self._view.set_filter_string)
+
+    def set_new_map_title(self, title: str):
+        """
+        Sets the title to use for the new map item
+        """
+        self._view.set_new_map_title(title)
