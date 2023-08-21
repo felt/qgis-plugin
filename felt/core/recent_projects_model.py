@@ -46,6 +46,7 @@ class RecentMapsModel(QAbstractItemModel):
     UrlRole = Qt.UserRole + 2
     ThumbnailRole = Qt.UserRole + 3
     IdRole = Qt.UserRole + 4
+    MapRole = Qt.UserRole + 5
 
     LIMIT = 100
 
@@ -165,6 +166,8 @@ class RecentMapsModel(QAbstractItemModel):
     def data(self, index, role=Qt.DisplayRole):
         _map = self.index2map(index)
         if _map:
+            if role == self.MapRole:
+                return _map
             if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):
                 return _map.title
             if role == self.UrlRole:
@@ -182,7 +185,7 @@ class RecentMapsModel(QAbstractItemModel):
         if not index.isValid():
             return f
 
-        return f | Qt.ItemIsEnabled
+        return f | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def canFetchMore(self, index: QModelIndex):
         if not self.maps:

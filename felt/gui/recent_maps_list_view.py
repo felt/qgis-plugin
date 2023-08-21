@@ -1,7 +1,14 @@
 import platform
 from typing import Optional
 
-from qgis.PyQt.QtCore import Qt, QObject, QModelIndex, QSize, QRectF, QPointF
+from qgis.PyQt.QtCore import (
+    Qt,
+    QObject,
+    QModelIndex,
+    QSize,
+    QRectF,
+    QPointF
+)
 from qgis.PyQt.QtGui import (
     QFontMetrics,
     QPainter,
@@ -20,8 +27,12 @@ from qgis.PyQt.QtWidgets import (
     QListView,
     QFrame,
     QApplication,
-    QStyle
+    QStyle,
+    QVBoxLayout,
+    QHBoxLayout
 )
+
+from qgis.gui import QgsFilterLineEdit
 
 from ..core import Map, RecentMapsModel
 
@@ -179,11 +190,6 @@ class RecentMapsListView(QListView):
         delegate = RecentMapDelegate(self)
         self.setItemDelegate(delegate)
 
-        self.setFrameShape(QFrame.NoFrame)
-        self.viewport().setStyleSheet(
-            "#qt_scrollarea_viewport{ background: transparent; }"
-        )
-
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
     def set_filter_string(self, filter_string: str):
@@ -191,3 +197,26 @@ class RecentMapsListView(QListView):
         Sets a text filter for the view
         """
         self._model.set_filter_string(filter_string)
+
+
+class RecentMapsWidget(QWidget):
+    """
+    Custom widget allowing users to select from recent maps
+    """
+
+    def __init__(self, parent:Optional[QWidget] = None):
+        super().__init__(parent)
+
+        vl = QVBoxLayout()
+        vl.setContentsMargins(0,0,0,0)
+
+        self._filter = QgsFilterLineEdit()
+        self._filter.setShowSearchIcon(True)
+        self._filter.setPlaceholderText(self.tr('Search maps...'))
+        vl.addWidget(self._filter)
+
+        self._view = RecentMapsListView()
+        vl.addWidget(self._view, 1)
+        self.setLayout(vl)
+
+        self._filter.textChanged.connect(self._view.set_filter_string)
