@@ -78,6 +78,9 @@ class RecentMapsModel(QAbstractItemModel):
         self._load_next_results()
 
     def _load_next_results(self):
+        """
+        Triggered when the next page of results needs to be loaded
+        """
         self._current_reply = API_CLIENT.recent_maps_async(
             filter_string=self._filter_string,
             cursor=self._next_page
@@ -86,6 +89,9 @@ class RecentMapsModel(QAbstractItemModel):
             partial(self._reply_finished, self._current_reply))
 
     def _reply_finished(self, reply: QNetworkReply):
+        """
+        Triggered when an open network request is finished
+        """
         if sip.isdeleted(self):
             return
 
@@ -134,7 +140,7 @@ class RecentMapsModel(QAbstractItemModel):
 
     # Qt model interface
 
-    # pylint: disable=missing-docstring, unused-arguments
+    # pylint: disable=missing-docstring,unused-argument
     def index(self, row, column, parent=QModelIndex()):
         if column < 0 or column >= self.columnCount():
             return QModelIndex()
@@ -178,18 +184,18 @@ class RecentMapsModel(QAbstractItemModel):
 
         return f | Qt.ItemIsEnabled
 
-    def canFetchMore(self, QModelIndex):
+    def canFetchMore(self, index: QModelIndex):
         if not self.maps:
             return True
         return self._next_page is not None
 
-    def fetchMore(self, QModelIndex):
+    def fetchMore(self, index: QModelIndex):
         if self._current_reply:
             return
 
         self._load_next_results()
 
-    # pylint: enable=missing-docstring, unused-arguments
+    # pylint: enable=missing-docstring,unused-argument
     def index2map(self, index: QModelIndex) -> Optional[Map]:
         """
         Returns the map at the given model index
