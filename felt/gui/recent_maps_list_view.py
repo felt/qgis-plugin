@@ -25,13 +25,10 @@ from qgis.PyQt.QtWidgets import (
     QStyleOptionViewItem,
     QAbstractItemView,
     QListView,
-    QFrame,
     QApplication,
     QStyle,
-    QVBoxLayout,
-    QHBoxLayout
+    QVBoxLayout
 )
-
 from qgis.gui import QgsFilterLineEdit
 
 from ..core import Map, RecentMapsModel
@@ -84,16 +81,21 @@ class RecentMapDelegate(QStyledItemDelegate):
             self.THUMBNAIL_CORNER_RADIUS,
             self.THUMBNAIL_CORNER_RADIUS,
         )
-        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+        painter.setCompositionMode(
+            QPainter.CompositionMode.CompositionMode_SourceIn)
         painter.drawImage(0, 0, scaled)
         painter.end()
         return im_out
 
     def paint(
-        self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex
+            self,
+            painter: QPainter,
+            option: QStyleOptionViewItem,
+            index: QModelIndex
     ):
         self.initStyleOption(option, index)
-        style = QApplication.style() if option.widget is None else option.widget.style()
+        style = QApplication.style() if option.widget is None \
+            else option.widget.style()
 
         is_selected = option.state & QStyle.State_Selected
 
@@ -156,7 +158,9 @@ class RecentMapDelegate(QStyledItemDelegate):
         painter.setFont(font)
 
         left_text_edge = (
-            inner_rect.left() + self.THUMBNAIL_WIDTH + self.HORIZONTAL_MARGIN * 2
+                inner_rect.left() +
+                self.THUMBNAIL_WIDTH +
+                self.HORIZONTAL_MARGIN * 2
         )
 
         line_heights = [1.6 * line_scale]
@@ -204,11 +208,11 @@ class RecentMapsWidget(QWidget):
     Custom widget allowing users to select from recent maps
     """
 
-    def __init__(self, parent:Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
         vl = QVBoxLayout()
-        vl.setContentsMargins(0,0,0,0)
+        vl.setContentsMargins(0, 0, 0, 0)
 
         self._filter = QgsFilterLineEdit()
         self._filter.setShowSearchIcon(True)
