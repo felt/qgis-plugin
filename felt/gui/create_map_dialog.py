@@ -257,6 +257,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
 
         target_map = self.maps_widget.selected_map()
+        self.map_uploader_task.associated_map = target_map
 
         self._map_title = target_map.title if target_map else \
             self.map_uploader_task.default_map_title()
@@ -290,7 +291,7 @@ class CreateMapDialog(QDialog, WIDGET):
         """
         Called when the upload operation finishes
         """
-        self.created_map = self.map_uploader_task.created_map
+        self.created_map = self.map_uploader_task.associated_map
         self.map_title_label.setText(self.tr('Upload complete — {}').format(
             self._map_title)
         )
