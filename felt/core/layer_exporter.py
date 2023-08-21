@@ -87,7 +87,10 @@ class LayerExporter(QObject):
             return True
 
         if isinstance(layer, QgsRasterLayer):
-            return layer.providerType() == 'gdal'
+            return layer.providerType() in (
+                'gdal',
+                'virtualraster'
+            )
 
         return False
 
