@@ -75,6 +75,21 @@ class LayerExporterTest(unittest.TestCase):
         file_name2 = exporter.generate_file_name('.gpkg')
         self.assertNotEqual(file_name, file_name2)
 
+    def test_layer_style(self):
+        """
+        Test retrieving original layer style XML
+        """
+        file = str(TEST_DATA_PATH / "points.gpkg")
+        layer = QgsVectorLayer(file, "test")
+
+        style = LayerExporter._get_original_style_xml(layer)
+        self.assertEqual(
+            style[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
+        # should only be the layer's style, not the source information
+        self.assertNotIn('points.gpkg', style)
+
     def test_vector_conversion(self):
         """
         Test vector layer conversion
@@ -89,6 +104,10 @@ class LayerExporterTest(unittest.TestCase):
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
+        self.assertEqual(
+            result.qgis_style_xml[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
 
         out_layer = QgsVectorLayer(result.filename, 'test')
         self.assertTrue(out_layer.isValid())
@@ -129,6 +148,10 @@ class LayerExporterTest(unittest.TestCase):
         result = exporter.export_layer_for_felt(layer)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
+        self.assertEqual(
+            result.qgis_style_xml[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
 
         out_layer = QgsRasterLayer(result.filename, 'test')
         self.assertTrue(out_layer.isValid())

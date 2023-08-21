@@ -23,6 +23,10 @@ from qgis.PyQt.QtCore import (
     QVariant,
     QObject
 )
+from qgis.PyQt.QtXml import (
+    QDomDocument
+)
+
 from qgis.core import (
     QgsFeedback,
     QgsMapLayer,
@@ -43,7 +47,8 @@ from qgis.core import (
     QgsSimpleFillSymbolLayer,
     QgsSimpleLineSymbolLayer,
     QgsSimpleMarkerSymbolLayer,
-    QgsEllipseSymbolLayer
+    QgsEllipseSymbolLayer,
+    QgsReadWriteContext
 )
 
 from .enums import LayerExportResult
@@ -59,6 +64,7 @@ class ExportResult:
     filename: str
     result: LayerExportResult
     error_message: str
+    qgis_style_xml: str
     style: Optional[LayerStyle] = None
 
 
@@ -174,6 +180,16 @@ class LayerExporter(QObject):
             return self.export_raster_layer(layer, feedback)
         assert False
 
+    @staticmethod
+    def _get_original_style_xml(layer: QgsMapLayer) -> str:
+        """
+        Returns the original QGIS xml styling content for a layer
+        """
+        doc = QDomDocument('qgis')
+        context = QgsReadWriteContext()
+        layer.exportNamedStyle(doc, context)
+        return doc.toString(2)
+
     def export_vector_layer(
             self,
             layer: QgsVectorLayer,
@@ -259,6 +275,7 @@ class LayerExporter(QObject):
             filename=dest_file,
             result=layer_export_result,
             error_message=error_message,
+            qgis_style_xml=self._get_original_style_xml(layer),
             style=self.representative_layer_style(layer)
         )
 
@@ -350,5 +367,6 @@ class LayerExporter(QObject):
         return ExportResult(
             filename=dest_file,
             result=layer_export_result,
-            error_message=error_message
+            error_message=error_message,
+            qgis_style_xml=self._get_original_style_xml(layer)
         )
