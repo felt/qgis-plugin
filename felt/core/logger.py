@@ -51,6 +51,7 @@ class Logger(QObject):
     PACKAGING_VECTOR = 'packaging_vector'
     MAP_EXPORT = 'map_export'
     S3_UPLOAD = 's3_upload'
+    UNSUPPORTED_LAYER = "unsupported_layer"
 
     def __init__(self):  # pylint: disable=useless-parent-delegation
         super().__init__()

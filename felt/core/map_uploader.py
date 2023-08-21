@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+from collections import defaultdict
 from pathlib import Path
 from typing import (
     Optional,
@@ -65,6 +66,7 @@ class MapUploaderTask(QgsTask):
         )
         project = project or QgsProject.instance()
 
+        self.unsupported_layers = []
         if layers:
             self.current_map_crs = QgsCoordinateReferenceSystem('EPSG:4326')
             self.current_map_extent = QgsMapLayerUtils.combinedExtent(
@@ -75,7 +77,7 @@ class MapUploaderTask(QgsTask):
             self.layers = [
                 layer.clone() for layer in layers
             ]
-            self.unsupported_layers = []
+            self.unsupported_layer_details = {}
         else:
             if iface is not None:
                 self.current_map_extent = iface.mapCanvas().extent()
@@ -86,20 +88,16 @@ class MapUploaderTask(QgsTask):
                 self.current_map_extent = view_settings.defaultViewExtent()
                 self.current_map_crs = view_settings.defaultViewExtent().crs()
             layer_tree_root = project.layerTreeRoot()
+            visible_layers = [layer for layer in
+                reversed(layer_tree_root.layerOrder()) if layer_tree_root.findLayer(layer).isVisible()
+            ]
+
             self.layers = [
-                layer.clone() for layer in
-                reversed(layer_tree_root.layerOrder()) if
-                LayerExporter.can_export_layer(layer) and
-                layer_tree_root.findLayer(layer).isVisible()
+                layer.clone() for layer in visible_layers if
+                LayerExporter.can_export_layer(layer)
             ]
-            self.unsupported_layers = [
-                layer.name() for _, layer in project.mapLayers().items() if
-                not LayerExporter.can_export_layer(layer)
-            ]
-            for layer_tree_layer in project.layerTreeRoot().findLayers():
-                if not layer_tree_layer.layer() and \
-                        not layer_tree_layer.name() in self.unsupported_layers:
-                    self.unsupported_layers.append(layer_tree_layer.name())
+
+            self._build_unsupported_layer_details(project, visible_layers)
 
         for layer in self.layers:
             layer.moveToThread(None)
@@ -135,6 +133,37 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+
+    def _build_unsupported_layer_details(self,
+                                         project: QgsProject,
+                                         layers: List[QgsMapLayer]):
+        """
+        Builds up details of unsupported layers, so that we can report
+        these to users and to Felt
+        """
+        unsupported_layer_type_count = defaultdict(int)
+        for layer in layers:
+            if LayerExporter.can_export_layer(layer):
+                continue
+
+            self.unsupported_layers.append(layer.name())
+            if layer.type() == QgsMapLayer.PluginLayer:
+                id_string = layer.pluginLayerType()
+            else:
+                id_string = str(layer.__class__.__name__)
+
+            unsupported_layer_type_count[id_string] = (
+                    unsupported_layer_type_count[id_string] + 1)
+
+        self.unsupported_layer_details = {}
+        for k, v in unsupported_layer_type_count.items():
+            self.unsupported_layer_details[k] = v
+
+        for layer_tree_layer in project.layerTreeRoot().findLayers():
+            if layer_tree_layer.isVisible() and \
+                    not layer_tree_layer.layer() and \
+                    not layer_tree_layer.name() in self.unsupported_layers:
+                self.unsupported_layers.append(layer_tree_layer.name())
 
     def default_map_title(self) -> str:
         """
@@ -206,6 +235,17 @@ class MapUploaderTask(QgsTask):
 
         if self.isCanceled():
             return False
+
+        if self.unsupported_layer_details:
+            message = {
+                    "type": Logger.UNSUPPORTED_LAYER,
+                }
+            for k, v in self.unsupported_layer_details.items():
+                message[k] = v
+
+            Logger.instance().log_message_json(
+                message
+            )
 
         self.status_changed.emit(self.tr('Creating map'))
         reply = API_CLIENT.create_map(
