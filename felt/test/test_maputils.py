@@ -33,6 +33,9 @@ class MapUtilsTest(unittest.TestCase):
     """Test MapUtils work."""
 
     def test_extent_to_zoom(self):
+        """
+        Test conversion of map extents to leaflet zoom levels
+        """
         self.assertEqual(
             MapUtils.calculate_leaflet_tile_zoom_for_extent(
                 QgsReferencedRectangle(
