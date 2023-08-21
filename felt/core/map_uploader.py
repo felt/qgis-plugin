@@ -88,8 +88,10 @@ class MapUploaderTask(QgsTask):
                 self.current_map_extent = view_settings.defaultViewExtent()
                 self.current_map_crs = view_settings.defaultViewExtent().crs()
             layer_tree_root = project.layerTreeRoot()
-            visible_layers = [layer for layer in
-                reversed(layer_tree_root.layerOrder()) if layer_tree_root.findLayer(layer).isVisible()
+            visible_layers = [
+                layer
+                for layer in reversed(layer_tree_root.layerOrder())
+                if layer_tree_root.findLayer(layer).isVisible()
             ]
 
             self.layers = [
@@ -350,11 +352,13 @@ class MapUploaderTask(QgsTask):
             )
             if not upload_params.url:
                 self.error_string = self.tr('Could not prepare layer upload')
+                message = "Error retrieving upload parameters: {}".format(
+                            self.error_string
+                        )
                 Logger.instance().log_error_json(
                     {
-                        'type': Logger.S3_UPLOAD,
-                        'error': 'Error retrieving upload parameters: {}'.format(
-                            self.error_string)
+                        "type": Logger.S3_UPLOAD,
+                        "error": message,
                     }
                 )
 
