@@ -57,7 +57,7 @@ class RecentMapDelegate(QStyledItemDelegate):
     THUMBNAIL_CORNER_RADIUS = 10
     VERTICAL_MARGIN = 7
     HORIZONTAL_MARGIN = 5
-    THUMBNAIL_RATIO = 4/3
+    THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
 
     def process_thumbnail(self, thumbnail: QImage, height: int) -> QImage:
@@ -76,7 +76,8 @@ class RecentMapDelegate(QStyledItemDelegate):
             Qt.SmoothTransformation,
         )
 
-        im_out = QImage(target_size.width(), target_size.height(), QImage.Format_ARGB32)
+        im_out = QImage(target_size.width(), target_size.height(),
+                        QImage.Format_ARGB32)
         im_out.fill(Qt.transparent)
         painter = QPainter(im_out)
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -136,8 +137,8 @@ class RecentMapDelegate(QStyledItemDelegate):
             -self.VERTICAL_MARGIN,
         )
 
-        thumbnail_width = int(inner_rect.height()
-                             * RecentMapDelegate.THUMBNAIL_RATIO)
+        thumbnail_width = int(inner_rect.height() *
+                              RecentMapDelegate.THUMBNAIL_RATIO)
 
         thumbnail_image = index.data(RecentMapsModel.ThumbnailRole)
         if thumbnail_image and not thumbnail_image.isNull():
