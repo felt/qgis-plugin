@@ -138,8 +138,6 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         option.palette.setColor(QPalette.Highlight, self.SELECTED_ROW_COLOR)
 
-        is_selected = option.state & QStyle.State_Selected
-
         # draw background for item (i.e. selection background)
         style.drawPrimitive(
             QStyle.PE_PanelItemViewItem, option, painter, option.widget)
