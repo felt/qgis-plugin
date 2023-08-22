@@ -253,31 +253,30 @@ class MapUploaderTask(QgsTask):
             )
 
         if not self.associated_map:
-	        self.status_changed.emit(self.tr('Creating map'))
-	        reply = API_CLIENT.create_map(
-	            self.map_center.y(),
-	            self.map_center.x(),
-	            self.initial_zoom_level,
-	            self.project_title,
-	            blocking=True,
-	            feedback=self.feedback
-	        )
+            self.status_changed.emit(self.tr('Creating map'))
+            reply = API_CLIENT.create_map(
+                self.map_center.y(),
+                self.map_center.x(),
+                self.initial_zoom_level,
+                self.project_title,
+                blocking=True,
+                feedback=self.feedback
+            )
 
-	        if reply.error() != QNetworkReply.NoError:
-	            self.error_string = reply.errorString()
-	            Logger.instance().log_error_json(
-	                {
-	                    'type': Logger.MAP_EXPORT,
-	                    'error': 'Error creating map: {}'.format(self.error_string)
-	                }
-	            )
+            if reply.error() != QNetworkReply.NoError:
+                self.error_string = reply.errorString()
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error creating map: {}'.format(self.error_string)
+                    }
+                )
+                return False
 
-	            return False
+            if self.isCanceled():
+                return False
 
-	        if self.isCanceled():
-	            return False
-
-            self.created_map = Map.from_json(reply.content().data().decode())
+            self.associated_map = Map.from_json(reply.content().data().decode())
             self.status_changed.emit(self.tr('Successfully created map'))
 
         multi_step_feedback.step_finished()
