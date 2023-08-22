@@ -29,15 +29,14 @@ from qgis.PyQt.QtGui import (
     QColor,
     QPainter
 )
+from qgis.PyQt.QtSvg import QSvgRenderer
 from qgis.PyQt.QtWidgets import (
     QMenu
 )
-from qgis.PyQt.QtSvg import QSvgRenderer
 from qgis.core import (
     Qgis
 )
 from qgis.utils import iface
-
 
 FONT_FAMILIES = ""
 
@@ -143,7 +142,8 @@ class GuiUtils:
 
     @staticmethod
     def get_svg_as_image(icon: str, width: int, height: int,
-                         background_color: Optional[QColor] = None) -> QImage:
+                         background_color: Optional[QColor] = None,
+                         device_pixel_ratio: float = 1) -> QImage:
         """
         Returns an SVG returned as an image
         """
@@ -152,13 +152,18 @@ class GuiUtils:
             return QImage()
 
         renderer = QSvgRenderer(path)
-        image = QImage(width, height, QImage.Format_ARGB32)
+        image = QImage(int(width * device_pixel_ratio),
+                       int(height * device_pixel_ratio),
+                       QImage.Format_ARGB32)
+        image.setDevicePixelRatio(device_pixel_ratio)
         if not background_color:
             image.fill(Qt.transparent)
         else:
             image.fill(background_color)
 
         painter = QPainter(image)
+        painter.scale(1 / device_pixel_ratio,
+                      1 / device_pixel_ratio)
         renderer.render(painter)
         painter.end()
 
