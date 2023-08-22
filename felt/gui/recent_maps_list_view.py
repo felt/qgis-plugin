@@ -56,7 +56,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
     THUMBNAIL_CORNER_RADIUS = 10
     VERTICAL_MARGIN = 7
-    HORIZONTAL_MARGIN = 5
+    HORIZONTAL_MARGIN = 7
     THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
 
