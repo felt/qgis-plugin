@@ -84,7 +84,7 @@ class RecentMapDelegate(QStyledItemDelegate):
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(0, 0, 0)))
         painter.drawRoundedRect(
-            QRectF(0, 0, target_size.width(), target_size.height()),
+            QRectF(1, 1, target_size.width() - 2, target_size.height() - 2),
             self.THUMBNAIL_CORNER_RADIUS,
             self.THUMBNAIL_CORNER_RADIUS,
         )
@@ -92,6 +92,20 @@ class RecentMapDelegate(QStyledItemDelegate):
             QPainter.CompositionMode.CompositionMode_SourceIn)
         painter.drawImage(int((target_size.width() - scaled.width()) / 2),
                           0, scaled)
+
+        painter.setCompositionMode(
+            QPainter.CompositionMode.CompositionMode_SourceOver)
+        pen = QPen(QColor(255, 255, 255))
+        pen.setWidth(2)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(
+            QRectF(1, 1, target_size.width() - 2, target_size.height() - 2),
+            self.THUMBNAIL_CORNER_RADIUS,
+            self.THUMBNAIL_CORNER_RADIUS,
+        )
+
         painter.end()
         return im_out
 
