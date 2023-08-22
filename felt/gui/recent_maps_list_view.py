@@ -67,7 +67,8 @@ class RecentMapDelegate(QStyledItemDelegate):
     def process_thumbnail(self,
                           thumbnail: QImage,
                           height: int,
-                          is_new_map_thumbnail: bool) -> QImage:
+                          is_new_map_thumbnail: bool,
+                          device_pixel_ratio: float) -> QImage:
         """
         Processes a raw thumbnail image, resizing to required size and
         rounding off corners
@@ -76,14 +77,17 @@ class RecentMapDelegate(QStyledItemDelegate):
             int(height * RecentMapDelegate.THUMBNAIL_RATIO), height
         )
         image_ratio = thumbnail.width() / thumbnail.height()
-        uncropped_thumbnail_width = int(image_ratio * height)
+        uncropped_thumbnail_width = int(image_ratio *
+                                        height *
+                                        device_pixel_ratio)
         scaled = thumbnail.scaled(
-            QSize(uncropped_thumbnail_width, height),
+            QSize(uncropped_thumbnail_width, int(height * device_pixel_ratio)),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation,
         )
 
-        im_out = QImage(target_size.width(), target_size.height(),
+        im_out = QImage(int(target_size.width() * device_pixel_ratio),
+                        int(target_size.height() * device_pixel_ratio),
                         QImage.Format_ARGB32)
         im_out.fill(Qt.transparent)
         painter = QPainter(im_out)
@@ -91,13 +95,17 @@ class RecentMapDelegate(QStyledItemDelegate):
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(0, 0, 0)))
         painter.drawRoundedRect(
-            QRectF(1, 1, target_size.width() - 2, target_size.height() - 2),
-            self.THUMBNAIL_CORNER_RADIUS,
-            self.THUMBNAIL_CORNER_RADIUS,
+            QRectF(1 * device_pixel_ratio,
+                   1 * device_pixel_ratio,
+                   (target_size.width() - 2) * device_pixel_ratio,
+                   (target_size.height() - 2) * device_pixel_ratio),
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
         )
         painter.setCompositionMode(
             QPainter.CompositionMode.CompositionMode_SourceIn)
-        painter.drawImage(int((target_size.width() - scaled.width()) / 2),
+        painter.drawImage(int((target_size.width() * device_pixel_ratio -
+                               scaled.width()) / 2),
                           0, scaled)
 
         painter.setCompositionMode(
@@ -105,14 +113,17 @@ class RecentMapDelegate(QStyledItemDelegate):
         outline_color = QColor(255, 255, 255) if not is_new_map_thumbnail \
             else QColor(220, 220, 220)
         pen = QPen(outline_color)
-        pen.setWidth(2)
+        pen.setWidthF(2 * device_pixel_ratio)
         pen.setCosmetic(True)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawRoundedRect(
-            QRectF(1, 1, target_size.width() - 2, target_size.height() - 2),
-            self.THUMBNAIL_CORNER_RADIUS,
-            self.THUMBNAIL_CORNER_RADIUS,
+            QRectF(device_pixel_ratio,
+                   device_pixel_ratio,
+                   (target_size.width() - 2) * device_pixel_ratio,
+                   (target_size.height() - 2) * device_pixel_ratio),
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
         )
 
         painter.end()
@@ -140,6 +151,9 @@ class RecentMapDelegate(QStyledItemDelegate):
         self.initStyleOption(option, index)
         style = QApplication.style() if option.widget is None \
             else option.widget.style()
+
+        device_pixel_ratio = 1.0 if option.widget is None else \
+            option.widget.devicePixelRatioF()
 
         option.palette.setColor(QPalette.Highlight, self.SELECTED_ROW_COLOR)
 
@@ -170,15 +184,16 @@ class RecentMapDelegate(QStyledItemDelegate):
             scaled = self.process_thumbnail(
                 thumbnail_image,
                 int(inner_rect.height()),
-                is_new_map_index
+                is_new_map_index,
+                device_pixel_ratio
             )
 
             painter.drawImage(
                 QRectF(
                     inner_rect.left(),
                     inner_rect.top(),
-                    scaled.width(),
-                    scaled.height(),
+                    scaled.width() / device_pixel_ratio,
+                    scaled.height() / device_pixel_ratio,
                 ),
                 scaled,
             )
