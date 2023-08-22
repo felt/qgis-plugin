@@ -183,17 +183,12 @@ class RecentMapDelegate(QStyledItemDelegate):
                 scaled,
             )
 
-        heading_font_size = 14
-        subheading_font_size = 12
         line_scale = 1
         if platform.system() == "Darwin":
-            heading_font_size = 16
-            subheading_font_size = 14
             line_scale = 1.3
 
         font = QFont(option.font)
         metrics = QFontMetrics(font)
-        font.setPointSizeF(heading_font_size)
         font.setBold(False)
         painter.setFont(font)
 
@@ -218,7 +213,6 @@ class RecentMapDelegate(QStyledItemDelegate):
         sub_title = index.data(RecentMapsModel.SubTitleRole)
         if sub_title:
             painter.setPen(QPen(self.SUBHEADING_COLOR))
-            font.setPointSizeF(subheading_font_size)
             painter.setFont(font)
             painter.drawText(
                 QPointF(
