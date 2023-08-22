@@ -49,6 +49,8 @@ from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
+from .exceptions import LayerPackagingException
+from .map_utils import MapUtils
 
 
 class MapUploaderTask(QgsTask):
@@ -60,7 +62,8 @@ class MapUploaderTask(QgsTask):
 
     def __init__(self,
                  project: Optional[QgsProject] = None,
-                 layers: Optional[List[QgsMapLayer]] = None):
+                 layers: Optional[List[QgsMapLayer]] = None,
+                 target_map: Optional[Map] = None):
         super().__init__(
             'Sharing Map'
         )
@@ -131,7 +134,7 @@ class MapUploaderTask(QgsTask):
                 QSize(1024, 800)
             )
 
-        self.created_map: Optional[Map] = None
+        self.associated_map: Optional[Map] = target_map
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
@@ -249,32 +252,33 @@ class MapUploaderTask(QgsTask):
                 message
             )
 
-        self.status_changed.emit(self.tr('Creating map'))
-        reply = API_CLIENT.create_map(
-            self.map_center.y(),
-            self.map_center.x(),
-            self.initial_zoom_level,
-            self.project_title,
-            blocking=True,
-            feedback=self.feedback
-        )
-
-        if reply.error() != QNetworkReply.NoError:
-            self.error_string = reply.errorString()
-            Logger.instance().log_error_json(
-                {
-                    'type': Logger.MAP_EXPORT,
-                    'error': 'Error creating map: {}'.format(self.error_string)
-                }
+        if not self.associated_map:
+            self.status_changed.emit(self.tr('Creating map'))
+            reply = API_CLIENT.create_map(
+                self.map_center.y(),
+                self.map_center.x(),
+                self.initial_zoom_level,
+                self.project_title,
+                blocking=True,
+                feedback=self.feedback
             )
 
-            return False
+            if reply.error() != QNetworkReply.NoError:
+                self.error_string = reply.errorString()
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error creating map: {}'.format(self.error_string)
+                    }
+                )
+                return False
 
-        if self.isCanceled():
-            return False
+            if self.isCanceled():
+                return False
 
-        self.created_map = Map.from_json(reply.content().data().decode())
-        self.status_changed.emit(self.tr('Successfully created map'))
+            self.associated_map = Map.from_json(reply.content().data().decode())
+            self.status_changed.emit(self.tr('Successfully created map'))
+
         multi_step_feedback.step_finished()
 
         exporter = LayerExporter(
@@ -325,7 +329,7 @@ class MapUploaderTask(QgsTask):
             )
 
             reply = API_CLIENT.prepare_layer_upload(
-                map_id=self.created_map.id,
+                map_id=self.associated_map.id,
                 name=layer.name(),
                 file_names=[Path(details.filename).name],
                 style=details.style,
@@ -409,7 +413,7 @@ class MapUploaderTask(QgsTask):
             )
 
             reply = API_CLIENT.finalize_layer_upload(
-                self.created_map.id,
+                self.associated_map.id,
                 upload_params.layer_id,
                 Path(details.filename).name,
                 blocking=True,
