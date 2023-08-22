@@ -57,35 +57,40 @@ class RecentMapDelegate(QStyledItemDelegate):
     THUMBNAIL_CORNER_RADIUS = 10
     VERTICAL_MARGIN = 7
     HORIZONTAL_MARGIN = 5
-    THUMBNAIL_WIDTH = 125
+    THUMBNAIL_RATIO = 4/3
     THUMBNAIL_MARGIN = 0
 
-    def process_thumbnail(self, thumbnail: QImage, size: QSize) -> QImage:
+    def process_thumbnail(self, thumbnail: QImage, height: int) -> QImage:
         """
         Processes a raw thumbnail image, resizing to required size and
         rounding off corners
         """
-        max_thumbnail_width = size.width()
-        max_thumbnail_height = int(min(size.height(), thumbnail.height()))
+        target_size = QSize(
+            int(height * RecentMapDelegate.THUMBNAIL_RATIO), height
+        )
+        image_ratio = thumbnail.width() / thumbnail.height()
+        uncropped_thumbnail_width = int(image_ratio * height)
         scaled = thumbnail.scaled(
-            QSize(max_thumbnail_width, max_thumbnail_height),
+            QSize(uncropped_thumbnail_width, height),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation,
         )
 
-        im_out = QImage(scaled.width(), scaled.height(), QImage.Format_ARGB32)
+        im_out = QImage(target_size.width(), target_size.height(), QImage.Format_ARGB32)
         im_out.fill(Qt.transparent)
         painter = QPainter(im_out)
+        painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(0, 0, 0)))
         painter.drawRoundedRect(
-            QRectF(0, 0, scaled.width(), scaled.height()),
+            QRectF(0, 0, target_size.width(), target_size.height()),
             self.THUMBNAIL_CORNER_RADIUS,
             self.THUMBNAIL_CORNER_RADIUS,
         )
         painter.setCompositionMode(
             QPainter.CompositionMode.CompositionMode_SourceIn)
-        painter.drawImage(0, 0, scaled)
+        painter.drawImage(int((target_size.width() - scaled.width()) / 2),
+                          0, scaled)
         painter.end()
         return im_out
 
@@ -131,25 +136,20 @@ class RecentMapDelegate(QStyledItemDelegate):
             -self.VERTICAL_MARGIN,
         )
 
-        thumbnail_rect = inner_rect
-        thumbnail_rect.setWidth(self.THUMBNAIL_WIDTH)
+        thumbnail_width = int(inner_rect.height()
+                             * RecentMapDelegate.THUMBNAIL_RATIO)
 
         thumbnail_image = index.data(RecentMapsModel.ThumbnailRole)
         if thumbnail_image and not thumbnail_image.isNull():
             scaled = self.process_thumbnail(
                 thumbnail_image,
-                QSize(
-                    int(thumbnail_rect.width()) - 2 * self.THUMBNAIL_MARGIN,
-                    int(thumbnail_rect.height()) - 2 * self.THUMBNAIL_MARGIN,
-                ),
+                int(inner_rect.height())
             )
 
-            center_x = int((thumbnail_rect.width() - scaled.width()) / 2)
-            center_y = int((thumbnail_rect.height() - scaled.height()) / 2)
             painter.drawImage(
                 QRectF(
-                    thumbnail_rect.left() + center_x,
-                    thumbnail_rect.top() + center_y,
+                    inner_rect.left(),
+                    inner_rect.top(),
                     scaled.width(),
                     scaled.height(),
                 ),
@@ -172,7 +172,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         left_text_edge = (
                 inner_rect.left() +
-                self.THUMBNAIL_WIDTH +
+                thumbnail_width +
                 self.HORIZONTAL_MARGIN * 2
         )
 
