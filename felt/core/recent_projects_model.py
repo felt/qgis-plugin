@@ -185,7 +185,7 @@ class RecentMapsModel(QAbstractItemModel):
                 # pylint: disable=import-outside-toplevel
                 from ..gui import GuiUtils
                 # pylint: enable=import-outside-toplevel
-                return GuiUtils.get_svg_as_image('plus.svg', 16, 16)
+                return GuiUtils.get_svg_as_image('plus.svg', 189, 142)
 
             return None
 
