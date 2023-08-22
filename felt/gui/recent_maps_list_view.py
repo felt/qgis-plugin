@@ -247,6 +247,10 @@ class RecentMapsListView(QListView):
         delegate = RecentMapDelegate(self)
         self.setItemDelegate(delegate)
 
+        p = self.palette()
+        p.setColor(QPalette.Base, QColor(255, 255, 255))
+        self.setPalette(p)
+
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
     def set_filter_string(self, filter_string: str):
