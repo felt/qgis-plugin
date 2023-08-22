@@ -182,7 +182,9 @@ class RecentMapsModel(QAbstractItemModel):
             if role == self.SubTitleRole:
                 return self.tr('New map')
             if role in (self.ThumbnailRole, Qt.DecorationRole):
-                from ..gui import GuiUtils  # pylint: disable=import-outside-toplevel
+                # pylint: disable=import-outside-toplevel
+                from ..gui import GuiUtils
+                # pylint: enable=import-outside-toplevel
                 return GuiUtils.get_svg_as_image('plus.svg', 16, 16)
 
             return None
