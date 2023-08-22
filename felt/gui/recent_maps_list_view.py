@@ -64,7 +64,10 @@ class RecentMapDelegate(QStyledItemDelegate):
     HEADING_COLOR = QColor(0, 0, 0)
     SUBHEADING_COLOR = QColor(153, 153, 153)
 
-    def process_thumbnail(self, thumbnail: QImage, height: int) -> QImage:
+    def process_thumbnail(self,
+                          thumbnail: QImage,
+                          height: int,
+                          is_new_map_thumbnail: bool) -> QImage:
         """
         Processes a raw thumbnail image, resizing to required size and
         rounding off corners
@@ -99,7 +102,9 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         painter.setCompositionMode(
             QPainter.CompositionMode.CompositionMode_SourceOver)
-        pen = QPen(QColor(255, 255, 255))
+        outline_color = QColor(255, 255, 255) if not is_new_map_thumbnail \
+            else QColor(220, 220, 220)
+        pen = QPen(outline_color)
         pen.setWidth(2)
         pen.setCosmetic(True)
         painter.setPen(pen)
@@ -159,10 +164,13 @@ class RecentMapDelegate(QStyledItemDelegate):
                               RecentMapDelegate.THUMBNAIL_RATIO)
 
         thumbnail_image = index.data(RecentMapsModel.ThumbnailRole)
+        is_new_map_index = index.data(RecentMapsModel.IsNewMapRole)
+
         if thumbnail_image and not thumbnail_image.isNull():
             scaled = self.process_thumbnail(
                 thumbnail_image,
-                int(inner_rect.height())
+                int(inner_rect.height()),
+                is_new_map_index
             )
 
             painter.drawImage(
