@@ -245,6 +245,9 @@ class RecentMapsListView(QListView):
         p.setColor(QPalette.Base, QColor(255, 255, 255))
         self.setPalette(p)
 
+        fm = QFontMetrics(self.font())
+        self.setMinimumHeight(fm.height() * 12)
+
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
     def set_filter_string(self, filter_string: str):
