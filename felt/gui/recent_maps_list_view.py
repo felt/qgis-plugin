@@ -60,6 +60,10 @@ class RecentMapDelegate(QStyledItemDelegate):
     THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
 
+    SELECTED_ROW_COLOR = QColor("#fed9e3")
+    HEADING_COLOR = QColor(0, 0, 0)
+    SUBHEADING_COLOR = QColor(153, 153, 153)
+
     def process_thumbnail(self, thumbnail: QImage, height: int) -> QImage:
         """
         Processes a raw thumbnail image, resizing to required size and
@@ -132,6 +136,8 @@ class RecentMapDelegate(QStyledItemDelegate):
         style = QApplication.style() if option.widget is None \
             else option.widget.style()
 
+        option.palette.setColor(QPalette.Highlight, self.SELECTED_ROW_COLOR)
+
         is_selected = option.state & QStyle.State_Selected
 
         # draw background for item (i.e. selection background)
@@ -194,10 +200,7 @@ class RecentMapDelegate(QStyledItemDelegate):
         line_heights = [1.6 * line_scale, 2.8 * line_scale]
 
         painter.setBrush(Qt.NoBrush)
-        font_color = option.palette.color(
-            QPalette.Active,
-            QPalette.HighlightedText if is_selected else QPalette.Text)
-        painter.setPen(QPen(font_color))
+        painter.setPen(QPen(self.HEADING_COLOR))
         painter.drawText(
             QPointF(
                 left_text_edge,
@@ -208,8 +211,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         sub_title = index.data(RecentMapsModel.SubTitleRole)
         if sub_title:
-            font_color.setAlphaF(0.5)
-            painter.setPen(QPen(font_color))
+            painter.setPen(QPen(self.SUBHEADING_COLOR))
             font.setPointSizeF(subheading_font_size)
             painter.setFont(font)
             painter.drawText(
