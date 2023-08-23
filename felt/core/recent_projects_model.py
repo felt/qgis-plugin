@@ -13,7 +13,6 @@ __copyright__ = 'Copyright 2023, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-
 import json
 from functools import partial
 from typing import (
@@ -48,6 +47,7 @@ class RecentMapsModel(QAbstractItemModel):
     IdRole = Qt.UserRole + 4
     MapRole = Qt.UserRole + 5
     SubTitleRole = Qt.UserRole + 6
+    IsNewMapRole = Qt.UserRole + 7
 
     LIMIT = 100
 
@@ -182,8 +182,12 @@ class RecentMapsModel(QAbstractItemModel):
             if role == self.SubTitleRole:
                 return self.tr('New map')
             if role in (self.ThumbnailRole, Qt.DecorationRole):
-                from ..gui import GuiUtils  # pylint: disable=import-outside-toplevel
-                return GuiUtils.get_svg_as_image('plus.svg', 16, 16)
+                # pylint: disable=import-outside-toplevel
+                from ..gui import GuiUtils
+                # pylint: enable=import-outside-toplevel
+                return GuiUtils.get_svg_as_image('plus.svg', 189, 142)
+            if role == self.IsNewMapRole:
+                return True
 
             return None
 
@@ -200,6 +204,8 @@ class RecentMapsModel(QAbstractItemModel):
             if role in (self.ThumbnailRole, Qt.DecorationRole):
                 return self._thumbnail_manager.thumbnail(
                     _map.thumbnail_url)
+            if role == self.IsNewMapRole:
+                return False
 
         return None
 

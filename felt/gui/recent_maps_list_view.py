@@ -55,37 +55,77 @@ class RecentMapDelegate(QStyledItemDelegate):
     """
 
     THUMBNAIL_CORNER_RADIUS = 10
-    VERTICAL_MARGIN = 7
-    HORIZONTAL_MARGIN = 5
-    THUMBNAIL_WIDTH = 125
+    VERTICAL_MARGIN = 4
+    HORIZONTAL_MARGIN = 8
+    THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
 
-    def process_thumbnail(self, thumbnail: QImage, size: QSize) -> QImage:
+    SELECTED_ROW_COLOR = QColor("#fed9e3")
+    HEADING_COLOR = QColor(0, 0, 0)
+    SUBHEADING_COLOR = QColor(153, 153, 153)
+
+    def process_thumbnail(self,
+                          thumbnail: QImage,
+                          height: int,
+                          is_new_map_thumbnail: bool,
+                          device_pixel_ratio: float) -> QImage:
         """
         Processes a raw thumbnail image, resizing to required size and
         rounding off corners
         """
-        max_thumbnail_width = size.width()
-        max_thumbnail_height = int(min(size.height(), thumbnail.height()))
+        target_size = QSize(
+            int(height * RecentMapDelegate.THUMBNAIL_RATIO), height
+        )
+        image_ratio = thumbnail.width() / thumbnail.height()
+        uncropped_thumbnail_width = int(image_ratio *
+                                        height *
+                                        device_pixel_ratio)
         scaled = thumbnail.scaled(
-            QSize(max_thumbnail_width, max_thumbnail_height),
+            QSize(uncropped_thumbnail_width, int(height * device_pixel_ratio)),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation,
         )
 
-        im_out = QImage(scaled.width(), scaled.height(), QImage.Format_ARGB32)
+        im_out = QImage(int(target_size.width() * device_pixel_ratio),
+                        int(target_size.height() * device_pixel_ratio),
+                        QImage.Format_ARGB32)
         im_out.fill(Qt.transparent)
         painter = QPainter(im_out)
+        painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(0, 0, 0)))
         painter.drawRoundedRect(
-            QRectF(0, 0, scaled.width(), scaled.height()),
-            self.THUMBNAIL_CORNER_RADIUS,
-            self.THUMBNAIL_CORNER_RADIUS,
+            QRectF(1 * device_pixel_ratio,
+                   1 * device_pixel_ratio,
+                   (target_size.width() - 2) * device_pixel_ratio,
+                   (target_size.height() - 2) * device_pixel_ratio),
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
         )
         painter.setCompositionMode(
             QPainter.CompositionMode.CompositionMode_SourceIn)
-        painter.drawImage(0, 0, scaled)
+        painter.drawImage(int((target_size.width() * device_pixel_ratio -
+                               scaled.width()) / 2),
+                          0, scaled)
+
+        painter.setCompositionMode(
+            QPainter.CompositionMode.CompositionMode_SourceOver)
+        outline_color = QColor(255, 255, 255) if not is_new_map_thumbnail \
+            else QColor(220, 220, 220)
+        pen = QPen(outline_color)
+        pen.setWidthF(2 * device_pixel_ratio)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(
+            QRectF(device_pixel_ratio,
+                   device_pixel_ratio,
+                   (target_size.width() - 2) * device_pixel_ratio,
+                   (target_size.height() - 2) * device_pixel_ratio),
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
+            self.THUMBNAIL_CORNER_RADIUS * device_pixel_ratio,
+        )
+
         painter.end()
         return im_out
 
@@ -112,7 +152,10 @@ class RecentMapDelegate(QStyledItemDelegate):
         style = QApplication.style() if option.widget is None \
             else option.widget.style()
 
-        is_selected = option.state & QStyle.State_Selected
+        device_pixel_ratio = 1.0 if option.widget is None else \
+            option.widget.devicePixelRatioF()
+
+        option.palette.setColor(QPalette.Highlight, self.SELECTED_ROW_COLOR)
 
         # draw background for item (i.e. selection background)
         style.drawPrimitive(
@@ -131,58 +174,49 @@ class RecentMapDelegate(QStyledItemDelegate):
             -self.VERTICAL_MARGIN,
         )
 
-        thumbnail_rect = inner_rect
-        thumbnail_rect.setWidth(self.THUMBNAIL_WIDTH)
+        thumbnail_width = int(inner_rect.height() *
+                              RecentMapDelegate.THUMBNAIL_RATIO)
 
         thumbnail_image = index.data(RecentMapsModel.ThumbnailRole)
+        is_new_map_index = index.data(RecentMapsModel.IsNewMapRole)
+
         if thumbnail_image and not thumbnail_image.isNull():
             scaled = self.process_thumbnail(
                 thumbnail_image,
-                QSize(
-                    int(thumbnail_rect.width()) - 2 * self.THUMBNAIL_MARGIN,
-                    int(thumbnail_rect.height()) - 2 * self.THUMBNAIL_MARGIN,
-                ),
+                int(inner_rect.height()),
+                is_new_map_index,
+                device_pixel_ratio
             )
 
-            center_x = int((thumbnail_rect.width() - scaled.width()) / 2)
-            center_y = int((thumbnail_rect.height() - scaled.height()) / 2)
             painter.drawImage(
                 QRectF(
-                    thumbnail_rect.left() + center_x,
-                    thumbnail_rect.top() + center_y,
-                    scaled.width(),
-                    scaled.height(),
+                    inner_rect.left(),
+                    inner_rect.top(),
+                    scaled.width() / device_pixel_ratio,
+                    scaled.height() / device_pixel_ratio,
                 ),
                 scaled,
             )
 
-        heading_font_size = 14
-        subheading_font_size = 12
         line_scale = 1
         if platform.system() == "Darwin":
-            heading_font_size = 16
-            subheading_font_size = 14
             line_scale = 1.3
 
         font = QFont(option.font)
         metrics = QFontMetrics(font)
-        font.setPointSizeF(heading_font_size)
         font.setBold(False)
         painter.setFont(font)
 
         left_text_edge = (
                 inner_rect.left() +
-                self.THUMBNAIL_WIDTH +
+                thumbnail_width +
                 self.HORIZONTAL_MARGIN * 2
         )
 
         line_heights = [1.6 * line_scale, 2.8 * line_scale]
 
         painter.setBrush(Qt.NoBrush)
-        font_color = option.palette.color(
-            QPalette.Active,
-            QPalette.HighlightedText if is_selected else QPalette.Text)
-        painter.setPen(QPen(font_color))
+        painter.setPen(QPen(self.HEADING_COLOR))
         painter.drawText(
             QPointF(
                 left_text_edge,
@@ -193,9 +227,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         sub_title = index.data(RecentMapsModel.SubTitleRole)
         if sub_title:
-            font_color.setAlphaF(0.5)
-            painter.setPen(QPen(font_color))
-            font.setPointSizeF(subheading_font_size)
+            painter.setPen(QPen(self.SUBHEADING_COLOR))
             painter.setFont(font)
             painter.drawText(
                 QPointF(
@@ -223,6 +255,13 @@ class RecentMapsListView(QListView):
         self.setModel(self._model)
         delegate = RecentMapDelegate(self)
         self.setItemDelegate(delegate)
+
+        p = self.palette()
+        p.setColor(QPalette.Base, QColor(255, 255, 255))
+        self.setPalette(p)
+
+        fm = QFontMetrics(self.font())
+        self.setMinimumHeight(fm.height() * 12)
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 

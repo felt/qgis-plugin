@@ -49,8 +49,6 @@ from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
-from .exceptions import LayerPackagingException
-from .map_utils import MapUtils
 
 
 class MapUploaderTask(QgsTask):
@@ -243,8 +241,8 @@ class MapUploaderTask(QgsTask):
 
         if self.unsupported_layer_details:
             message = {
-                    "type": Logger.UNSUPPORTED_LAYER,
-                }
+                "type": Logger.UNSUPPORTED_LAYER,
+            }
             for k, v in self.unsupported_layer_details.items():
                 message[k] = v
 
@@ -268,7 +266,8 @@ class MapUploaderTask(QgsTask):
                 Logger.instance().log_error_json(
                     {
                         'type': Logger.MAP_EXPORT,
-                        'error': 'Error creating map: {}'.format(self.error_string)
+                        'error': 'Error creating map: {}'.format(
+                            self.error_string)
                     }
                 )
                 return False
@@ -276,7 +275,8 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
-            self.associated_map = Map.from_json(reply.content().data().decode())
+            self.associated_map = Map.from_json(
+                reply.content().data().decode())
             self.status_changed.emit(self.tr('Successfully created map'))
 
         multi_step_feedback.step_finished()
@@ -357,8 +357,8 @@ class MapUploaderTask(QgsTask):
             if not upload_params.url:
                 self.error_string = self.tr('Could not prepare layer upload')
                 message = "Error retrieving upload parameters: {}".format(
-                            self.error_string
-                        )
+                    self.error_string
+                )
                 Logger.instance().log_error_json(
                     {
                         "type": Logger.S3_UPLOAD,
