@@ -304,6 +304,12 @@ class RecentMapsWidget(QWidget):
             self._view.model().index(0, 0),
             QItemSelectionModel.ClearAndSelect)
 
+    def filter_line_edit(self) -> QgsFilterLineEdit:
+        """
+        Returns a reference to the filter search widget
+        """
+        return self._filter
+
     def set_new_map_title(self, title: str):
         """
         Sets the title to use for the new map item
