@@ -265,6 +265,7 @@ class RecentMapsListView(QListView):
         self.setMinimumHeight(fm.height() * 12)
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     def set_filter_string(self, filter_string: str):
         """
