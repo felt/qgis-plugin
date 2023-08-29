@@ -56,7 +56,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
     THUMBNAIL_CORNER_RADIUS = 4
     VERTICAL_MARGIN = 4
-    HORIZONTAL_MARGIN = 8
+    HORIZONTAL_MARGIN = 5
     THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
     BORDER_WIDTH_PIXELS = 1
@@ -139,7 +139,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         return QSize(
             option.rect.width(),
-            int(QFontMetrics(option.font).height() * 4.5 * line_scale),
+            int(QFontMetrics(option.font).height() * 3 * line_scale),
         )
 
     # pylint: disable=too-many-locals
@@ -214,7 +214,7 @@ class RecentMapDelegate(QStyledItemDelegate):
                 self.HORIZONTAL_MARGIN * 2
         )
 
-        line_heights = [1.6 * line_scale, 2.8 * line_scale]
+        line_heights = [1.0 * line_scale, 2.0 * line_scale]
 
         painter.setBrush(Qt.NoBrush)
         painter.setPen(QPen(self.HEADING_COLOR))
