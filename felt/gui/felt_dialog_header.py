@@ -42,7 +42,7 @@ class FeltDialogHeader(QWidget):
 
     FIXED_HEIGHT_PIXELS = 107
     LOGO_HEIGHT_PIXELS = 42
-    LOGO_WIDTH_PIXELS = int(1938/1084 * LOGO_HEIGHT_PIXELS)
+    LOGO_WIDTH_PIXELS = int(1938 / 1084 * LOGO_HEIGHT_PIXELS)
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
