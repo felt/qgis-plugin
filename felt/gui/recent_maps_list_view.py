@@ -54,11 +54,12 @@ class RecentMapDelegate(QStyledItemDelegate):
     Custom delegate for rendering map details in a list
     """
 
-    THUMBNAIL_CORNER_RADIUS = 10
+    THUMBNAIL_CORNER_RADIUS = 4
     VERTICAL_MARGIN = 4
     HORIZONTAL_MARGIN = 8
     THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
+    BORDER_WIDTH_PIXELS = 1
 
     SELECTED_ROW_COLOR = QColor("#fed9e3")
     HEADING_COLOR = QColor(0, 0, 0)
@@ -113,7 +114,7 @@ class RecentMapDelegate(QStyledItemDelegate):
         outline_color = QColor(255, 255, 255) if not is_new_map_thumbnail \
             else QColor(220, 220, 220)
         pen = QPen(outline_color)
-        pen.setWidthF(2 * device_pixel_ratio)
+        pen.setWidthF(self.BORDER_WIDTH_PIXELS * device_pixel_ratio)
         pen.setCosmetic(True)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
