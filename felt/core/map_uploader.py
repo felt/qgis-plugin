@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import (
@@ -172,20 +173,15 @@ class MapUploaderTask(QgsTask):
         """
         Returns an auto-generated title for a map
         """
-        date_string = QDate.currentDate().toString('yyyy-MM-dd')
         if self.project_title:
-            return self.tr('{} QGIS Map - {}').format(
-                self.project_title,
-                date_string
-            )
+            return self.project_title
+
         if self.project_file_name:
             file_name_part = Path(self.project_file_name).stem
-            return self.tr('{} QGIS Map - {}').format(
-                file_name_part,
-                date_string
-            )
+            return re.sub(r'[\-_]', ' ', file_name_part)
 
-        return self.tr('Untitled QGIS Map - {}').format(
+        date_string = QDate.currentDate().toString('yyyy-MM-dd')
+        return self.tr('QGIS Map - {}').format(
             date_string
         )
 
