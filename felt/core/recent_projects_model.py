@@ -14,6 +14,7 @@ __copyright__ = 'Copyright 2023, North Road'
 __revision__ = '$Format:%H$'
 
 import json
+import math
 from functools import partial
 from typing import (
     Optional,
@@ -26,7 +27,8 @@ from qgis.PyQt.QtCore import (
     QAbstractItemModel,
     QObject,
     QModelIndex,
-    pyqtSignal
+    pyqtSignal,
+    QDateTime
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply
@@ -195,7 +197,47 @@ class RecentMapsModel(QAbstractItemModel):
     def columnCount(self, parent=QModelIndex()):
         return 1
 
-    def data(self,  # pylint:disable=too-many-return-statements
+    # pylint:disable=too-many-return-statements
+    def pretty_format_date(self, date: QDateTime) -> str:
+        """
+        Creates a pretty format for a date difference, like '3 days ago'
+        """
+        now = QDateTime.currentDateTime()
+
+        if date.date() == now.date():
+            secs_diff = date.secsTo(now)
+            if secs_diff < 60:
+                return self.tr("just now")
+            if secs_diff < 3600:
+                minutes = math.floor(secs_diff / 60)
+                return self.tr("{} minutes ago").format(
+                    minutes) if minutes > 1 else self.tr("1 minute ago")
+
+            hours = math.floor(secs_diff / 3600)
+            return self.tr("{} hours ago").format(
+                hours) if hours > 1 else self.tr("1 hour ago")
+
+        days_diff = date.daysTo(now)
+        if days_diff == 1:
+            return self.tr("yesterday")
+        if days_diff < 7:
+            return self.tr("{} days ago").format(days_diff)
+        if days_diff < 30:
+            weeks = math.floor(days_diff / 7)
+            return self.tr("{} weeks ago").format(
+                weeks) if weeks > 1 else self.tr("1 week ago")
+        if days_diff < 365:
+            months = math.floor(days_diff / 30)
+            return self.tr("{} months ago").format(
+                months) if months > 1 else self.tr("1 month ago")
+
+        years = math.floor(days_diff / 365)
+        return self.tr("{} years ago").format(years) if years > 1 else self.tr(
+            "1 year ago")
+    # pylint:enable=too-many-return-statements
+
+    # pylint:disable=too-many-return-statements,too-many-branches
+    def data(self,
              index,
              role=Qt.DisplayRole):
         if index.row() == 0 and not index.parent().isValid():
@@ -220,6 +262,9 @@ class RecentMapsModel(QAbstractItemModel):
                 return _map
             if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):
                 return _map.title
+            if role == self.SubTitleRole and _map.last_visited:
+                date_string = self.pretty_format_date(_map.last_visited)
+                return self.tr('Last visited {}'.format(date_string))
             if role == self.UrlRole:
                 return _map.url
             if role == self.IdRole:
@@ -231,6 +276,8 @@ class RecentMapsModel(QAbstractItemModel):
                 return False
 
         return None
+
+    # pylint:enable=too-many-return-statements,too-many-branches
 
     def flags(self, index):
         f = super().flags(index)
