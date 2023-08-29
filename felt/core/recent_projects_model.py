@@ -53,6 +53,7 @@ class RecentMapsModel(QAbstractItemModel):
     LIMIT = 100
 
     first_results_found = pyqtSignal()
+    no_results_found = pyqtSignal()
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -61,6 +62,7 @@ class RecentMapsModel(QAbstractItemModel):
         self._new_map_title: Optional[str] = None
         self._filter_string: Optional[str] = None
         self.maps: List[Map] = []
+        self._no_results_found = False
         self._next_page: Optional[str] = None
         self._load_next_results()
 
@@ -139,11 +141,18 @@ class RecentMapsModel(QAbstractItemModel):
 
         was_first_page = not self.maps
 
+        new_maps = result.get('data', [])
+        if not new_maps:
+            self._next_page = None
+            self._no_results_found = True
+        else:
+            self._no_results_found = False
+
         self.beginInsertRows(QModelIndex(), 1 + len(self.maps),
-                             1 + len(self.maps) + len(result) - 1)
+                             1 + len(self.maps) + len(new_maps) - 1)
 
         thumbnail_urls = set()
-        for map_json in result.get('data', []):
+        for map_json in new_maps:
             _map = Map.from_json(map_json)
             self.maps.append(_map)
 
@@ -159,7 +168,9 @@ class RecentMapsModel(QAbstractItemModel):
         for thumbnail_url in thumbnail_urls:
             self._thumbnail_manager.download_thumbnail(thumbnail_url)
 
-        if was_first_page:
+        if was_first_page and not new_maps:
+            self.no_results_found.emit()
+        elif was_first_page:
             self.first_results_found.emit()
 
     # Qt model interface
@@ -231,6 +242,8 @@ class RecentMapsModel(QAbstractItemModel):
         return f | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def canFetchMore(self, index: QModelIndex):
+        if self._no_results_found:
+            return False
         if not self.maps:
             return True
         return self._next_page is not None

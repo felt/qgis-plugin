@@ -266,12 +266,19 @@ class RecentMapsListView(QListView):
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
         self._model.first_results_found.connect(self._on_first_results_found)
+        self._model.no_results_found.connect(self._on_no_results_found)
 
     def set_filter_string(self, filter_string: str):
         """
         Sets a text filter for the view
         """
         self._model.set_filter_string(filter_string)
+        if not filter_string:
+            # when you clear the search the new map
+            # option should get selected again
+            self.selectionModel().select(
+                self._model.index(0, 0),
+                QItemSelectionModel.ClearAndSelect)
 
     def set_new_map_title(self, title: str):
         """
@@ -290,6 +297,17 @@ class RecentMapsListView(QListView):
             self.selectionModel().select(
                 self._model.index(1, 0),
                 QItemSelectionModel.ClearAndSelect)
+
+    def _on_no_results_found(self):
+        """
+        Triggered when no matching search results are found
+        """
+
+        # when no search results are found, the new map
+        # option should get selected again
+        self.selectionModel().select(
+            self._model.index(0, 0),
+            QItemSelectionModel.ClearAndSelect)
 
 
 class RecentMapsWidget(QWidget):
