@@ -26,7 +26,8 @@ from qgis.PyQt.QtCore import (
     QAbstractItemModel,
     QObject,
     QModelIndex,
-    pyqtSignal
+    pyqtSignal,
+    QDateTime
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply
@@ -195,7 +196,35 @@ class RecentMapsModel(QAbstractItemModel):
     def columnCount(self, parent=QModelIndex()):
         return 1
 
-    def data(self,  # pylint:disable=too-many-return-statements
+    def pretty_format_date(self, date: QDateTime) -> str:
+        """
+        Creates a pretty format for a date difference, like '3 days ago'
+        """
+        days_ago = date.daysTo(QDateTime.currentDateTime())
+        if days_ago == 0:
+            date_string = self.tr('today')
+        elif days_ago == 1:
+            date_string = self.tr('1 day ago')
+        elif days_ago < 7:
+            date_string = self.tr('{} days ago')
+        elif days_ago < 14:
+            date_string = self.tr('1 week ago')
+        elif days_ago < 21:
+            date_string = self.tr('2 weeks ago')
+        elif days_ago < 30:
+            date_string = self.tr('3 weeks ago')
+        elif days_ago < 365:
+            date_string = self.tr('{} months ago').format(
+                days_ago // 30
+            )
+        else:
+            date_string = self.tr('{} years ago').format(
+                days_ago // 365
+            )
+        return date_string
+
+    # pylint:disable=too-many-return-statements,too-many-branches
+    def data(self,
              index,
              role=Qt.DisplayRole):
         if index.row() == 0 and not index.parent().isValid():
@@ -220,6 +249,9 @@ class RecentMapsModel(QAbstractItemModel):
                 return _map
             if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):
                 return _map.title
+            if role == self.SubTitleRole and _map.last_visited:
+                date_string = self.pretty_format_date(_map.last_visited)
+                return self.tr('Last visited {}'.format(date_string))
             if role == self.UrlRole:
                 return _map.url
             if role == self.IdRole:
@@ -231,6 +263,7 @@ class RecentMapsModel(QAbstractItemModel):
                 return False
 
         return None
+    # pylint:enable=too-many-return-statements,too-many-branches
 
     def flags(self, index):
         f = super().flags(index)
