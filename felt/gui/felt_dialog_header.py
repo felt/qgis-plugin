@@ -20,7 +20,6 @@ from qgis.PyQt.QtCore import (
     QRectF
 )
 from qgis.PyQt.QtGui import (
-    QFontMetrics,
     QPainter,
     QImage
 )
@@ -47,8 +46,6 @@ class FeltDialogHeader(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        font_metrics = QFontMetrics(self.font())
-
         self._cached_image: Optional[QImage] = None
 
         self.setSizePolicy(
