@@ -62,6 +62,7 @@ class RecentMapsModel(QAbstractItemModel):
         self._new_map_title: Optional[str] = None
         self._filter_string: Optional[str] = None
         self.maps: List[Map] = []
+        self._clear_maps_on_results = False
         self._no_results_found = False
         self._next_page: Optional[str] = None
         self._load_next_results()
@@ -89,12 +90,10 @@ class RecentMapsModel(QAbstractItemModel):
         if filter_string == self._filter_string:
             return
 
-        self.beginResetModel()
+        self._clear_maps_on_results = True
         self._filter_string = filter_string
-        self.maps = []
         self._current_reply = None
         self._next_page = None
-        self.endResetModel()
 
         self._load_next_results()
 
@@ -139,7 +138,17 @@ class RecentMapsModel(QAbstractItemModel):
         else:
             self._next_page = next_page
 
-        was_first_page = not self.maps
+        if self._clear_maps_on_results:
+            was_first_page = True
+            if self.maps:
+                self.beginRemoveRows(QModelIndex(),
+                                     1,
+                                     1+len(self.maps))
+                self.maps = []
+                self.endRemoveRows()
+            self._clear_maps_on_results = False
+        else:
+            was_first_page = not self.maps
 
         new_maps = result.get('data', [])
         if not new_maps:
