@@ -54,11 +54,12 @@ class RecentMapDelegate(QStyledItemDelegate):
     Custom delegate for rendering map details in a list
     """
 
-    THUMBNAIL_CORNER_RADIUS = 10
+    THUMBNAIL_CORNER_RADIUS = 4
     VERTICAL_MARGIN = 4
-    HORIZONTAL_MARGIN = 8
+    HORIZONTAL_MARGIN = 5
     THUMBNAIL_RATIO = 4 / 3
     THUMBNAIL_MARGIN = 0
+    BORDER_WIDTH_PIXELS = 1
 
     SELECTED_ROW_COLOR = QColor("#fed9e3")
     HEADING_COLOR = QColor(0, 0, 0)
@@ -113,7 +114,7 @@ class RecentMapDelegate(QStyledItemDelegate):
         outline_color = QColor(255, 255, 255) if not is_new_map_thumbnail \
             else QColor(220, 220, 220)
         pen = QPen(outline_color)
-        pen.setWidthF(2 * device_pixel_ratio)
+        pen.setWidthF(self.BORDER_WIDTH_PIXELS * device_pixel_ratio)
         pen.setCosmetic(True)
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
@@ -138,7 +139,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         return QSize(
             option.rect.width(),
-            int(QFontMetrics(option.font).height() * 4.5 * line_scale),
+            int(QFontMetrics(option.font).height() * 3 * line_scale),
         )
 
     # pylint: disable=too-many-locals
@@ -213,7 +214,7 @@ class RecentMapDelegate(QStyledItemDelegate):
                 self.HORIZONTAL_MARGIN * 2
         )
 
-        line_heights = [1.6 * line_scale, 2.8 * line_scale]
+        line_heights = [1.0 * line_scale, 2.0 * line_scale]
 
         painter.setBrush(Qt.NoBrush)
         painter.setPen(QPen(self.HEADING_COLOR))
@@ -264,6 +265,7 @@ class RecentMapsListView(QListView):
         self.setMinimumHeight(fm.height() * 12)
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self._model.first_results_found.connect(self._on_first_results_found)
         self._model.no_results_found.connect(self._on_no_results_found)
