@@ -112,17 +112,11 @@ class RecentMapsModel(QAbstractItemModel):
         """
         Triggered when an open network request is finished
         """
-        if sip.isdeleted(self):
-            return
 
-        if reply != self._current_reply:
-            # an old reply we don't care about anymore
+        if sip.isdeleted(self) or reply != self._current_reply:
             return
 
         self._current_reply = None
-
-        if reply.error() == QNetworkReply.OperationCanceledError:
-            return
 
         if reply.error() == QNetworkReply.ContentNotFoundError:
             self._next_page = None
@@ -133,29 +127,24 @@ class RecentMapsModel(QAbstractItemModel):
 
         result = json.loads(reply.readAll().data().decode())
         next_page = result.get('meta', {}).get('next')
-        if next_page == self._next_page:
-            self._next_page = None
-        else:
-            self._next_page = next_page
+        self._next_page = next_page if next_page != self._next_page else None
+
+        was_first_page = self._clear_maps_on_results or not self.maps
 
         if self._clear_maps_on_results:
-            was_first_page = True
             if self.maps:
                 self.beginRemoveRows(QModelIndex(),
                                      1,
-                                     1+len(self.maps))
+                                     1 + len(self.maps))
                 self.maps = []
                 self.endRemoveRows()
             self._clear_maps_on_results = False
-        else:
-            was_first_page = not self.maps
 
         new_maps = result.get('data', [])
         if not new_maps:
             self._next_page = None
-            self._no_results_found = True
-        else:
-            self._no_results_found = False
+
+        self._no_results_found = not new_maps
 
         self.beginInsertRows(QModelIndex(), 1 + len(self.maps),
                              1 + len(self.maps) + len(new_maps) - 1)
