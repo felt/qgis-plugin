@@ -265,6 +265,8 @@ class RecentMapsListView(QListView):
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
+        self._model.first_results_found.connect(self._on_first_results_found)
+
     def set_filter_string(self, filter_string: str):
         """
         Sets a text filter for the view
@@ -276,6 +278,18 @@ class RecentMapsListView(QListView):
         Sets the title to use for the new map item
         """
         self._model.set_new_map_title(title)
+
+    def _on_first_results_found(self):
+        """
+        Triggered when the first page of maps are fetched
+        """
+
+        # while you search, the first search result should be
+        # selected so you can quickly hit enter
+        if self._model.filter_string():
+            self.selectionModel().select(
+                self._model.index(1, 0),
+                QItemSelectionModel.ClearAndSelect)
 
 
 class RecentMapsWidget(QWidget):

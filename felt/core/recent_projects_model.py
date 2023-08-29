@@ -25,7 +25,8 @@ from qgis.PyQt.QtCore import (
     Qt,
     QAbstractItemModel,
     QObject,
-    QModelIndex
+    QModelIndex,
+    pyqtSignal
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply
@@ -51,6 +52,8 @@ class RecentMapsModel(QAbstractItemModel):
 
     LIMIT = 100
 
+    first_results_found = pyqtSignal()
+
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
 
@@ -70,6 +73,12 @@ class RecentMapsModel(QAbstractItemModel):
         """
         self._new_map_title = title
         self.dataChanged.emit(self.index(0, 0), self.index(0, 0))
+
+    def filter_string(self) -> Optional[str]:
+        """
+        Returns the filter text
+        """
+        return self._filter_string
 
     def set_filter_string(self, filter_string: str):
         """
@@ -128,6 +137,8 @@ class RecentMapsModel(QAbstractItemModel):
         else:
             self._next_page = next_page
 
+        was_first_page = not self.maps
+
         self.beginInsertRows(QModelIndex(), 1 + len(self.maps),
                              1 + len(self.maps) + len(result) - 1)
 
@@ -147,6 +158,9 @@ class RecentMapsModel(QAbstractItemModel):
 
         for thumbnail_url in thumbnail_urls:
             self._thumbnail_manager.download_thumbnail(thumbnail_url)
+
+        if was_first_page:
+            self.first_results_found.emit()
 
     # Qt model interface
 
