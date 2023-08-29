@@ -173,6 +173,7 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.started = False
         self._validate()
+        self.maps_widget.filter_line_edit().setFocus()
 
     def _create_map_uploader_task(self):
         """

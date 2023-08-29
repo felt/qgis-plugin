@@ -25,7 +25,8 @@ from qgis.PyQt.QtCore import (
     Qt,
     QAbstractItemModel,
     QObject,
-    QModelIndex
+    QModelIndex,
+    pyqtSignal
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply
@@ -51,6 +52,9 @@ class RecentMapsModel(QAbstractItemModel):
 
     LIMIT = 100
 
+    first_results_found = pyqtSignal()
+    no_results_found = pyqtSignal()
+
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
 
@@ -58,6 +62,8 @@ class RecentMapsModel(QAbstractItemModel):
         self._new_map_title: Optional[str] = None
         self._filter_string: Optional[str] = None
         self.maps: List[Map] = []
+        self._clear_maps_on_results = False
+        self._no_results_found = False
         self._next_page: Optional[str] = None
         self._load_next_results()
 
@@ -71,6 +77,12 @@ class RecentMapsModel(QAbstractItemModel):
         self._new_map_title = title
         self.dataChanged.emit(self.index(0, 0), self.index(0, 0))
 
+    def filter_string(self) -> Optional[str]:
+        """
+        Returns the filter text
+        """
+        return self._filter_string
+
     def set_filter_string(self, filter_string: str):
         """
         Sets a text filter for the view
@@ -78,12 +90,10 @@ class RecentMapsModel(QAbstractItemModel):
         if filter_string == self._filter_string:
             return
 
-        self.beginResetModel()
+        self._clear_maps_on_results = True
         self._filter_string = filter_string
-        self.maps = []
         self._current_reply = None
         self._next_page = None
-        self.endResetModel()
 
         self._load_next_results()
 
@@ -102,17 +112,11 @@ class RecentMapsModel(QAbstractItemModel):
         """
         Triggered when an open network request is finished
         """
-        if sip.isdeleted(self):
-            return
 
-        if reply != self._current_reply:
-            # an old reply we don't care about anymore
+        if sip.isdeleted(self) or reply != self._current_reply:
             return
 
         self._current_reply = None
-
-        if reply.error() == QNetworkReply.OperationCanceledError:
-            return
 
         if reply.error() == QNetworkReply.ContentNotFoundError:
             self._next_page = None
@@ -123,16 +127,30 @@ class RecentMapsModel(QAbstractItemModel):
 
         result = json.loads(reply.readAll().data().decode())
         next_page = result.get('meta', {}).get('next')
-        if next_page == self._next_page:
+        self._next_page = next_page if next_page != self._next_page else None
+
+        was_first_page = self._clear_maps_on_results or not self.maps
+
+        if self._clear_maps_on_results:
+            if self.maps:
+                self.beginRemoveRows(QModelIndex(),
+                                     1,
+                                     1 + len(self.maps))
+                self.maps = []
+                self.endRemoveRows()
+            self._clear_maps_on_results = False
+
+        new_maps = result.get('data', [])
+        if not new_maps:
             self._next_page = None
-        else:
-            self._next_page = next_page
+
+        self._no_results_found = not new_maps
 
         self.beginInsertRows(QModelIndex(), 1 + len(self.maps),
-                             1 + len(self.maps) + len(result) - 1)
+                             1 + len(self.maps) + len(new_maps) - 1)
 
         thumbnail_urls = set()
-        for map_json in result.get('data', []):
+        for map_json in new_maps:
             _map = Map.from_json(map_json)
             self.maps.append(_map)
 
@@ -147,6 +165,11 @@ class RecentMapsModel(QAbstractItemModel):
 
         for thumbnail_url in thumbnail_urls:
             self._thumbnail_manager.download_thumbnail(thumbnail_url)
+
+        if was_first_page and not new_maps:
+            self.no_results_found.emit()
+        elif was_first_page:
+            self.first_results_found.emit()
 
     # Qt model interface
 
@@ -217,6 +240,8 @@ class RecentMapsModel(QAbstractItemModel):
         return f | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def canFetchMore(self, index: QModelIndex):
+        if self._no_results_found:
+            return False
         if not self.maps:
             return True
         return self._next_page is not None

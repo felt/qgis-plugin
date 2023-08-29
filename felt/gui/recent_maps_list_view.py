@@ -265,17 +265,49 @@ class RecentMapsListView(QListView):
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
+        self._model.first_results_found.connect(self._on_first_results_found)
+        self._model.no_results_found.connect(self._on_no_results_found)
+
     def set_filter_string(self, filter_string: str):
         """
         Sets a text filter for the view
         """
         self._model.set_filter_string(filter_string)
+        if not filter_string:
+            # when you clear the search the new map
+            # option should get selected again
+            self.selectionModel().select(
+                self._model.index(0, 0),
+                QItemSelectionModel.ClearAndSelect)
 
     def set_new_map_title(self, title: str):
         """
         Sets the title to use for the new map item
         """
         self._model.set_new_map_title(title)
+
+    def _on_first_results_found(self):
+        """
+        Triggered when the first page of maps are fetched
+        """
+
+        # while you search, the first search result should be
+        # selected so you can quickly hit enter
+        if self._model.filter_string():
+            self.selectionModel().select(
+                self._model.index(1, 0),
+                QItemSelectionModel.ClearAndSelect)
+
+    def _on_no_results_found(self):
+        """
+        Triggered when no matching search results are found
+        """
+
+        # when no search results are found, the new map
+        # option should get selected again
+        self.selectionModel().select(
+            self._model.index(0, 0),
+            QItemSelectionModel.ClearAndSelect)
 
 
 class RecentMapsWidget(QWidget):
@@ -303,6 +335,12 @@ class RecentMapsWidget(QWidget):
         self._view.selectionModel().select(
             self._view.model().index(0, 0),
             QItemSelectionModel.ClearAndSelect)
+
+    def filter_line_edit(self) -> QgsFilterLineEdit:
+        """
+        Returns a reference to the filter search widget
+        """
+        return self._filter
 
     def set_new_map_title(self, title: str):
         """
