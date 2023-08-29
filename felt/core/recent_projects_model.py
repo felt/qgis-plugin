@@ -14,6 +14,7 @@ __copyright__ = 'Copyright 2023, North Road'
 __revision__ = '$Format:%H$'
 
 import json
+import math
 from functools import partial
 from typing import (
     Optional,
@@ -200,28 +201,38 @@ class RecentMapsModel(QAbstractItemModel):
         """
         Creates a pretty format for a date difference, like '3 days ago'
         """
-        days_ago = date.daysTo(QDateTime.currentDateTime())
-        if days_ago == 0:
-            date_string = self.tr('today')
-        elif days_ago == 1:
-            date_string = self.tr('1 day ago')
-        elif days_ago < 7:
-            date_string = self.tr('{} days ago')
-        elif days_ago < 14:
-            date_string = self.tr('1 week ago')
-        elif days_ago < 21:
-            date_string = self.tr('2 weeks ago')
-        elif days_ago < 30:
-            date_string = self.tr('3 weeks ago')
-        elif days_ago < 365:
-            date_string = self.tr('{} months ago').format(
-                days_ago // 30
-            )
-        else:
-            date_string = self.tr('{} years ago').format(
-                days_ago // 365
-            )
-        return date_string
+        now = QDateTime.currentDateTime()
+
+        if date.date() == now.date():
+            secs_diff = date.secsTo(now)
+            if secs_diff < 60:
+                return self.tr("just now")
+            elif secs_diff < 3600:
+                minutes = math.floor(secs_diff / 60)
+                return self.tr("{} minutes ago").format(
+                    minutes) if minutes > 1 else self.tr("1 minute ago")
+            else:
+                hours = math.floor(secs_diff / 3600)
+                return self.tr("{} hours ago").format(
+                    hours) if hours > 1 else self.tr("1 hour ago")
+
+        days_diff = date.daysTo(now)
+        if days_diff == 1:
+            return self.tr("yesterday")
+        elif days_diff < 7:
+            return self.tr("{} days ago").format(days_diff)
+        elif days_diff < 30:
+            weeks = math.floor(days_diff / 7)
+            return self.tr("{} weeks ago").format(
+                weeks) if weeks > 1 else self.tr("1 week ago")
+        elif days_diff < 365:
+            months = math.floor(days_diff / 30)
+            return self.tr("{} months ago").format(
+                months) if months > 1 else self.tr("1 month ago")
+
+        years = math.floor(days_diff / 365)
+        return self.tr("{} years ago").format(years) if years > 1 else self.tr(
+            "1 year ago")
 
     # pylint:disable=too-many-return-statements,too-many-branches
     def data(self,
@@ -263,6 +274,7 @@ class RecentMapsModel(QAbstractItemModel):
                 return False
 
         return None
+
     # pylint:enable=too-many-return-statements,too-many-branches
 
     def flags(self, index):
