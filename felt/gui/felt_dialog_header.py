@@ -41,6 +41,10 @@ class FeltDialogHeader(QWidget):
     A widget for dialog headers
     """
 
+    FIXED_HEIGHT_PIXELS = 107
+    LOGO_HEIGHT_PIXELS = 42
+    LOGO_WIDTH_PIXELS = int(1938/1084 * LOGO_HEIGHT_PIXELS)
+
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         font_metrics = QFontMetrics(self.font())
@@ -54,8 +58,8 @@ class FeltDialogHeader(QWidget):
 
         self.setStyleSheet('background: solid #3d521e;')
         svg_logo_widget = QSvgWidget()
-        fixed_size = QSize(int(font_metrics.height() * 7.150951),
-                           font_metrics.height() * 4)
+        fixed_size = QSize(self.LOGO_WIDTH_PIXELS,
+                           self.LOGO_HEIGHT_PIXELS)
         svg_logo_widget.setFixedSize(fixed_size)
         svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
         svg_logo_widget.setStyleSheet('background: transparent;')
@@ -69,8 +73,7 @@ class FeltDialogHeader(QWidget):
     # pylint: disable=missing-function-docstring
 
     def sizeHint(self):
-        font_metrics = QFontMetrics(self.font())
-        return QSize(0, font_metrics.height() * 10)
+        return QSize(0, self.FIXED_HEIGHT_PIXELS)
 
     def paintEvent(self, event):  # pylint: disable=unused-argument
         painter = QPainter(self)
