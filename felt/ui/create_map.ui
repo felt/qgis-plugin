@@ -112,7 +112,7 @@
            <item row="0" column="0">
             <widget class="QLabel" name="label_user_2">
              <property name="text">
-              <string>Choose where to add</string>
+              <string>Select map:</string>
              </property>
             </widget>
            </item>

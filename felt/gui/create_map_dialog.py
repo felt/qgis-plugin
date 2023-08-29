@@ -162,7 +162,7 @@ class CreateMapDialog(QDialog, WIDGET):
             self.label_user.setText(
                 GuiUtils.set_link_color(
                     self.tr(
-                        'Logged in as: {} ({})'
+                        '{} ({})'
                     ).format(AUTHORIZATION_MANAGER.user.name,
                              AUTHORIZATION_MANAGER.user.email) +
                     ' <a href="logout">' + self.tr('Log out') + '</a>',
