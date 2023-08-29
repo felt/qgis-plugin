@@ -197,6 +197,7 @@ class RecentMapsModel(QAbstractItemModel):
     def columnCount(self, parent=QModelIndex()):
         return 1
 
+    # pylint:disable=too-many-return-statements
     def pretty_format_date(self, date: QDateTime) -> str:
         """
         Creates a pretty format for a date difference, like '3 days ago'
@@ -207,25 +208,25 @@ class RecentMapsModel(QAbstractItemModel):
             secs_diff = date.secsTo(now)
             if secs_diff < 60:
                 return self.tr("just now")
-            elif secs_diff < 3600:
+            if secs_diff < 3600:
                 minutes = math.floor(secs_diff / 60)
                 return self.tr("{} minutes ago").format(
                     minutes) if minutes > 1 else self.tr("1 minute ago")
-            else:
-                hours = math.floor(secs_diff / 3600)
-                return self.tr("{} hours ago").format(
-                    hours) if hours > 1 else self.tr("1 hour ago")
+
+            hours = math.floor(secs_diff / 3600)
+            return self.tr("{} hours ago").format(
+                hours) if hours > 1 else self.tr("1 hour ago")
 
         days_diff = date.daysTo(now)
         if days_diff == 1:
             return self.tr("yesterday")
-        elif days_diff < 7:
+        if days_diff < 7:
             return self.tr("{} days ago").format(days_diff)
-        elif days_diff < 30:
+        if days_diff < 30:
             weeks = math.floor(days_diff / 7)
             return self.tr("{} weeks ago").format(
                 weeks) if weeks > 1 else self.tr("1 week ago")
-        elif days_diff < 365:
+        if days_diff < 365:
             months = math.floor(days_diff / 30)
             return self.tr("{} months ago").format(
                 months) if months > 1 else self.tr("1 month ago")
@@ -233,6 +234,7 @@ class RecentMapsModel(QAbstractItemModel):
         years = math.floor(days_diff / 365)
         return self.tr("{} years ago").format(years) if years > 1 else self.tr(
             "1 year ago")
+    # pylint:enable=too-many-return-statements
 
     # pylint:disable=too-many-return-statements,too-many-branches
     def data(self,
