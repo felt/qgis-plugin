@@ -27,7 +27,11 @@ from qgis.PyQt.QtCore import (
     QThread,
     QSize
 )
-from qgis.PyQt.QtNetwork import QNetworkReply
+from qgis.PyQt.QtNetwork import (
+    QNetworkReply,
+    QNetworkRequest
+)
+
 from qgis.core import (
     QgsMapLayer,
     QgsMapLayerUtils,
@@ -324,25 +328,34 @@ class MapUploaderTask(QgsTask):
                 self.tr('Uploading {}').format(layer.name())
             )
 
-            reply = API_CLIENT.prepare_layer_upload(
-                map_id=self.associated_map.id,
-                name=layer.name(),
-                file_names=[Path(details.filename).name],
-                style=details.style,
-                blocking=True,
-                feedback=self.feedback
-            )
-            if reply.error() != QNetworkReply.NoError:
-                self.error_string = reply.errorString()
-                Logger.instance().log_error_json(
-                    {
-                        'type': Logger.MAP_EXPORT,
-                        'error': 'Error preparing layer upload: {}'.format(
-                            self.error_string)
-                    }
+            while True:
+                reply = API_CLIENT.prepare_layer_upload(
+                    map_id=self.associated_map.id,
+                    name=layer.name(),
+                    file_names=[Path(details.filename).name],
+                    style=details.style,
+                    blocking=True,
+                    feedback=self.feedback
                 )
+                if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                    self.status_changed.emit(
+                        self.tr('Rate throttled -- waiting')
+                    )
+                    QThread.sleep(5)
+                    continue
 
-                return False
+                if reply.error() != QNetworkReply.NoError:
+                    self.error_string = reply.errorString()
+                    Logger.instance().log_error_json(
+                        {
+                            'type': Logger.MAP_EXPORT,
+                            'error': 'Error preparing layer upload: {}'.format(
+                                self.error_string)
+                        }
+                    )
+
+                    return False
+                break
 
             if self.isCanceled():
                 return False
@@ -408,24 +421,33 @@ class MapUploaderTask(QgsTask):
                 self.tr('Finalizing {}').format(layer.name())
             )
 
-            reply = API_CLIENT.finalize_layer_upload(
-                self.associated_map.id,
-                upload_params.layer_id,
-                Path(details.filename).name,
-                blocking=True,
-                feedback=self.feedback
-            )
-
-            if reply.error() != QNetworkReply.NoError:
-                self.error_string = reply.errorString()
-                Logger.instance().log_error_json(
-                    {
-                        'type': Logger.MAP_EXPORT,
-                        'error': 'Error finalizing layer upload: {}'.format(
-                            self.error_string)
-                    }
+            while True:
+                reply = API_CLIENT.finalize_layer_upload(
+                    self.associated_map.id,
+                    upload_params.layer_id,
+                    Path(details.filename).name,
+                    blocking=True,
+                    feedback=self.feedback
                 )
-                return False
+                if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                    self.status_changed.emit(
+                        self.tr('Rate throttled -- waiting')
+                    )
+                    QThread.sleep(5)
+                    continue
+
+                if reply.error() != QNetworkReply.NoError:
+                    self.error_string = reply.errorString()
+                    Logger.instance().log_error_json(
+                        {
+                            'type': Logger.MAP_EXPORT,
+                            'error': 'Error finalizing layer upload: {}'.format(
+                                self.error_string)
+                        }
+                    )
+                    return False
+
+                break
 
             multi_step_feedback.step_finished()
 
