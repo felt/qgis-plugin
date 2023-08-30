@@ -202,9 +202,9 @@ class RecentMapsModel(QAbstractItemModel):
         """
         Creates a pretty format for a date difference, like '3 days ago'
         """
-        now = QDateTime.currentDateTime()
+        now = QDateTime.currentDateTimeUtc()
 
-        if date.date() == now.date():
+        if date.secsTo(now) < 60 * 60 * 24:
             secs_diff = date.secsTo(now)
             if secs_diff < 60:
                 return self.tr("just now")
