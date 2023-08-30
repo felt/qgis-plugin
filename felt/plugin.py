@@ -31,7 +31,8 @@ from qgis.PyQt.QtWidgets import (
 
 from qgis.core import (
     QgsLayerTreeLayer,
-    QgsMapLayer
+    QgsMapLayer,
+    QgsProject
 )
 from qgis.gui import (
     QgisInterface
@@ -127,6 +128,12 @@ class FeltPlugin(QObject):
 
         AUTHORIZATION_MANAGER.status_changed.connect(self._auth_state_changed)
 
+        QgsProject.instance().layersRemoved.connect(
+            self._update_action_enabled_states)
+        QgsProject.instance().layersAdded.connect(
+            self._update_action_enabled_states)
+        self._update_action_enabled_states()
+
     def unload(self):
         if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
             self.felt_web_menu.deleteLater()
@@ -166,16 +173,13 @@ class FeltPlugin(QObject):
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
 
+    # pylint:disable=unused-argument
     def _auth_state_changed(self, state: AuthState):
         """
         Called when the plugin authorization state changes
         """
-        if state == AuthState.Authorizing:
-            self.share_map_to_felt_action.setEnabled(False)
-            self.create_map_action.setEnabled(False)
-        else:
-            self.share_map_to_felt_action.setEnabled(True)
-            self.create_map_action.setEnabled(True)
+        self._update_action_enabled_states()
+    # pylint:enable=unused-argument
 
     def _share_layer_to_felt(self, layer: QgsMapLayer):
         """
@@ -257,3 +261,13 @@ class FeltPlugin(QObject):
             share_to_felt_action.triggered.connect(
                 partial(self._share_layer_to_felt, layer)
             )
+
+    def _update_action_enabled_states(self):
+        """
+        Updates the enabled state of export actions
+        """
+        has_layers = bool(QgsProject.instance().mapLayers())
+        is_authorizing = AUTHORIZATION_MANAGER.status == AuthState.Authorizing
+        allowed_to_export = has_layers and not is_authorizing
+        self.share_map_to_felt_action.setEnabled(allowed_to_export)
+        self.create_map_action.setEnabled(allowed_to_export)
