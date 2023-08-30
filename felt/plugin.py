@@ -173,11 +173,13 @@ class FeltPlugin(QObject):
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Felt', message)
 
+    # pylint:disable=unused-argument
     def _auth_state_changed(self, state: AuthState):
         """
         Called when the plugin authorization state changes
         """
         self._update_action_enabled_states()
+    # pylint:enable=unused-argument
 
     def _share_layer_to_felt(self, layer: QgsMapLayer):
         """
