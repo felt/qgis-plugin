@@ -31,7 +31,8 @@ from qgis.PyQt.QtWidgets import (
 
 from qgis.core import (
     QgsLayerTreeLayer,
-    QgsMapLayer
+    QgsMapLayer,
+    QgsProject
 )
 from qgis.gui import (
     QgisInterface
@@ -126,6 +127,12 @@ class FeltPlugin(QObject):
             pass
 
         AUTHORIZATION_MANAGER.status_changed.connect(self._auth_state_changed)
+
+        QgsProject.instance().layersRemoved.connect(
+            self._layers_changed)
+        QgsProject.instance().layersAdded.connect(
+            self._layers_changed)
+        self._layers_changed()
 
     def unload(self):
         if self.felt_web_menu and not sip.isdeleted(self.felt_web_menu):
@@ -257,3 +264,10 @@ class FeltPlugin(QObject):
             share_to_felt_action.triggered.connect(
                 partial(self._share_layer_to_felt, layer)
             )
+
+    def _layers_changed(self):
+        """
+        Triggered when the project's layers are changed
+        """
+        has_layers = bool(QgsProject.instance().mapLayers())
+        self.share_map_to_felt_action.setEnabled(has_layers)
