@@ -20,7 +20,7 @@ class RecentMapsModelTest(unittest.TestCase):
         Test generation of pretty date diffs
         """
         model = RecentMapsModel()
-        now = QDateTime.currentDateTime()
+        now = QDateTime.currentDateTimeUtc()
         self.assertEqual(model.pretty_format_date(now), "just now")
 
         one_minute_ago = now.addSecs(-1 * 60)
