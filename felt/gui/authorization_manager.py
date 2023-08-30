@@ -24,7 +24,10 @@ from qgis.PyQt.QtCore import (
     QTimer,
     QDate
 )
-from qgis.PyQt.QtNetwork import QNetworkReply
+from qgis.PyQt.QtNetwork import (
+    QNetworkReply,
+    QNetworkRequest
+)
 from qgis.PyQt.QtWidgets import (
     QAction,
     QPushButton
@@ -337,6 +340,13 @@ class AuthorizationManager(QObject):
 
         if not self._user_reply or sip.isdeleted(self._user_reply):
             self._user_reply = None
+            return
+
+        if self._user_reply.attribute(
+                QNetworkRequest.HttpStatusCodeAttribute) == 401:
+            self._user_reply = None
+            self.deauthorize()
+            self.attempt_authorize()
             return
 
         if self._user_reply.error() != QNetworkReply.NoError:
