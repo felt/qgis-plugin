@@ -31,7 +31,6 @@ from qgis.PyQt.QtNetwork import (
     QNetworkReply,
     QNetworkRequest
 )
-
 from qgis.core import (
     QgsMapLayer,
     QgsMapLayerUtils,
@@ -337,7 +336,8 @@ class MapUploaderTask(QgsTask):
                     blocking=True,
                     feedback=self.feedback
                 )
-                if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                if reply.attribute(
+                        QNetworkRequest.HttpStatusCodeAttribute) == 429:
                     self.status_changed.emit(
                         self.tr('Rate throttled -- waiting')
                     )
@@ -429,7 +429,8 @@ class MapUploaderTask(QgsTask):
                     blocking=True,
                     feedback=self.feedback
                 )
-                if reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                if reply.attribute(
+                        QNetworkRequest.HttpStatusCodeAttribute) == 429:
                     self.status_changed.emit(
                         self.tr('Rate throttled -- waiting')
                     )
@@ -441,8 +442,9 @@ class MapUploaderTask(QgsTask):
                     Logger.instance().log_error_json(
                         {
                             'type': Logger.MAP_EXPORT,
-                            'error': 'Error finalizing layer upload: {}'.format(
-                                self.error_string)
+                            'error':
+                                'Error finalizing layer upload: {}'.format(
+                                    self.error_string)
                         }
                     )
                     return False
