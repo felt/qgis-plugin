@@ -55,6 +55,26 @@ class LayerExportResult(Enum):
     Canceled = auto()
 
 
+class LayerSupport(Enum):
+    """
+    Reasons why a layer is not supported
+    """
+    Supported = auto()
+    NotImplementedProvider = auto()
+    NotImplementedLayerType = auto()
+    EmptyLayer = auto()
+
+    def should_report(self) -> bool:
+        """
+        Returns True if the layer support should be reported to Felt
+        usage API
+        """
+        return self not in (
+            LayerSupport.Supported,
+            LayerSupport.EmptyLayer
+        )
+
+
 class UsageType(Enum):
     """
     Usage types for reporting plugin usage

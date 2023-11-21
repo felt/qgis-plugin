@@ -60,7 +60,10 @@ from qgis.core import (
     QgsRasterRange
 )
 
-from .enums import LayerExportResult
+from .enums import (
+    LayerExportResult,
+    LayerSupport
+)
 from .exceptions import LayerPackagingException
 from .layer_style import LayerStyle
 from .logger import Logger
@@ -108,7 +111,8 @@ class LayerExporter(QObject):
         self.temp_dir.cleanup()
 
     @staticmethod
-    def can_export_layer(layer: QgsMapLayer) -> Tuple[bool, str]:
+    def can_export_layer(layer: QgsMapLayer) \
+            -> Tuple[LayerSupport, str]:
         """
         Returns True if a layer can be exported, and an explanatory
         string if not
@@ -116,23 +120,28 @@ class LayerExporter(QObject):
         if isinstance(layer, QgsVectorLayer):
             # Vector layers must have some features
             if layer.featureCount() == 0:
-                return False, 'Layer is empty'
+                return LayerSupport.EmptyLayer, 'Layer is empty'
 
-            return True, ''
+            return LayerSupport.Supported, ''
 
         if isinstance(layer, QgsRasterLayer):
             if layer.providerType() in (
                     'gdal',
                     'virtualraster'
             ):
-                return True, ''
+                return LayerSupport.Supported, ''
 
-            return False, '{} raster layers are not yet supported'.format(
-                layer.providerType()
+            return (
+                LayerSupport.NotImplementedProvider,
+                '{} raster layers are not yet supported'.format(
+                    layer.providerType())
             )
 
-        return False, '{} layers are not yet supported'.format(
-            layer.__class__.__name__
+        return (
+            LayerSupport.NotImplementedLayerType,
+            '{} layers are not yet supported'.format(
+                layer.__class__.__name__
+            )
         )
 
     @staticmethod

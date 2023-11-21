@@ -30,7 +30,8 @@ from qgis.core import (
 from .utilities import get_qgis_app
 from ..core import (
     LayerExporter,
-    LayerExportResult
+    LayerExportResult,
+    LayerSupport
 )
 
 QGIS_APP = get_qgis_app()
@@ -48,20 +49,22 @@ class LayerExporterTest(unittest.TestCase):
         file = str(TEST_DATA_PATH / 'points.gpkg')
         layer = QgsVectorLayer(file, 'test')
         self.assertTrue(layer.isValid())
-        self.assertTrue(LayerExporter.can_export_layer(layer)[0])
+        self.assertEqual(
+            LayerExporter.can_export_layer(layer)[0], LayerSupport.Supported)
 
         file = str(TEST_DATA_PATH / 'dem.tif')
         layer = QgsRasterLayer(file, 'test')
         self.assertTrue(layer.isValid())
-        self.assertTrue(LayerExporter.can_export_layer(layer)[0])
+        self.assertEqual(
+            LayerExporter.can_export_layer(layer)[0], LayerSupport.Supported)
 
         layer = QgsRasterLayer(
             'crs=EPSG:3857&format&type=xyz&url='
             'https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png'
             '&zmax=19&zmin=0',
             'test', 'wms')
-        can_export, reason = LayerExporter.can_export_layer(layer)
-        self.assertFalse(can_export)
+        support, reason = LayerExporter.can_export_layer(layer)
+        self.assertEqual(support, LayerSupport.NotImplementedProvider)
         self.assertEqual(reason, 'wms raster layers are not yet supported')
 
     def test_file_name(self):

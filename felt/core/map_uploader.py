@@ -54,6 +54,7 @@ from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
+from .enums import LayerSupport
 
 
 class MapUploaderTask(QgsTask):
@@ -102,7 +103,8 @@ class MapUploaderTask(QgsTask):
 
             self.layers = [
                 layer.clone() for layer in visible_layers if
-                LayerExporter.can_export_layer(layer)[0]
+                LayerExporter.can_export_layer(layer)[
+                    0] == LayerSupport.Supported
             ]
 
             self._build_unsupported_layer_details(project, visible_layers)
@@ -152,8 +154,8 @@ class MapUploaderTask(QgsTask):
         unsupported_layer_type_count = defaultdict(int)
         unsupported_layer_names = set()
         for layer in layers:
-            can_export, reason = LayerExporter.can_export_layer(layer)
-            if can_export:
+            support, reason = LayerExporter.can_export_layer(layer)
+            if not support.should_report():
                 continue
 
             unsupported_layer_names.add(layer.name())
@@ -161,7 +163,10 @@ class MapUploaderTask(QgsTask):
             if layer.type() == QgsMapLayer.PluginLayer:
                 id_string = layer.pluginLayerType()
             else:
-                id_string = str(layer.__class__.__name__)
+                id_string = '{}:{}'.format(
+                    layer.__class__.__name__,
+                    layer.providerType()
+                )
 
             unsupported_layer_type_count[id_string] = (
                     unsupported_layer_type_count[id_string] + 1)
