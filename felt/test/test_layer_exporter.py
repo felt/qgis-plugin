@@ -64,8 +64,65 @@ class LayerExporterTest(unittest.TestCase):
             '&zmax=19&zmin=0',
             'test', 'wms')
         support, reason = LayerExporter.can_export_layer(layer)
+        self.assertEqual(support, LayerSupport.Supported)
+
+        layer = QgsRasterLayer(
+            'http-header:referer=&type=xyz&url=http://ecn.t3.tiles.'
+            'virtualearth.net/tiles/a%7Bq%7D.jpeg?g%3D1&zmax=18&zmin=0',
+            'test', 'wms')
+        support, reason = LayerExporter.can_export_layer(layer)
+        self.assertEqual(support, LayerSupport.NotImplementedProvider)
+        self.assertEqual(reason, '{q} token in XYZ tile layers not supported')
+
+        layer = QgsRasterLayer(
+            'crs=EPSG:4326&dpiMode=7&format=image/png&layers='
+            'wofs_summary_clear&styles&'
+            'tilePixelRatio=0&url=https://ows.dea.ga.gov.au/',
+            'test', 'wms')
+        support, reason = LayerExporter.can_export_layer(layer)
         self.assertEqual(support, LayerSupport.NotImplementedProvider)
         self.assertEqual(reason, 'wms raster layers are not yet supported')
+
+    def test_use_url_import_method(self):
+        """
+        Test determining if layers should use the URL import method
+        """
+        file = str(TEST_DATA_PATH / 'points.gpkg')
+        layer = QgsVectorLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+        self.assertFalse(
+            LayerExporter.layer_import_url(layer))
+
+        file = str(TEST_DATA_PATH / 'dem.tif')
+        layer = QgsRasterLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+        self.assertFalse(
+            LayerExporter.layer_import_url(layer))
+
+        layer = QgsRasterLayer(
+            'crs=EPSG:3857&format&type=xyz&url='
+            'https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png'
+            '&zmax=19&zmin=0',
+            'test', 'wms')
+        self.assertEqual(
+            LayerExporter.layer_import_url(layer),
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+        )
+
+        layer = QgsRasterLayer(
+            'http-header:referer=&type=xyz&url=http://ecn.t3.tiles.'
+            'virtualearth.net/tiles/a%7Bq%7D.jpeg?g%3D1&zmax=18&zmin=0',
+            'test', 'wms')
+        self.assertFalse(
+            LayerExporter.layer_import_url(layer))
+
+        layer = QgsRasterLayer(
+            'crs=EPSG:4326&dpiMode=7&format=image/png&layers='
+            'wofs_summary_clear&styles&tilePixelRatio=0'
+            '&url=https://ows.dea.ga.gov.au/',
+            'test', 'wms')
+        self.assertFalse(
+            LayerExporter.layer_import_url(layer))
 
     def test_file_name(self):
         """

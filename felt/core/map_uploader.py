@@ -308,27 +308,47 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
-            self.status_changed.emit(
-                self.tr('Exporting {}').format(layer.name())
-            )
-            try:
-                result = exporter.export_layer_for_felt(
+            if LayerExporter.layer_import_url(layer):
+                result = LayerExporter.import_from_url(
                     layer,
-                    multi_step_feedback
-                )
-            except LayerPackagingException as e:
+                    self.associated_map,
+                    multi_step_feedback)
+
+                if 'errors' in result:
+                    self.error_string = self.tr(
+                        'Error occurred while exporting layer {}: {}').format(
+                        layer.name(),
+                        result['errors'][0]['detail']
+                    )
+                    self.status_changed.emit(self.error_string)
+
+                    return False
+
                 layer.moveToThread(None)
-                self.error_string = self.tr(
-                    'Error occurred while exporting layer {}: {}').format(
-                    layer.name(),
-                    e
+            else:
+
+                self.status_changed.emit(
+                    self.tr('Exporting {}').format(layer.name())
                 )
-                self.status_changed.emit(self.error_string)
+                try:
+                    result = exporter.export_layer_for_felt(
+                        layer,
+                        multi_step_feedback
+                    )
+                except LayerPackagingException as e:
+                    layer.moveToThread(None)
+                    self.error_string = self.tr(
+                        'Error occurred while exporting layer {}: {}').format(
+                        layer.name(),
+                        e
+                    )
+                    self.status_changed.emit(self.error_string)
 
-                return False
+                    return False
 
-            layer.moveToThread(None)
-            to_upload[layer] = result
+                layer.moveToThread(None)
+                to_upload[layer] = result
+
             multi_step_feedback.step_finished()
 
         if self.isCanceled():
