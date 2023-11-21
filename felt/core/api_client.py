@@ -172,6 +172,7 @@ class FeltApiClient:
                    title: Optional[str] = None,
                    basemap: Optional[str] = None,
                    layer_urls: Optional[List[str]] = None,
+                   workspace_id: Optional[str] = None,
                    blocking: bool = False,
                    feedback: Optional[QgsFeedback] = None
                    ) -> Union[QNetworkReply, QgsNetworkReplyContent]:
@@ -190,6 +191,9 @@ class FeltApiClient:
             request_params['title'] = title
         if basemap:
             request_params['basemap'] = basemap
+        if workspace_id:
+            request_params['workspace_id'] = workspace_id
+
         # TODO -- layer URLS!
         json_data = json.dumps(request_params)
         if blocking:

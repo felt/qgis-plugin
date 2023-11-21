@@ -184,13 +184,15 @@ class CreateMapDialog(QDialog, WIDGET):
         Called when the selected workspace is changed
         """
         self.maps_widget.set_workspace_id(workspace_id)
+        self.map_uploader_task.set_workspace_id(workspace_id)
 
     def _create_map_uploader_task(self):
         """
         Creates a new map uploader task for the dialog's use
         """
         self.map_uploader_task = MapUploaderTask(
-            layers=self.layers
+            layers=self.layers,
+            workspace_id=self.workspace_combo.current_workspace_id()
         )
         self._update_warning_label()
 

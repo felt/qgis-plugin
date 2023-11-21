@@ -67,11 +67,13 @@ class MapUploaderTask(QgsTask):
     def __init__(self,
                  project: Optional[QgsProject] = None,
                  layers: Optional[List[QgsMapLayer]] = None,
-                 target_map: Optional[Map] = None):
+                 target_map: Optional[Map] = None,
+                 workspace_id: Optional[str] = None):
         super().__init__(
             'Sharing Map'
         )
         project = project or QgsProject.instance()
+        self._workspace_id = workspace_id
 
         self.unsupported_layers: List[Tuple[str, str]] = []
         if layers:
@@ -143,6 +145,12 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+
+    def set_workspace_id(self, workspace_id: Optional[str]):
+        """
+        Sets the target workspace ID
+        """
+        self._workspace_id = workspace_id
 
     def _build_unsupported_layer_details(self,
                                          project: QgsProject,
@@ -271,6 +279,7 @@ class MapUploaderTask(QgsTask):
                 self.map_center.x(),
                 self.initial_zoom_level,
                 self.project_title,
+                workspace_id=self._workspace_id,
                 blocking=True,
                 feedback=self.feedback
             )

@@ -32,6 +32,12 @@ class WorkspacesComboBox(QComboBox):
 
         self.currentIndexChanged.connect(self._index_changed)
 
+    def current_workspace_id(self) -> Optional[str]:
+        """
+        Returns the current selected workspace ID
+        """
+        return self.currentData(WorkspacesModel.IdRole)
+
     def _index_changed(self, index):
         """
         Called when the current selected workspace is changed
@@ -41,5 +47,3 @@ class WorkspacesComboBox(QComboBox):
                 WorkspacesModel.IdRole
             )
         )
-
-
