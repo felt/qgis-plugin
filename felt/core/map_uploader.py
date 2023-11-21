@@ -18,7 +18,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import (
     Optional,
-    List
+    List,
+    Tuple
 )
 
 from qgis.PyQt.QtCore import (
@@ -71,7 +72,7 @@ class MapUploaderTask(QgsTask):
         )
         project = project or QgsProject.instance()
 
-        self.unsupported_layers = []
+        self.unsupported_layers: List[Tuple[str, str]] = []
         if layers:
             self.current_map_crs = QgsCoordinateReferenceSystem('EPSG:4326')
             self.current_map_extent = QgsMapLayerUtils.combinedExtent(
@@ -101,7 +102,7 @@ class MapUploaderTask(QgsTask):
 
             self.layers = [
                 layer.clone() for layer in visible_layers if
-                LayerExporter.can_export_layer(layer)
+                LayerExporter.can_export_layer(layer)[0]
             ]
 
             self._build_unsupported_layer_details(project, visible_layers)
@@ -149,11 +150,14 @@ class MapUploaderTask(QgsTask):
         these to users and to Felt
         """
         unsupported_layer_type_count = defaultdict(int)
+        unsupported_layer_names = set()
         for layer in layers:
-            if LayerExporter.can_export_layer(layer):
+            can_export, reason = LayerExporter.can_export_layer(layer)
+            if can_export:
                 continue
 
-            self.unsupported_layers.append(layer.name())
+            unsupported_layer_names.add(layer.name())
+            self.unsupported_layers.append((layer.name(), reason))
             if layer.type() == QgsMapLayer.PluginLayer:
                 id_string = layer.pluginLayerType()
             else:
@@ -169,8 +173,8 @@ class MapUploaderTask(QgsTask):
         for layer_tree_layer in project.layerTreeRoot().findLayers():
             if layer_tree_layer.isVisible() and \
                     not layer_tree_layer.layer() and \
-                    not layer_tree_layer.name() in self.unsupported_layers:
-                self.unsupported_layers.append(layer_tree_layer.name())
+                    not layer_tree_layer.name() in unsupported_layer_names:
+                self.unsupported_layers.append((layer_tree_layer.name(), ''))
 
     def default_map_title(self) -> str:
         """
@@ -199,7 +203,13 @@ class MapUploaderTask(QgsTask):
 
         msg = '<p>' + self.tr('The following layers are not supported '
                               'and won\'t be uploaded:') + '</p><ul><li>'
-        msg += '</li><li>'.join(self.unsupported_layers)
+
+        for layer_name, reason in self.unsupported_layers:
+            if reason:
+                msg += '<li>{}: {}</li>'.format(layer_name, reason)
+            else:
+                msg += '<li>{}</li>'.format(layer_name)
+
         msg += '</ul>'
         return msg
 

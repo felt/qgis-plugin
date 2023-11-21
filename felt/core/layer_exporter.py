@@ -61,8 +61,8 @@ from qgis.core import (
 )
 
 from .enums import LayerExportResult
-from .layer_style import LayerStyle
 from .exceptions import LayerPackagingException
+from .layer_style import LayerStyle
 from .logger import Logger
 
 
@@ -108,20 +108,32 @@ class LayerExporter(QObject):
         self.temp_dir.cleanup()
 
     @staticmethod
-    def can_export_layer(layer: QgsMapLayer) -> bool:
+    def can_export_layer(layer: QgsMapLayer) -> Tuple[bool, str]:
         """
-        Returns True if a layer can be exported
+        Returns True if a layer can be exported, and an explanatory
+        string if not
         """
         if isinstance(layer, QgsVectorLayer):
-            return True
+            # Vector layers must have some features
+            if layer.featureCount() == 0:
+                return False, 'Layer is empty'
+
+            return True, ''
 
         if isinstance(layer, QgsRasterLayer):
-            return layer.providerType() in (
-                'gdal',
-                'virtualraster'
+            if layer.providerType() in (
+                    'gdal',
+                    'virtualraster'
+            ):
+                return True, ''
+
+            return False, '{} raster layers are not yet supported'.format(
+                layer.providerType()
             )
 
-        return False
+        return False, '{} layers are not yet supported'.format(
+            layer.__class__.__name__
+        )
 
     @staticmethod
     def representative_layer_style(layer: QgsVectorLayer) -> LayerStyle:
@@ -188,8 +200,8 @@ class LayerExporter(QObject):
         """
         Generates a temporary file name with the given suffix
         """
-        return (Path(str(self.temp_dir.name)) / ('qgis_export_' +
-                (uuid.uuid4().hex + suffix))).as_posix()
+        file_name = 'qgis_export_' + uuid.uuid4().hex + suffix
+        return (Path(str(self.temp_dir.name)) / file_name).as_posix()
 
     def export_layer_for_felt(
             self,
@@ -296,7 +308,7 @@ class LayerExporter(QObject):
                 {
                     'type': Logger.PACKAGING_VECTOR,
                     'error': 'Error packaging layer: {}'.format(error_message)
-                 }
+                }
             )
 
             raise LayerPackagingException(error_message)

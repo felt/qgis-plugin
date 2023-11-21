@@ -48,19 +48,21 @@ class LayerExporterTest(unittest.TestCase):
         file = str(TEST_DATA_PATH / 'points.gpkg')
         layer = QgsVectorLayer(file, 'test')
         self.assertTrue(layer.isValid())
-        self.assertTrue(LayerExporter.can_export_layer(layer))
+        self.assertTrue(LayerExporter.can_export_layer(layer)[0])
 
         file = str(TEST_DATA_PATH / 'dem.tif')
         layer = QgsRasterLayer(file, 'test')
         self.assertTrue(layer.isValid())
-        self.assertTrue(LayerExporter.can_export_layer(layer))
+        self.assertTrue(LayerExporter.can_export_layer(layer)[0])
 
         layer = QgsRasterLayer(
             'crs=EPSG:3857&format&type=xyz&url='
             'https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png'
             '&zmax=19&zmin=0',
             'test', 'wms')
-        self.assertFalse(LayerExporter.can_export_layer(layer))
+        can_export, reason = LayerExporter.can_export_layer(layer)
+        self.assertFalse(can_export)
+        self.assertEqual(reason, 'wms raster layers are not yet supported')
 
     def test_file_name(self):
         """
