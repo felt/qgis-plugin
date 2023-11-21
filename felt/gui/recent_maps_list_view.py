@@ -287,6 +287,11 @@ class RecentMapsListView(QListView):
         Sets the selected workspace ID to filter the view
         """
         self._model.set_workspace_id(workspace_id)
+        # when you change the workspace the new map
+        # option should get selected again
+        self.selectionModel().select(
+            self._model.index(0, 0),
+            QItemSelectionModel.ClearAndSelect)
 
     def set_new_map_title(self, title: str):
         """
@@ -301,7 +306,7 @@ class RecentMapsListView(QListView):
 
         # while you search, the first search result should be
         # selected so you can quickly hit enter
-        if self._model.filter_string() or self._model.workspace_id():
+        if self._model.filter_string():
             self.selectionModel().select(
                 self._model.index(1, 0),
                 QItemSelectionModel.ClearAndSelect)
