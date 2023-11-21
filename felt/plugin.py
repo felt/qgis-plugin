@@ -40,7 +40,8 @@ from qgis.gui import (
 
 from .core import (
     AuthState,
-    LayerExporter
+    LayerExporter,
+    LayerSupport
 )
 
 from .gui import (
@@ -241,7 +242,8 @@ class FeltPlugin(QObject):
         if layer is None:
             return
 
-        if LayerExporter.can_export_layer(layer):
+        if (LayerExporter.can_export_layer(layer)[0] ==
+                LayerSupport.Supported):
             menus = [action for action in menu.children() if
                      isinstance(action, QMenu) and
                      action.objectName() == 'exportMenu']
@@ -269,5 +271,7 @@ class FeltPlugin(QObject):
         has_layers = bool(QgsProject.instance().mapLayers())
         is_authorizing = AUTHORIZATION_MANAGER.status == AuthState.Authorizing
         allowed_to_export = has_layers and not is_authorizing
-        self.share_map_to_felt_action.setEnabled(allowed_to_export)
-        self.create_map_action.setEnabled(allowed_to_export)
+        if self.share_map_to_felt_action:
+            self.share_map_to_felt_action.setEnabled(allowed_to_export)
+        if self.create_map_action:
+            self.create_map_action.setEnabled(allowed_to_export)

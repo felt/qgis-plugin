@@ -6,7 +6,8 @@ from .enums import (  # noqa
     AuthState,
     ObjectType,
     LayerExportResult,
-    UsageType
+    UsageType,
+    LayerSupport
 )
 from .auth import OAuthWorkflow  # noqa
 from .map import Map  # noqa

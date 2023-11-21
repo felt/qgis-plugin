@@ -18,7 +18,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import (
     Optional,
-    List
+    List,
+    Tuple
 )
 
 from qgis.PyQt.QtCore import (
@@ -53,6 +54,7 @@ from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
+from .enums import LayerSupport
 
 
 class MapUploaderTask(QgsTask):
@@ -71,7 +73,7 @@ class MapUploaderTask(QgsTask):
         )
         project = project or QgsProject.instance()
 
-        self.unsupported_layers = []
+        self.unsupported_layers: List[Tuple[str, str]] = []
         if layers:
             self.current_map_crs = QgsCoordinateReferenceSystem('EPSG:4326')
             self.current_map_extent = QgsMapLayerUtils.combinedExtent(
@@ -101,7 +103,8 @@ class MapUploaderTask(QgsTask):
 
             self.layers = [
                 layer.clone() for layer in visible_layers if
-                LayerExporter.can_export_layer(layer)
+                LayerExporter.can_export_layer(layer)[
+                    0] == LayerSupport.Supported
             ]
 
             self._build_unsupported_layer_details(project, visible_layers)
@@ -149,15 +152,21 @@ class MapUploaderTask(QgsTask):
         these to users and to Felt
         """
         unsupported_layer_type_count = defaultdict(int)
+        unsupported_layer_names = set()
         for layer in layers:
-            if LayerExporter.can_export_layer(layer):
+            support, reason = LayerExporter.can_export_layer(layer)
+            if not support.should_report():
                 continue
 
-            self.unsupported_layers.append(layer.name())
+            unsupported_layer_names.add(layer.name())
+            self.unsupported_layers.append((layer.name(), reason))
             if layer.type() == QgsMapLayer.PluginLayer:
                 id_string = layer.pluginLayerType()
             else:
-                id_string = str(layer.__class__.__name__)
+                id_string = '{}:{}'.format(
+                    layer.__class__.__name__,
+                    layer.providerType()
+                )
 
             unsupported_layer_type_count[id_string] = (
                     unsupported_layer_type_count[id_string] + 1)
@@ -169,8 +178,8 @@ class MapUploaderTask(QgsTask):
         for layer_tree_layer in project.layerTreeRoot().findLayers():
             if layer_tree_layer.isVisible() and \
                     not layer_tree_layer.layer() and \
-                    not layer_tree_layer.name() in self.unsupported_layers:
-                self.unsupported_layers.append(layer_tree_layer.name())
+                    not layer_tree_layer.name() in unsupported_layer_names:
+                self.unsupported_layers.append((layer_tree_layer.name(), ''))
 
     def default_map_title(self) -> str:
         """
@@ -199,7 +208,13 @@ class MapUploaderTask(QgsTask):
 
         msg = '<p>' + self.tr('The following layers are not supported '
                               'and won\'t be uploaded:') + '</p><ul><li>'
-        msg += '</li><li>'.join(self.unsupported_layers)
+
+        for layer_name, reason in self.unsupported_layers:
+            if reason:
+                msg += '<li>{}: {}</li>'.format(layer_name, reason)
+            else:
+                msg += '<li>{}</li>'.format(layer_name)
+
         msg += '</ul>'
         return msg
 
@@ -293,27 +308,47 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
-            self.status_changed.emit(
-                self.tr('Exporting {}').format(layer.name())
-            )
-            try:
-                result = exporter.export_layer_for_felt(
+            if LayerExporter.layer_import_url(layer):
+                result = LayerExporter.import_from_url(
                     layer,
-                    multi_step_feedback
-                )
-            except LayerPackagingException as e:
+                    self.associated_map,
+                    multi_step_feedback)
+
+                if 'errors' in result:
+                    self.error_string = self.tr(
+                        'Error occurred while exporting layer {}: {}').format(
+                        layer.name(),
+                        result['errors'][0]['detail']
+                    )
+                    self.status_changed.emit(self.error_string)
+
+                    return False
+
                 layer.moveToThread(None)
-                self.error_string = self.tr(
-                    'Error occurred while exporting layer {}: {}').format(
-                    layer.name(),
-                    e
+            else:
+
+                self.status_changed.emit(
+                    self.tr('Exporting {}').format(layer.name())
                 )
-                self.status_changed.emit(self.error_string)
+                try:
+                    result = exporter.export_layer_for_felt(
+                        layer,
+                        multi_step_feedback
+                    )
+                except LayerPackagingException as e:
+                    layer.moveToThread(None)
+                    self.error_string = self.tr(
+                        'Error occurred while exporting layer {}: {}').format(
+                        layer.name(),
+                        e
+                    )
+                    self.status_changed.emit(self.error_string)
 
-                return False
+                    return False
 
-            layer.moveToThread(None)
-            to_upload[layer] = result
+                layer.moveToThread(None)
+                to_upload[layer] = result
+
             multi_step_feedback.step_finished()
 
         if self.isCanceled():

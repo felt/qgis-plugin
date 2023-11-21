@@ -13,13 +13,15 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import json
+import math
 import tempfile
 import uuid
 import zipfile
-import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
+    Dict,
     Optional,
     List,
     Tuple
@@ -34,6 +36,7 @@ from qgis.PyQt.QtXml import (
 )
 
 from qgis.core import (
+    QgsDataSourceUri,
     QgsFeedback,
     QgsMapLayer,
     QgsVectorLayer,
@@ -60,10 +63,15 @@ from qgis.core import (
     QgsRasterRange
 )
 
-from .enums import LayerExportResult
-from .layer_style import LayerStyle
+from .api_client import API_CLIENT
+from .enums import (
+    LayerExportResult,
+    LayerSupport
+)
 from .exceptions import LayerPackagingException
+from .layer_style import LayerStyle
 from .logger import Logger
+from .map import Map
 
 
 @dataclass
@@ -108,20 +116,85 @@ class LayerExporter(QObject):
         self.temp_dir.cleanup()
 
     @staticmethod
-    def can_export_layer(layer: QgsMapLayer) -> bool:
+    def can_export_layer(layer: QgsMapLayer) \
+            -> Tuple[LayerSupport, str]:
         """
-        Returns True if a layer can be exported
+        Returns True if a layer can be exported, and an explanatory
+        string if not
         """
         if isinstance(layer, QgsVectorLayer):
-            return True
+            # Vector layers must have some features
+            if layer.featureCount() == 0:
+                return LayerSupport.EmptyLayer, 'Layer is empty'
+
+            return LayerSupport.Supported, ''
 
         if isinstance(layer, QgsRasterLayer):
-            return layer.providerType() in (
-                'gdal',
-                'virtualraster'
+            if layer.providerType() in (
+                    'gdal',
+                    'virtualraster'
+            ):
+                return LayerSupport.Supported, ''
+
+            if layer.providerType() == 'wms':
+                ds = QgsDataSourceUri()
+                ds.setEncodedUri(layer.source())
+                if ds.param('type') == 'xyz':
+                    url = ds.param('url')
+                    if '{q}' in url:
+                        return (
+                            LayerSupport.NotImplementedProvider,
+                            '{q} token in XYZ tile layers not supported'
+                        )
+
+                    return LayerSupport.Supported, ''
+
+            return (
+                LayerSupport.NotImplementedProvider,
+                '{} raster layers are not yet supported'.format(
+                    layer.providerType())
             )
 
-        return False
+        return (
+            LayerSupport.NotImplementedLayerType,
+            '{} layers are not yet supported'.format(
+                layer.__class__.__name__
+            )
+        )
+
+    @staticmethod
+    def layer_import_url(layer: QgsMapLayer) -> Optional[str]:
+        """
+        Returns the layer URL if the URL import method should be used to add
+        a layer
+        """
+        if isinstance(layer, QgsRasterLayer):
+            if layer.providerType() == 'wms':
+                ds = QgsDataSourceUri()
+                ds.setEncodedUri(layer.source())
+                if ds.param('type') == 'xyz':
+                    url = ds.param('url')
+                    if '{q}' not in url:
+                        return url
+
+        return None
+
+    @staticmethod
+    def import_from_url(layer: QgsMapLayer, target_map: Map,
+                        feedback: Optional[QgsFeedback] = None) -> Dict:
+        """
+        Imports a layer from URI to the given map
+        """
+        layer_url = LayerExporter.layer_import_url(layer)
+
+        reply = API_CLIENT.url_import_to_map(
+            map_id=target_map.id,
+            name=layer.name(),
+            layer_url=layer_url,
+            blocking=True,
+            feedback=feedback
+        )
+        return json.loads(reply.content().data().decode())
 
     @staticmethod
     def representative_layer_style(layer: QgsVectorLayer) -> LayerStyle:
@@ -188,8 +261,8 @@ class LayerExporter(QObject):
         """
         Generates a temporary file name with the given suffix
         """
-        return (Path(str(self.temp_dir.name)) / ('qgis_export_' +
-                (uuid.uuid4().hex + suffix))).as_posix()
+        file_name = 'qgis_export_' + uuid.uuid4().hex + suffix
+        return (Path(str(self.temp_dir.name)) / file_name).as_posix()
 
     def export_layer_for_felt(
             self,
@@ -296,7 +369,7 @@ class LayerExporter(QObject):
                 {
                     'type': Logger.PACKAGING_VECTOR,
                     'error': 'Error packaging layer: {}'.format(error_message)
-                 }
+                }
             )
 
             raise LayerPackagingException(error_message)

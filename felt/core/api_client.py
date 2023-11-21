@@ -55,6 +55,7 @@ class FeltApiClient:
     CREATE_MAP_ENDPOINT = '/maps'
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
     FINISH_LAYER_ENDPOINT = '/maps/{}/layers/{}/finish_upload'
+    URL_IMPORT_ENDPOINT = '/maps/{}/layers/url_import'
     USAGE_ENDPOINT = '/internal/reports'
     RECENT_MAPS_ENDPOINT = '/maps/recent'
 
@@ -186,6 +187,39 @@ class FeltApiClient:
                                                        json_data.encode())
 
     # pylint: enable=unused-argument
+
+    def url_import_to_map(self,
+                          map_id: str,
+                          name: str,
+                          layer_url: str,
+                          blocking: bool = False,
+                          feedback: Optional[QgsFeedback] = None) \
+            -> Union[QNetworkReply, QgsNetworkReplyContent]:
+        """
+        Prepares a layer upload
+        """
+        request = self._build_request(
+            self.URL_IMPORT_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'}
+        )
+
+        request_params = {
+            'name': name,
+            'layer_url': layer_url
+        }
+
+        json_data = json.dumps(request_params)
+        if blocking:
+            return QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                json_data.encode(),
+                feedback=feedback
+            )
+
+        return QgsNetworkAccessManager.instance().post(
+            request,
+            json_data.encode()
+        )
 
     def prepare_layer_upload(self,
                              map_id: str,
