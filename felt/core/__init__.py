@@ -19,7 +19,7 @@ from .api_client import (  # noqa
 from .map_uploader import MapUploaderTask  # noqa
 from .layer_exporter import (  # noqa
     LayerExporter,
-    ExportResult
+    ZippedExportResult
 )
 from .multi_step_feedback import MultiStepFeedback  # noqa
 from .meta import PLUGIN_METADATA_PARSER  # noqa

@@ -16,9 +16,14 @@ __revision__ = '$Format:%H$'
 import tempfile
 import uuid
 import zipfile
+import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import (
+    Optional,
+    List,
+    Tuple
+)
 
 from qgis.PyQt.QtCore import (
     QVariant,
@@ -49,7 +54,10 @@ from qgis.core import (
     QgsSimpleLineSymbolLayer,
     QgsSimpleMarkerSymbolLayer,
     QgsEllipseSymbolLayer,
-    QgsReadWriteContext
+    QgsReadWriteContext,
+    QgsRasterPipe,
+    QgsRasterNuller,
+    QgsRasterRange
 )
 
 from .enums import LayerExportResult
@@ -59,9 +67,22 @@ from .logger import Logger
 
 
 @dataclass
-class ExportResult:
+class LayerExportDetails:
     """
     Export results
+    """
+    representative_filename: str
+    filenames: List[str]
+    result: LayerExportResult
+    error_message: str
+    qgis_style_xml: str
+    style: Optional[LayerStyle] = None
+
+
+@dataclass
+class ZippedExportResult:
+    """
+    A zipped export results
     """
     filename: str
     result: LayerExportResult
@@ -174,7 +195,7 @@ class LayerExporter(QObject):
             self,
             layer: QgsMapLayer,
             feedback: Optional[QgsFeedback] = None
-    ) -> ExportResult:
+    ) -> ZippedExportResult:
         """
         Exports a layer into a format acceptable for Felt
         :raises LayerPackagingException
@@ -189,15 +210,21 @@ class LayerExporter(QObject):
         # package into zip
         zip_file_path = (
             (Path(str(self.temp_dir.name)) /
-             (Path(res.filename).stem + '.zip')).as_posix())
+             (Path(res.representative_filename).stem + '.zip')).as_posix())
         with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            zipf.write(res.filename, Path(res.filename).name)
+            for filename in res.filenames:
+                zipf.write(filename, Path(filename).name)
 
             # add QGIS layer style xml also
             zipf.writestr("qgis_style.xml", res.qgis_style_xml)
 
-        res.filename = zip_file_path
-        return res
+        return ZippedExportResult(
+            filename=zip_file_path,
+            result=res.result,
+            error_message=res.error_message,
+            qgis_style_xml=res.qgis_style_xml,
+            style=res.style
+        )
 
     @staticmethod
     def _get_original_style_xml(layer: QgsMapLayer) -> str:
@@ -212,7 +239,7 @@ class LayerExporter(QObject):
     def export_vector_layer(
             self,
             layer: QgsVectorLayer,
-            feedback: Optional[QgsFeedback] = None) -> ExportResult:
+            feedback: Optional[QgsFeedback] = None) -> LayerExportDetails:
         """
         Exports a vector layer into a format acceptable for Felt
         """
@@ -305,25 +332,25 @@ class LayerExporter(QObject):
                     res_layer.featureCount(), layer.featureCount())
             )
 
-        return ExportResult(
-            filename=dest_file,
+        return LayerExportDetails(
+            representative_filename=dest_file,
+            filenames=[dest_file],
             result=layer_export_result,
             error_message=error_message,
             qgis_style_xml=self._get_original_style_xml(layer),
             style=self.representative_layer_style(layer)
         )
 
-    def export_raster_layer(
-            self,
-            layer: QgsRasterLayer,
-            feedback: Optional[QgsFeedback] = None) -> ExportResult:
+    def run_raster_writer(self,
+                          layer: QgsRasterLayer,
+                          file_name: str,
+                          use_style: bool,
+                          feedback: Optional[QgsFeedback] = None) \
+            -> Tuple[LayerExportResult, Optional[str]]:
         """
-        Exports a raster layer into a format acceptable for Felt
+        Runs a raster write operation for the layer
         """
-
-        dest_file = self.generate_file_name('.tif')
-
-        writer = QgsRasterFileWriter(dest_file)
+        writer = QgsRasterFileWriter(file_name)
         writer.setOutputFormat('GTiff')
         writer.setOutputProviderKey('gdal')
         writer.setTiledMode(False)
@@ -336,26 +363,29 @@ class LayerExporter(QObject):
         ])
 
         extent = layer.extent()
-        raster_pipe = layer.pipe()
-        projector = raster_pipe.projector()
+        if use_style:
+            raster_pipe = layer.pipe()
+        else:
+            raster_pipe = QgsRasterPipe()
+            raster_pipe.set(layer.dataProvider().clone())
+            nuller = QgsRasterNuller()
+            for band in range(1, layer.dataProvider().bandCount() + 1):
+                additional_no_data_values = (
+                    layer.dataProvider().userNoDataValues(
+                        band))
+                source_no_data = layer.dataProvider().sourceNoDataValue(band)
+                if not math.isnan(source_no_data):
+                    additional_no_data_values.append(
+                        QgsRasterRange(
+                            layer.dataProvider().sourceNoDataValue(band),
+                            layer.dataProvider().sourceNoDataValue(band)
+                        )
+                    )
+                if additional_no_data_values:
+                    nuller.setNoData(band, additional_no_data_values)
+            raster_pipe.insert(1, nuller)
 
         dest_crs = layer.crs()
-        # disable local reprojection for now - see #14
-        if False:  # pylint: disable=using-constant-test
-            dest_crs = QgsCoordinateReferenceSystem('EPSG:3857')
-            projector.setCrs(
-                layer.crs(),
-                dest_crs,
-                self.transform_context
-            )
-
-            to_3857_transform = QgsCoordinateTransform(
-                layer.crs(),
-                dest_crs,
-                self.transform_context
-            )
-            extent = to_3857_transform.transformBoundingBox(extent)
-
         width = layer.width()
         if feedback:
             block_feedback = QgsRasterBlockFeedback()
@@ -388,6 +418,32 @@ class LayerExporter(QObject):
             QgsRasterFileWriter.WriterError.WriteCanceled:
                 None,
         }[res]
+
+        layer_export_result = {
+            QgsRasterFileWriter.WriterError.NoError:
+                LayerExportResult.Success,
+            QgsRasterFileWriter.WriterError.WriteCanceled:
+                LayerExportResult.Canceled,
+        }[res]
+
+        return layer_export_result, error_message
+
+    def export_raster_layer(
+            self,
+            layer: QgsRasterLayer,
+            feedback: Optional[QgsFeedback] = None) -> LayerExportDetails:
+        """
+        Exports a raster layer into a format acceptable for Felt
+        """
+        raw_dest_file = self.generate_file_name('.tif')
+        styled_dest_file = raw_dest_file.replace('.tif', '_styled.tif')
+
+        layer_export_result, error_message = self.run_raster_writer(
+            layer,
+            file_name=styled_dest_file,
+            use_style=True,
+            feedback=feedback)
+
         if error_message:
             Logger.instance().log_error_json(
                 {
@@ -397,15 +453,31 @@ class LayerExporter(QObject):
             )
             raise LayerPackagingException(error_message)
 
-        layer_export_result = {
-            QgsRasterFileWriter.WriterError.NoError:
-                LayerExportResult.Success,
-            QgsRasterFileWriter.WriterError.WriteCanceled:
-                LayerExportResult.Canceled,
-        }[res]
+        filenames = [styled_dest_file]
+        if layer_export_result != LayerExportResult.Canceled:
+            # also write raw raster
 
-        return ExportResult(
-            filename=dest_file,
+            layer_export_result, error_message = self.run_raster_writer(
+                layer,
+                file_name=raw_dest_file,
+                use_style=False,
+                feedback=feedback)
+
+            if error_message:
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.PACKAGING_RASTER,
+                        'error': 'Error packaging layer: {}'.format(
+                            error_message)
+                    }
+                )
+                raise LayerPackagingException(error_message)
+
+            filenames.append(raw_dest_file)
+
+        return LayerExportDetails(
+            representative_filename=raw_dest_file,
+            filenames=filenames,
             result=layer_export_result,
             error_message=error_message,
             qgis_style_xml=self._get_original_style_xml(layer)
