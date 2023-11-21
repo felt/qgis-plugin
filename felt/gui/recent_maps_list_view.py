@@ -322,6 +322,7 @@ class RecentMapsWidget(QWidget):
 
         vl = QVBoxLayout()
         vl.setContentsMargins(0, 0, 0, 0)
+        vl.setSpacing(0)
 
         self._filter = QgsFilterLineEdit()
         self._filter.setShowSearchIcon(True)

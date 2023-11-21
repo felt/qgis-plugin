@@ -27,3 +27,6 @@ from .meta import PLUGIN_METADATA_PARSER  # noqa
 from .exceptions import LayerPackagingException  # noqa
 from .recent_projects_model import RecentMapsModel  # noqa
 from .thumbnail_manager import AsyncThumbnailManager  # noqa
+from .workspaces_model import WorkspacesModel  # noqa
+from .workspace import Workspace  # noqa
+

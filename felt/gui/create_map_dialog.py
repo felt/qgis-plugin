@@ -47,6 +47,7 @@ from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
 )
+from .workspaces_combo import WorkspacesComboBox
 from .felt_dialog_header import FeltDialogHeader
 from .gui_utils import (
     GuiUtils,
@@ -127,9 +128,11 @@ class CreateMapDialog(QDialog, WIDGET):
         from .recent_maps_list_view import RecentMapsWidget
         # pylint: enable=import-outside-toplevel
         self.maps_widget = RecentMapsWidget()
+        self.workspace_combo = WorkspacesComboBox()
 
         maps_layout = QVBoxLayout()
         maps_layout.setContentsMargins(0, 0, 0, 0)
+        maps_layout.addWidget(self.workspace_combo)
         maps_layout.addWidget(self.maps_widget)
         self.maps_frame.setLayout(maps_layout)
 

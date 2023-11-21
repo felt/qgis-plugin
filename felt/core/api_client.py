@@ -52,6 +52,7 @@ class FeltApiClient:
 
     URL = 'https://felt.com/api/v1'
     USER_ENDPOINT = '/user'
+    WORKSPACES_ENDPOINT = '/workspaces'
     CREATE_MAP_ENDPOINT = '/maps'
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
     FINISH_LAYER_ENDPOINT = '/maps/{}/layers/{}/finish_upload'
@@ -127,6 +128,18 @@ class FeltApiClient:
         Returns information about the user
         """
         request = self._build_request(self.USER_ENDPOINT)
+        return QgsNetworkAccessManager.instance().get(request)
+
+    def workspaces_async(self) -> QNetworkReply:
+        """
+        Retrieve workspaces asynchronously
+        """
+        params = {}
+
+        request = self._build_request(
+            self.WORKSPACES_ENDPOINT,
+            params=params
+        )
         return QgsNetworkAccessManager.instance().get(request)
 
     def recent_maps_async(self,
