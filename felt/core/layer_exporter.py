@@ -18,7 +18,10 @@ import uuid
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import (
+    Optional,
+    List
+)
 
 from qgis.PyQt.QtCore import (
     QVariant,
@@ -59,9 +62,22 @@ from .logger import Logger
 
 
 @dataclass
-class ExportResult:
+class LayerExportDetails:
     """
     Export results
+    """
+    representative_filename: str
+    filenames: List[str]
+    result: LayerExportResult
+    error_message: str
+    qgis_style_xml: str
+    style: Optional[LayerStyle] = None
+
+
+@dataclass
+class ZippedExportResult:
+    """
+    A zipped export results
     """
     filename: str
     result: LayerExportResult
@@ -174,7 +190,7 @@ class LayerExporter(QObject):
             self,
             layer: QgsMapLayer,
             feedback: Optional[QgsFeedback] = None
-    ) -> ExportResult:
+    ) -> ZippedExportResult:
         """
         Exports a layer into a format acceptable for Felt
         :raises LayerPackagingException
@@ -189,15 +205,21 @@ class LayerExporter(QObject):
         # package into zip
         zip_file_path = (
             (Path(str(self.temp_dir.name)) /
-             (Path(res.filename).stem + '.zip')).as_posix())
+             (Path(res.representative_filename).stem + '.zip')).as_posix())
         with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            zipf.write(res.filename, Path(res.filename).name)
+            for filename in res.filenames:
+                zipf.write(filename, Path(filename).name)
 
             # add QGIS layer style xml also
             zipf.writestr("qgis_style.xml", res.qgis_style_xml)
 
-        res.filename = zip_file_path
-        return res
+        return ZippedExportResult(
+            filename=zip_file_path,
+            result=res.result,
+            error_message=res.error_message,
+            qgis_style_xml=res.qgis_style_xml,
+            style=res.style
+        )
 
     @staticmethod
     def _get_original_style_xml(layer: QgsMapLayer) -> str:
@@ -212,7 +234,7 @@ class LayerExporter(QObject):
     def export_vector_layer(
             self,
             layer: QgsVectorLayer,
-            feedback: Optional[QgsFeedback] = None) -> ExportResult:
+            feedback: Optional[QgsFeedback] = None) -> LayerExportDetails:
         """
         Exports a vector layer into a format acceptable for Felt
         """
@@ -305,8 +327,9 @@ class LayerExporter(QObject):
                     res_layer.featureCount(), layer.featureCount())
             )
 
-        return ExportResult(
-            filename=dest_file,
+        return LayerExportDetails(
+            representative_filename=dest_file,
+            filenames=[dest_file],
             result=layer_export_result,
             error_message=error_message,
             qgis_style_xml=self._get_original_style_xml(layer),
@@ -316,7 +339,7 @@ class LayerExporter(QObject):
     def export_raster_layer(
             self,
             layer: QgsRasterLayer,
-            feedback: Optional[QgsFeedback] = None) -> ExportResult:
+            feedback: Optional[QgsFeedback] = None) -> LayerExportDetails:
         """
         Exports a raster layer into a format acceptable for Felt
         """
@@ -404,8 +427,9 @@ class LayerExporter(QObject):
                 LayerExportResult.Canceled,
         }[res]
 
-        return ExportResult(
-            filename=dest_file,
+        return LayerExportDetails(
+            representative_filename=dest_file,
+            filenames=[dest_file],
             result=layer_export_result,
             error_message=error_message,
             qgis_style_xml=self._get_original_style_xml(layer)
