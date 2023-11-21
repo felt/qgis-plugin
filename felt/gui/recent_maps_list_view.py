@@ -282,6 +282,12 @@ class RecentMapsListView(QListView):
                 self._model.index(0, 0),
                 QItemSelectionModel.ClearAndSelect)
 
+    def set_workspace_id(self, workspace_id: Optional[str]):
+        """
+        Sets the selected workspace ID to filter the view
+        """
+        self._model.set_workspace_id(workspace_id)
+
     def set_new_map_title(self, title: str):
         """
         Sets the title to use for the new map item
@@ -295,7 +301,7 @@ class RecentMapsListView(QListView):
 
         # while you search, the first search result should be
         # selected so you can quickly hit enter
-        if self._model.filter_string():
+        if self._model.filter_string() or self._model.workspace_id():
             self.selectionModel().select(
                 self._model.index(1, 0),
                 QItemSelectionModel.ClearAndSelect)
@@ -358,3 +364,9 @@ class RecentMapsWidget(QWidget):
         return self._view.selectionModel().selectedIndexes()[0].data(
             RecentMapsModel.MapRole
         )
+
+    def set_workspace_id(self, workspace_id: Optional[str]):
+        """
+        Sets the selected workspace ID to filter the list
+        """
+        self._view.set_workspace_id(workspace_id)

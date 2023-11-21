@@ -129,6 +129,7 @@ class CreateMapDialog(QDialog, WIDGET):
         # pylint: enable=import-outside-toplevel
         self.maps_widget = RecentMapsWidget()
         self.workspace_combo = WorkspacesComboBox()
+        self.workspace_combo.workspace_changed.connect(self._workspace_changed)
 
         maps_layout = QVBoxLayout()
         maps_layout.setContentsMargins(0, 0, 0, 0)
@@ -177,6 +178,12 @@ class CreateMapDialog(QDialog, WIDGET):
         self.started = False
         self._validate()
         self.maps_widget.filter_line_edit().setFocus()
+
+    def _workspace_changed(self, workspace_id: str):
+        """
+        Called when the selected workspace is changed
+        """
+        self.maps_widget.set_workspace_id(workspace_id)
 
     def _create_map_uploader_task(self):
         """

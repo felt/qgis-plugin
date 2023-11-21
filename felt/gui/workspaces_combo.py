@@ -9,6 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 from typing import Optional
 
+from qgis.PyQt.QtCore import pyqtSignal
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QComboBox,
@@ -21,8 +22,24 @@ class WorkspacesComboBox(QComboBox):
     Custom combo box for workspace selection
     """
 
+    workspace_changed = pyqtSignal(str)
+
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
         self._model = WorkspacesModel(self)
         self.setModel(self._model)
+
+        self.currentIndexChanged.connect(self._index_changed)
+
+    def _index_changed(self, index):
+        """
+        Called when the current selected workspace is changed
+        """
+        self.workspace_changed.emit(
+            self.currentData(
+                WorkspacesModel.IdRole
+            )
+        )
+
+

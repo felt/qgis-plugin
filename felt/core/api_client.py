@@ -144,7 +144,8 @@ class FeltApiClient:
 
     def recent_maps_async(self,
                           cursor: Optional[str] = None,
-                          filter_string: Optional[str] = None) \
+                          filter_string: Optional[str] = None,
+                          workspace_id: Optional[str] = None) \
             -> QNetworkReply:
         """
         Retrieve recent maps asynchronously
@@ -154,6 +155,8 @@ class FeltApiClient:
             params['cursor'] = cursor
         if filter_string:
             params['title'] = filter_string
+        if workspace_id:
+            params['workspace_id'] = workspace_id
 
         request = self._build_request(
             self.RECENT_MAPS_ENDPOINT,
