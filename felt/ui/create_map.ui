@@ -70,7 +70,7 @@
           <number>0</number>
          </property>
          <widget class="QWidget" name="page">
-          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,1,0">
+          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,1">
            <property name="leftMargin">
             <number>0</number>
            </property>
@@ -188,11 +188,11 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
        <item>
         <widget class="QLabel" name="footer_label">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;privacy_policy&quot;&gt;Privacy&lt;/a&gt; •  &lt;a href=&quot;terms_of_use&quot;&gt;Terms&lt;/a&gt; •  &lt;a href=&quot;mailto:support@felt.com&quot;&gt;Contact us&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string/>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

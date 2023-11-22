@@ -32,7 +32,8 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
     QDialog,
     QDialogButtonBox,
-    QVBoxLayout
+    QVBoxLayout,
+    QLabel
 )
 from qgis.core import (
     QgsMapLayer,
@@ -92,9 +93,33 @@ class CreateMapDialog(QDialog, WIDGET):
 
         vl = QVBoxLayout()
         vl.setContentsMargins(0, 0, 0, 0)
-        vl.addWidget(FeltDialogHeader())
+        header = FeltDialogHeader()
+        vl.addWidget(header)
         self.widget_logo.setStyleSheet('background: solid #3d521e;')
         self.widget_logo.setLayout(vl)
+
+        self.header_label = QLabel(
+            """<style> a { text-decoration: none; }</style>"""
+            """<a href="privacy_policy">Privacy</a>&nbsp;&nbsp;&nbsp;"""
+            """<a href="terms_of_use">Terms</a>&nbsp;&nbsp;&nbsp;"""
+            """<a href="mailto:support@felt.com">Contact us</a></p>"""
+        )
+        self.header_label.setMouseTracking(True)
+        self.header_label.linkActivated.connect(self._link_activated)
+        self.header_label.setText(
+            GuiUtils.set_link_color(self.header_label.text(),
+                                    color='rgba(255,255,255,.7)')
+        )
+
+        header_label_vl = QVBoxLayout()
+        header_label_vl.setContentsMargins(0,0,0,0)
+        header_label_vl.addStretch()
+        header_label_vl.addWidget(self.header_label)
+
+        header_label_widget = QWidget()
+        header_label_widget.setLayout(header_label_vl)
+
+        header.push_widget(header_label_widget)
 
         self.setWindowTitle(self.tr('Add to Felt'))
 

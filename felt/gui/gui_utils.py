@@ -16,7 +16,10 @@ __revision__ = '$Format:%H$'
 import math
 import os
 import re
-from typing import Optional
+from typing import (
+    Optional,
+    Union
+)
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import (
@@ -76,12 +79,15 @@ class GuiUtils:
     @staticmethod
     def set_link_color(html: str,
                        wrap_color=True,
-                       color: Optional[QColor] = None) -> str:
+                       color: Optional[Union[QColor, str]] = None) -> str:
         """
         Adds style tags to links in a HTML string for the standard link color
         """
         if color:
-            color_string = color.name()
+            if isinstance(color, str):
+                color_string = color
+            else:
+                color_string = color.name()
         else:
             color_string = 'rgba(0,0,0,.3)'
         res = re.sub(r'(<a href.*?)>',
