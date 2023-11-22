@@ -72,8 +72,8 @@ class WorkspacesModel(QAbstractItemModel):
 
         workspaces = result.get('data', [])
 
-        self.beginInsertRows(QModelIndex(), len(self.workspaces) + 1,
-                             1 + len(self.workspaces) + len(workspaces) - 1)
+        self.beginInsertRows(QModelIndex(), len(self.workspaces),
+                             len(self.workspaces) + len(workspaces) - 1)
 
         for workspace_json in workspaces:
             _workspace = Workspace.from_json(workspace_json)
@@ -88,7 +88,7 @@ class WorkspacesModel(QAbstractItemModel):
         if column < 0 or column >= self.columnCount():
             return QModelIndex()
 
-        if not parent.isValid() and 0 <= row < 1 + len(self.workspaces):
+        if not parent.isValid() and 0 <= row < len(self.workspaces):
             return self.createIndex(row, column)
 
         return QModelIndex()
@@ -98,7 +98,7 @@ class WorkspacesModel(QAbstractItemModel):
 
     def rowCount(self, parent=QModelIndex()):
         if not parent.isValid():
-            return 1 + len(self.workspaces)
+            return len(self.workspaces)
         # no child items
         return 0
 
@@ -109,12 +109,6 @@ class WorkspacesModel(QAbstractItemModel):
     def data(self,
              index,
              role=Qt.DisplayRole):
-
-        if index.row() == 0 and not index.parent().isValid():
-            # special "My workspace" item
-            if role in (self.NameRole, Qt.DisplayRole, Qt.ToolTipRole):
-                return self.tr('My Workspace')
-            return None
 
         _workspace = self.index2workspace(index)
         if _workspace:
@@ -141,8 +135,8 @@ class WorkspacesModel(QAbstractItemModel):
         """
         Returns the workspace at the given model index
         """
-        if not index.isValid() or index.row() < 1 or index.row() >= 1 + len(
+        if not index.isValid() or index.row() < 0 or index.row() >= len(
                 self.workspaces):
             return None
 
-        return self.workspaces[index.row() - 1]
+        return self.workspaces[index.row()]
