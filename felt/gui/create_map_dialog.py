@@ -157,8 +157,14 @@ class CreateMapDialog(QDialog, WIDGET):
         self.logout_action.triggered.connect(self._logout)
 
         self.setting_button.setMenu(self.setting_menu)
+        self.setting_button.setIcon(GuiUtils.get_icon('setting_icon.svg'))
         self.setting_button.setPopupMode(QToolButton.InstantPopup)
-
+        self.setting_button.setFixedHeight(
+            self.button_box.button(QDialogButtonBox.Cancel).height()
+        )
+        self.setting_button.setFixedWidth(
+            self.setting_button.size().height()
+        )
 
         # pylint: disable=import-outside-toplevel
         from .recent_maps_list_view import RecentMapsWidget
