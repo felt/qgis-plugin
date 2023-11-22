@@ -153,6 +153,14 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
         self.setting_menu = QMenu(self)
+        palette = self.setting_menu.palette()
+        palette.setColor(QPalette.Active, QPalette.Base, QColor(255,255,255))
+        palette.setColor(QPalette.Active, QPalette.Text, QColor(0, 0, 0))
+        palette.setColor(QPalette.Active, QPalette.Highlight, QColor('#3d521e'))
+        palette.setColor(QPalette.Active, QPalette.HighlightedText,
+                         QColor(255, 255, 255))
+        self.setting_menu.setPalette(palette)
+
         self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)
         self.setting_menu.addAction(self.logout_action)
         self.logout_action.triggered.connect(self._logout)
