@@ -53,12 +53,12 @@ from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
 )
-from .workspaces_combo import WorkspacesComboBox
 from .felt_dialog_header import FeltDialogHeader
 from .gui_utils import (
     GuiUtils,
     FELT_STYLESHEET
 )
+from .workspaces_combo import WorkspacesComboBox
 from ..core import (
     MapUploaderTask,
     Map
@@ -116,7 +116,7 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
         header_label_vl = QVBoxLayout()
-        header_label_vl.setContentsMargins(0,0,0,0)
+        header_label_vl.setContentsMargins(0, 0, 0, 0)
         header_label_vl.addStretch()
         header_label_vl.addWidget(self.header_label)
 
@@ -155,15 +155,17 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.setting_menu = QMenu(self)
         palette = self.setting_menu.palette()
-        palette.setColor(QPalette.Active, QPalette.Base, QColor(255,255,255))
+        palette.setColor(QPalette.Active, QPalette.Base, QColor(255, 255, 255))
         palette.setColor(QPalette.Active, QPalette.Text, QColor(0, 0, 0))
-        palette.setColor(QPalette.Active, QPalette.Highlight, QColor('#3d521e'))
+        palette.setColor(QPalette.Active, QPalette.Highlight,
+                         QColor('#3d521e'))
         palette.setColor(QPalette.Active, QPalette.HighlightedText,
                          QColor(255, 255, 255))
         self.setting_menu.setPalette(palette)
 
-        self.upload_raster_as_styled_action = QAction(self.tr('Upload Raster Layers as Styled Images'),
-                                                      self.setting_menu)
+        self.upload_raster_as_styled_action = QAction(
+            self.tr('Upload Raster Layers as Styled Images'),
+            self.setting_menu)
         self.upload_raster_as_styled_action.setCheckable(True)
         self.upload_raster_as_styled_action.setChecked(
             QgsSettings().value(
