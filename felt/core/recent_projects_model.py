@@ -63,6 +63,7 @@ class RecentMapsModel(QAbstractItemModel):
         self._current_reply = None
         self._new_map_title: Optional[str] = None
         self._filter_string: Optional[str] = None
+        self._workspace_id: Optional[str] = None
         self.maps: List[Map] = []
         self._clear_maps_on_results = False
         self._no_results_found = False
@@ -99,13 +100,34 @@ class RecentMapsModel(QAbstractItemModel):
 
         self._load_next_results()
 
+    def workspace_id(self) -> Optional[str]:
+        """
+        Returns the workspace id
+        """
+        return self._workspace_id
+
+    def set_workspace_id(self, workspace_id: Optional[str]):
+        """
+        Sets the selected workspace ID to filter the model
+        """
+        if workspace_id == self._workspace_id:
+            return
+
+        self._clear_maps_on_results = True
+        self._workspace_id = workspace_id
+        self._current_reply = None
+        self._next_page = None
+
+        self._load_next_results()
+
     def _load_next_results(self):
         """
         Triggered when the next page of results needs to be loaded
         """
         self._current_reply = API_CLIENT.recent_maps_async(
             filter_string=self._filter_string,
-            cursor=self._next_page
+            cursor=self._next_page,
+            workspace_id=self._workspace_id
         )
         self._current_reply.finished.connect(
             partial(self._reply_finished, self._current_reply))

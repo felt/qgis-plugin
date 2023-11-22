@@ -52,6 +52,7 @@ class FeltApiClient:
 
     URL = 'https://felt.com/api/v1'
     USER_ENDPOINT = '/user'
+    WORKSPACES_ENDPOINT = '/workspaces'
     CREATE_MAP_ENDPOINT = '/maps'
     CREATE_LAYER_ENDPOINT = '/maps/{}/layers'
     FINISH_LAYER_ENDPOINT = '/maps/{}/layers/{}/finish_upload'
@@ -129,9 +130,22 @@ class FeltApiClient:
         request = self._build_request(self.USER_ENDPOINT)
         return QgsNetworkAccessManager.instance().get(request)
 
+    def workspaces_async(self) -> QNetworkReply:
+        """
+        Retrieve workspaces asynchronously
+        """
+        params = {}
+
+        request = self._build_request(
+            self.WORKSPACES_ENDPOINT,
+            params=params
+        )
+        return QgsNetworkAccessManager.instance().get(request)
+
     def recent_maps_async(self,
                           cursor: Optional[str] = None,
-                          filter_string: Optional[str] = None) \
+                          filter_string: Optional[str] = None,
+                          workspace_id: Optional[str] = None) \
             -> QNetworkReply:
         """
         Retrieve recent maps asynchronously
@@ -141,6 +155,8 @@ class FeltApiClient:
             params['cursor'] = cursor
         if filter_string:
             params['title'] = filter_string
+        if workspace_id:
+            params['workspace_id'] = workspace_id
 
         request = self._build_request(
             self.RECENT_MAPS_ENDPOINT,
@@ -156,6 +172,7 @@ class FeltApiClient:
                    title: Optional[str] = None,
                    basemap: Optional[str] = None,
                    layer_urls: Optional[List[str]] = None,
+                   workspace_id: Optional[str] = None,
                    blocking: bool = False,
                    feedback: Optional[QgsFeedback] = None
                    ) -> Union[QNetworkReply, QgsNetworkReplyContent]:
@@ -174,6 +191,9 @@ class FeltApiClient:
             request_params['title'] = title
         if basemap:
             request_params['basemap'] = basemap
+        if workspace_id:
+            request_params['workspace_id'] = workspace_id
+
         # TODO -- layer URLS!
         json_data = json.dumps(request_params)
         if blocking:
