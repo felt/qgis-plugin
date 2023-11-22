@@ -155,11 +155,11 @@ class MapUploaderTask(QgsTask):
         unsupported_layer_names = set()
         for layer in layers:
             support, reason = LayerExporter.can_export_layer(layer)
+            self.unsupported_layers.append((layer.name(), reason))
             if not support.should_report():
                 continue
 
             unsupported_layer_names.add(layer.name())
-            self.unsupported_layers.append((layer.name(), reason))
             if layer.type() == QgsMapLayer.PluginLayer:
                 id_string = layer.pluginLayerType()
             else:
