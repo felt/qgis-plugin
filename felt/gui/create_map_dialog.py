@@ -42,7 +42,8 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import (
     QgsMapLayer,
     QgsApplication,
-    QgsProject
+    QgsProject,
+    QgsSettings
 )
 from qgis.gui import QgsGui
 
@@ -161,6 +162,30 @@ class CreateMapDialog(QDialog, WIDGET):
                          QColor(255, 255, 255))
         self.setting_menu.setPalette(palette)
 
+        self.upload_raster_as_styled_action = QAction(self.tr('Upload Raster Layers as Styled Images'),
+                                                      self.setting_menu)
+        self.upload_raster_as_styled_action.setCheckable(True)
+        self.upload_raster_as_styled_action.setChecked(
+            QgsSettings().value(
+                "felt/upload_raster_as_styled", True, bool, QgsSettings.Plugins
+            )
+        )
+
+        def upload_raster_as_styled_toggled():
+            """
+            Called when upload raster as style action is toggled
+            """
+            QgsSettings().setValue(
+                "felt/upload_raster_as_styled",
+                self.upload_raster_as_styled_action.isChecked(),
+                QgsSettings.Plugins
+            )
+
+        self.upload_raster_as_styled_action.toggled.connect(
+            upload_raster_as_styled_toggled)
+        self.setting_menu.addAction(self.upload_raster_as_styled_action)
+
+        self.setting_menu.addSeparator()
         self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)
         self.setting_menu.addAction(self.logout_action)
         self.logout_action.triggered.connect(self._logout)
