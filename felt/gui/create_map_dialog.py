@@ -26,7 +26,8 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtGui import (
     QDesktopServices,
     QFontMetrics,
-    QColor
+    QColor,
+    QPalette
 )
 from qgis.PyQt.QtWidgets import (
     QWidget,
@@ -155,6 +156,10 @@ class CreateMapDialog(QDialog, WIDGET):
         self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)
         self.setting_menu.addAction(self.logout_action)
         self.logout_action.triggered.connect(self._logout)
+
+        palette = self.setting_button.palette()
+        palette.setColor(QPalette.Active, QPalette.Button, QColor('#ececec'))
+        self.setting_button.setPalette(palette)
 
         self.setting_button.setMenu(self.setting_menu)
         self.setting_button.setIcon(GuiUtils.get_icon('setting_icon.svg'))
