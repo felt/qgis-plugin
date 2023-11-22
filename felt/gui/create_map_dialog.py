@@ -188,17 +188,14 @@ class CreateMapDialog(QDialog, WIDGET):
         self.progress_bar.setValue(0)
 
         if AUTHORIZATION_MANAGER.user:
-            self.label_user.setText(
+            self.footer_label.setText(
                 GuiUtils.set_link_color(
-                    self.tr(
-                        '{} ({})'
-                    ).format(AUTHORIZATION_MANAGER.user.name,
-                             AUTHORIZATION_MANAGER.user.email) +
-                    ' <a href="logout">' + self.tr('Log out') + '</a>',
+                    AUTHORIZATION_MANAGER.user.email +
+                    '&nbsp;&nbsp;<a href="logout">' + self.tr('Log out') + '</a>',
                     wrap_color=False
                 )
             )
-        self.label_user.linkActivated.connect(self._link_activated)
+        self.footer_label.linkActivated.connect(self._link_activated)
 
         self.started = False
         self._validate()
