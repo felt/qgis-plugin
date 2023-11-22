@@ -54,7 +54,6 @@ class FeltDialogHeader(QWidget):
             QSizePolicy.Fixed
         )
 
-        self.setStyleSheet('background: solid #3d521e;')
         svg_logo_widget = QSvgWidget()
         fixed_size = QSize(self.LOGO_WIDTH_PIXELS,
                            self.LOGO_HEIGHT_PIXELS)

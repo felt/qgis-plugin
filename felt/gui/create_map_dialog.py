@@ -95,7 +95,6 @@ class CreateMapDialog(QDialog, WIDGET):
         vl.setContentsMargins(0, 0, 0, 0)
         header = FeltDialogHeader()
         vl.addWidget(header)
-        self.widget_logo.setStyleSheet('background: solid #3d521e;')
         self.widget_logo.setLayout(vl)
 
         self.header_label = QLabel(
