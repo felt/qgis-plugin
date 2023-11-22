@@ -33,7 +33,10 @@ from qgis.PyQt.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QVBoxLayout,
-    QLabel
+    QLabel,
+    QMenu,
+    QAction,
+    QToolButton
 )
 from qgis.core import (
     QgsMapLayer,
@@ -148,6 +151,15 @@ class CreateMapDialog(QDialog, WIDGET):
             GuiUtils.set_link_color(self.footer_label.text())
         )
 
+        self.setting_menu = QMenu(self)
+        self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)
+        self.setting_menu.addAction(self.logout_action)
+        self.logout_action.triggered.connect(self._logout)
+
+        self.setting_button.setMenu(self.setting_menu)
+        self.setting_button.setPopupMode(QToolButton.InstantPopup)
+
+
         # pylint: disable=import-outside-toplevel
         from .recent_maps_list_view import RecentMapsWidget
         # pylint: enable=import-outside-toplevel
@@ -188,13 +200,8 @@ class CreateMapDialog(QDialog, WIDGET):
 
         if AUTHORIZATION_MANAGER.user:
             self.footer_label.setText(
-                GuiUtils.set_link_color(
-                    AUTHORIZATION_MANAGER.user.email +
-                    '&nbsp;&nbsp;<a href="logout">' + self.tr('Log out') + '</a>',
-                    wrap_color=False
-                )
+                AUTHORIZATION_MANAGER.user.email
             )
-        self.footer_label.linkActivated.connect(self._link_activated)
 
         self.started = False
         self._validate()
@@ -245,6 +252,13 @@ class CreateMapDialog(QDialog, WIDGET):
         else:
             self.reject()
 
+    def _logout(self):
+        """
+        Triggers a logout
+        """
+        AUTHORIZATION_MANAGER.deauthorize()
+        self.close()
+
     def _link_activated(self, link: str):
         """
         Called when a hyperlink is clicked in dialog labels
@@ -254,8 +268,7 @@ class CreateMapDialog(QDialog, WIDGET):
         elif link == 'terms_of_use':
             url = QUrl(TOS_URL)
         elif link == 'logout':
-            AUTHORIZATION_MANAGER.deauthorize()
-            self.close()
+            self._logout()
             return
         else:
             url = QUrl(link)

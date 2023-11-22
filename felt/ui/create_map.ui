@@ -171,7 +171,7 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0">
        <item>
         <widget class="QLabel" name="footer_label">
          <property name="text">
@@ -182,6 +182,13 @@
          </property>
          <property name="textInteractionFlags">
           <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="setting_button">
+         <property name="text">
+          <string>...</string>
          </property>
         </widget>
        </item>
