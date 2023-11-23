@@ -211,8 +211,8 @@ class CreateMapDialog(QDialog, WIDGET):
         )
         self.setting_button.setIconSize(
             QSize(int(self.setting_button.size().width() * 0.6),
-                int(self.setting_button.size().height()* 0.6)
-        ))
+                  int(self.setting_button.size().height() * 0.6)
+                  ))
         # setting the setting button to a fixed height doesn't always
         # guarantee that the height exactly matches the Close/Add buttons.
         # So let's play it safe and force them to match always:
