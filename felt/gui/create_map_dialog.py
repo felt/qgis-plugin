@@ -205,6 +205,13 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setting_button.setFixedWidth(
             self.setting_button.size().height()
         )
+        # setting the setting button to a fixed height doesn't always
+        # guarantee that the height exactly matches the Close/Add buttons.
+        # So let's play it safe and force them to match always:
+        for b in (QDialogButtonBox.Cancel, QDialogButtonBox.Ok):
+            self.button_box.button(b).setFixedHeight(
+                self.setting_button.size().height()
+            )
 
         # pylint: disable=import-outside-toplevel
         from .recent_maps_list_view import RecentMapsWidget
