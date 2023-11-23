@@ -199,6 +199,9 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setting_button.setMenu(self.setting_menu)
         self.setting_button.setIcon(GuiUtils.get_icon('setting_icon.svg'))
         self.setting_button.setPopupMode(QToolButton.InstantPopup)
+        self.setting_button.setStyleSheet(
+            """QToolButton::menu-indicator { image: none; }"""
+        )
         self.setting_button.setFixedHeight(
             self.button_box.button(QDialogButtonBox.Cancel).height()
         )
