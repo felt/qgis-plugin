@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   width="13.333353"
+   width="26.063723"
    height="13.063334"
-   viewBox="0 0 13.333353 13.063334"
+   viewBox="0 0 26.063723 13.063334"
    fill="none"
    version="1.1"
    id="svg15"
-   sodipodi:docname="setting_icon.svg"
+   sodipodi:docname="Group 1.svg"
    inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -21,15 +21,19 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="9.4628831"
-     inkscape:cx="20.078447"
-     inkscape:cy="12.205582"
+     inkscape:zoom="6.1940928"
+     inkscape:cx="24.53951"
+     inkscape:cy="-2.0180518"
      inkscape:window-width="2490"
      inkscape:window-height="1371"
      inkscape:window-x="2630"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg15" />
+  <path
+     d="m 22.166623,8.66669 3.8971,-3 h -7.7942 z"
+     fill="#000000"
+     id="path9" />
   <path
      fill-rule="evenodd"
      clip-rule="evenodd"
@@ -74,8 +78,7 @@
        y1="0"
        x2="20.5"
        y2="24"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="translate(0.7105556,1.3758742)">
+       gradientUnits="userSpaceOnUse">
       <stop
          stop-color="#FDFDFD"
          id="stop14" />

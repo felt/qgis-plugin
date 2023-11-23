@@ -21,7 +21,8 @@ from typing import (
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import (
     Qt,
-    QUrl
+    QUrl,
+    QSize
 )
 from qgis.PyQt.QtGui import (
     QDesktopServices,
@@ -200,14 +201,18 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setting_button.setIcon(GuiUtils.get_icon('setting_icon.svg'))
         self.setting_button.setPopupMode(QToolButton.InstantPopup)
         self.setting_button.setStyleSheet(
-            """QToolButton::menu-indicator { image: none; }"""
+            """QToolButton::menu-indicator { image: none }"""
         )
         self.setting_button.setFixedHeight(
             self.button_box.button(QDialogButtonBox.Cancel).height()
         )
         self.setting_button.setFixedWidth(
-            self.setting_button.size().height()
+            int(self.setting_button.size().height() * 1.8)
         )
+        self.setting_button.setIconSize(
+            QSize(int(self.setting_button.size().width() * 0.6),
+                int(self.setting_button.size().height()* 0.6)
+        ))
         # setting the setting button to a fixed height doesn't always
         # guarantee that the height exactly matches the Close/Add buttons.
         # So let's play it safe and force them to match always:
