@@ -267,7 +267,8 @@ class LayerExporter(QObject):
     def export_layer_for_felt(
             self,
             layer: QgsMapLayer,
-            feedback: Optional[QgsFeedback] = None
+            feedback: Optional[QgsFeedback] = None,
+            upload_raster_as_styled: bool = True
     ) -> ZippedExportResult:
         """
         Exports a layer into a format acceptable for Felt
@@ -276,7 +277,9 @@ class LayerExporter(QObject):
         if isinstance(layer, QgsVectorLayer):
             res = self.export_vector_layer(layer, feedback)
         elif isinstance(layer, QgsRasterLayer):
-            res = self.export_raster_layer(layer, feedback)
+            res = self.export_raster_layer(
+                layer, feedback,
+                upload_raster_as_styled)
         else:
             assert False
 
@@ -504,17 +507,17 @@ class LayerExporter(QObject):
     def export_raster_layer(
             self,
             layer: QgsRasterLayer,
-            feedback: Optional[QgsFeedback] = None) -> LayerExportDetails:
+            feedback: Optional[QgsFeedback] = None,
+            upload_raster_as_styled: bool = True) -> LayerExportDetails:
         """
         Exports a raster layer into a format acceptable for Felt
         """
-        raw_dest_file = self.generate_file_name('.tif')
-        styled_dest_file = raw_dest_file.replace('.tif', '_styled.tif')
+        dest_file = self.generate_file_name('.tif')
 
         layer_export_result, error_message = self.run_raster_writer(
             layer,
-            file_name=styled_dest_file,
-            use_style=True,
+            file_name=dest_file,
+            use_style=upload_raster_as_styled,
             feedback=feedback)
 
         if error_message:
@@ -526,31 +529,9 @@ class LayerExporter(QObject):
             )
             raise LayerPackagingException(error_message)
 
-        filenames = [styled_dest_file]
-        if layer_export_result != LayerExportResult.Canceled:
-            # also write raw raster
-
-            layer_export_result, error_message = self.run_raster_writer(
-                layer,
-                file_name=raw_dest_file,
-                use_style=False,
-                feedback=feedback)
-
-            if error_message:
-                Logger.instance().log_error_json(
-                    {
-                        'type': Logger.PACKAGING_RASTER,
-                        'error': 'Error packaging layer: {}'.format(
-                            error_message)
-                    }
-                )
-                raise LayerPackagingException(error_message)
-
-            filenames.append(raw_dest_file)
-
         return LayerExportDetails(
-            representative_filename=raw_dest_file,
-            filenames=filenames,
+            representative_filename=dest_file,
+            filenames=[dest_file],
             result=layer_export_result,
             error_message=error_message,
             qgis_style_xml=self._get_original_style_xml(layer)

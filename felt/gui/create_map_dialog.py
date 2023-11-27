@@ -21,23 +21,30 @@ from typing import (
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import (
     Qt,
-    QUrl
+    QUrl,
+    QSize
 )
 from qgis.PyQt.QtGui import (
     QDesktopServices,
     QFontMetrics,
-    QColor
+    QColor,
+    QPalette
 )
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QDialog,
     QDialogButtonBox,
-    QVBoxLayout
+    QVBoxLayout,
+    QLabel,
+    QMenu,
+    QAction,
+    QToolButton
 )
 from qgis.core import (
     QgsMapLayer,
     QgsApplication,
-    QgsProject
+    QgsProject,
+    QgsSettings
 )
 from qgis.gui import QgsGui
 
@@ -47,12 +54,12 @@ from .constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
 )
-from .workspaces_combo import WorkspacesComboBox
 from .felt_dialog_header import FeltDialogHeader
 from .gui_utils import (
     GuiUtils,
     FELT_STYLESHEET
 )
+from .workspaces_combo import WorkspacesComboBox
 from ..core import (
     MapUploaderTask,
     Map
@@ -92,9 +99,32 @@ class CreateMapDialog(QDialog, WIDGET):
 
         vl = QVBoxLayout()
         vl.setContentsMargins(0, 0, 0, 0)
-        vl.addWidget(FeltDialogHeader())
-        self.widget_logo.setStyleSheet('background: solid #3d521e;')
+        header = FeltDialogHeader()
+        vl.addWidget(header)
         self.widget_logo.setLayout(vl)
+
+        self.header_label = QLabel(
+            """<style> a { text-decoration: none; }</style>"""
+            """<a href="privacy_policy">Privacy</a>&nbsp;&nbsp;&nbsp;"""
+            """<a href="terms_of_use">Terms</a>&nbsp;&nbsp;&nbsp;"""
+            """<a href="mailto:support@felt.com">Contact us</a></p>"""
+        )
+        self.header_label.setMouseTracking(True)
+        self.header_label.linkActivated.connect(self._link_activated)
+        self.header_label.setText(
+            GuiUtils.set_link_color(self.header_label.text(),
+                                    color='rgba(255,255,255,.7)')
+        )
+
+        header_label_vl = QVBoxLayout()
+        header_label_vl.setContentsMargins(0, 0, 0, 0)
+        header_label_vl.addStretch()
+        header_label_vl.addWidget(self.header_label)
+
+        header_label_widget = QWidget()
+        header_label_widget.setLayout(header_label_vl)
+
+        header.push_widget(header_label_widget)
 
         self.setWindowTitle(self.tr('Add to Felt'))
 
@@ -123,6 +153,73 @@ class CreateMapDialog(QDialog, WIDGET):
         self.footer_label.setText(
             GuiUtils.set_link_color(self.footer_label.text())
         )
+
+        self.setting_menu = QMenu(self)
+        palette = self.setting_menu.palette()
+        palette.setColor(QPalette.Active, QPalette.Base, QColor(255, 255, 255))
+        palette.setColor(QPalette.Active, QPalette.Text, QColor(0, 0, 0))
+        palette.setColor(QPalette.Active, QPalette.Highlight,
+                         QColor('#3d521e'))
+        palette.setColor(QPalette.Active, QPalette.HighlightedText,
+                         QColor(255, 255, 255))
+        self.setting_menu.setPalette(palette)
+
+        self.upload_raster_as_styled_action = QAction(
+            self.tr('Upload Raster Layers as Styled Images'),
+            self.setting_menu)
+        self.upload_raster_as_styled_action.setCheckable(True)
+        self.upload_raster_as_styled_action.setChecked(
+            QgsSettings().value(
+                "felt/upload_raster_as_styled", True, bool, QgsSettings.Plugins
+            )
+        )
+
+        def upload_raster_as_styled_toggled():
+            """
+            Called when upload raster as style action is toggled
+            """
+            QgsSettings().setValue(
+                "felt/upload_raster_as_styled",
+                self.upload_raster_as_styled_action.isChecked(),
+                QgsSettings.Plugins
+            )
+
+        self.upload_raster_as_styled_action.toggled.connect(
+            upload_raster_as_styled_toggled)
+        self.setting_menu.addAction(self.upload_raster_as_styled_action)
+
+        self.setting_menu.addSeparator()
+        self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)
+        self.setting_menu.addAction(self.logout_action)
+        self.logout_action.triggered.connect(self._logout)
+
+        palette = self.setting_button.palette()
+        palette.setColor(QPalette.Active, QPalette.Button, QColor('#ececec'))
+        self.setting_button.setPalette(palette)
+
+        self.setting_button.setMenu(self.setting_menu)
+        self.setting_button.setIcon(GuiUtils.get_icon('setting_icon.svg'))
+        self.setting_button.setPopupMode(QToolButton.InstantPopup)
+        self.setting_button.setStyleSheet(
+            """QToolButton::menu-indicator { image: none }"""
+        )
+        self.setting_button.setFixedHeight(
+            self.button_box.button(QDialogButtonBox.Cancel).height()
+        )
+        self.setting_button.setFixedWidth(
+            int(self.setting_button.size().height() * 1.8)
+        )
+        self.setting_button.setIconSize(
+            QSize(int(self.setting_button.size().width() * 0.6),
+                  int(self.setting_button.size().height() * 0.6)
+                  ))
+        # setting the setting button to a fixed height doesn't always
+        # guarantee that the height exactly matches the Close/Add buttons.
+        # So let's play it safe and force them to match always:
+        for b in (QDialogButtonBox.Cancel, QDialogButtonBox.Ok):
+            self.button_box.button(b).setFixedHeight(
+                self.setting_button.size().height()
+            )
 
         # pylint: disable=import-outside-toplevel
         from .recent_maps_list_view import RecentMapsWidget
@@ -163,17 +260,9 @@ class CreateMapDialog(QDialog, WIDGET):
         self.progress_bar.setValue(0)
 
         if AUTHORIZATION_MANAGER.user:
-            self.label_user.setText(
-                GuiUtils.set_link_color(
-                    self.tr(
-                        '{} ({})'
-                    ).format(AUTHORIZATION_MANAGER.user.name,
-                             AUTHORIZATION_MANAGER.user.email) +
-                    ' <a href="logout">' + self.tr('Log out') + '</a>',
-                    wrap_color=False
-                )
+            self.footer_label.setText(
+                AUTHORIZATION_MANAGER.user.email
             )
-        self.label_user.linkActivated.connect(self._link_activated)
 
         self.started = False
         self._validate()
@@ -224,6 +313,13 @@ class CreateMapDialog(QDialog, WIDGET):
         else:
             self.reject()
 
+    def _logout(self):
+        """
+        Triggers a logout
+        """
+        AUTHORIZATION_MANAGER.deauthorize()
+        self.close()
+
     def _link_activated(self, link: str):
         """
         Called when a hyperlink is clicked in dialog labels
@@ -233,8 +329,7 @@ class CreateMapDialog(QDialog, WIDGET):
         elif link == 'terms_of_use':
             url = QUrl(TOS_URL)
         elif link == 'logout':
-            AUTHORIZATION_MANAGER.deauthorize()
-            self.close()
+            self._logout()
             return
         else:
             url = QUrl(link)

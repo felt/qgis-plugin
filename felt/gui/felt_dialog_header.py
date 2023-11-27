@@ -27,7 +27,8 @@ from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QSizePolicy
+    QSizePolicy,
+    QHBoxLayout
 )
 
 from .gui_utils import (
@@ -53,21 +54,35 @@ class FeltDialogHeader(QWidget):
             QSizePolicy.Fixed
         )
 
-        self.setStyleSheet('background: solid #3d521e;')
         svg_logo_widget = QSvgWidget()
         fixed_size = QSize(self.LOGO_WIDTH_PIXELS,
                            self.LOGO_HEIGHT_PIXELS)
         svg_logo_widget.setFixedSize(fixed_size)
         svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
         svg_logo_widget.setStyleSheet('background: transparent;')
+        svg_logo_container = QVBoxLayout()
+        svg_logo_container.setContentsMargins(0, 0, 0, 4)
+        svg_logo_container.addWidget(svg_logo_widget)
         vl = QVBoxLayout()
-        vl.setContentsMargins(12, 0, 0, 19)
+        vl.setContentsMargins(12, 0, 12, 15)
         vl.addStretch(1)
-        vl.addWidget(svg_logo_widget)
+
+        self.header_layout = QHBoxLayout()
+        self.header_layout.setContentsMargins(0, 0, 0, 0)
+        self.header_layout.addLayout(svg_logo_container)
+        self.header_layout.addStretch()
+
+        vl.addLayout(self.header_layout)
         self.setLayout(vl)
 
     # QWidget interface
     # pylint: disable=missing-function-docstring
+
+    def push_widget(self, widget: QWidget):
+        """
+        Pushes a new widget into the right section of the header
+        """
+        self.header_layout.addWidget(widget)
 
     def sizeHint(self):
         return QSize(0, self.FIXED_HEIGHT_PIXELS)

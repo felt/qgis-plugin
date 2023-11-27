@@ -217,7 +217,52 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
 
-    def test_raster_conversion(self):
+    def test_raster_conversion_raw(self):
+        """
+        Test raw raster layer conversion
+        """
+        file = str(TEST_DATA_PATH / 'dem.tif')
+        layer = QgsRasterLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+
+        exporter = LayerExporter(
+            QgsCoordinateTransformContext()
+        )
+        result = exporter.export_layer_for_felt(layer,
+                                                upload_raster_as_styled=False)
+        self.assertEqual(result.result, LayerExportResult.Success)
+        self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            tif_files = [f for f in z.namelist() if f.endswith('tif')]
+        self.assertEqual(len(tif_files), 1)
+
+        self.assertEqual(
+            result.qgis_style_xml[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
+
+        out_layer = QgsRasterLayer(
+            '/vsizip/{}/{}'.format(result.filename, tif_files[0]),
+            'test')
+        self.assertTrue(out_layer.isValid())
+        self.assertEqual(out_layer.width(), 373)
+        self.assertEqual(out_layer.height(), 350)
+        self.assertEqual(out_layer.bandCount(), 1)
+        self.assertEqual(out_layer.dataProvider().dataType(1),
+                         Qgis.DataType.Float32)
+        self.assertEqual(out_layer.crs(),
+                         QgsCoordinateReferenceSystem('EPSG:4326'))
+        self.assertAlmostEqual(out_layer.extent().xMinimum(),
+                               18.6662979442, 3)
+        self.assertAlmostEqual(out_layer.extent().xMaximum(),
+                               18.7035979442, 3)
+        self.assertAlmostEqual(out_layer.extent().yMinimum(),
+                               45.7767014376, 3)
+        self.assertAlmostEqual(out_layer.extent().yMaximum(),
+                               45.8117014376, 3)
+
+    def test_raster_conversion_styled(self):
         """
         Test raster layer conversion
         """
@@ -228,15 +273,14 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer)
+        result = exporter.export_layer_for_felt(layer,
+                                                upload_raster_as_styled=True)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')
         with zipfile.ZipFile(result.filename) as z:
             tif_files = [f for f in z.namelist() if f.endswith('tif')]
-        self.assertEqual(len(tif_files), 2)
-
-        styled_tif = [f for f in tif_files if '_styled' in f][0]
+        self.assertEqual(len(tif_files), 1)
 
         self.assertEqual(
             result.qgis_style_xml[:58],
@@ -244,7 +288,7 @@ class LayerExporterTest(unittest.TestCase):
         )
 
         out_layer = QgsRasterLayer(
-            '/vsizip/{}/{}'.format(result.filename, styled_tif),
+            '/vsizip/{}/{}'.format(result.filename, tif_files[0]),
             'test')
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.width(), 373)
@@ -258,27 +302,6 @@ class LayerExporterTest(unittest.TestCase):
                          Qgis.DataType.Byte)
         self.assertEqual(out_layer.dataProvider().dataType(4),
                          Qgis.DataType.Byte)
-        self.assertEqual(out_layer.crs(),
-                         QgsCoordinateReferenceSystem('EPSG:4326'))
-        self.assertAlmostEqual(out_layer.extent().xMinimum(),
-                               18.6662979442, 3)
-        self.assertAlmostEqual(out_layer.extent().xMaximum(),
-                               18.7035979442, 3)
-        self.assertAlmostEqual(out_layer.extent().yMinimum(),
-                               45.7767014376, 3)
-        self.assertAlmostEqual(out_layer.extent().yMaximum(),
-                               45.8117014376, 3)
-
-        raw_tif = [f for f in tif_files if '_styled' not in f][0]
-        out_layer = QgsRasterLayer(
-            '/vsizip/{}/{}'.format(result.filename, raw_tif),
-            'test')
-        self.assertTrue(out_layer.isValid())
-        self.assertEqual(out_layer.width(), 373)
-        self.assertEqual(out_layer.height(), 350)
-        self.assertEqual(out_layer.bandCount(), 1)
-        self.assertEqual(out_layer.dataProvider().dataType(1),
-                         Qgis.DataType.Float32)
         self.assertEqual(out_layer.crs(),
                          QgsCoordinateReferenceSystem('EPSG:4326'))
         self.assertAlmostEqual(out_layer.extent().xMinimum(),

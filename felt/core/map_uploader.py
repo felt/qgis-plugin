@@ -42,7 +42,8 @@ from qgis.core import (
     QgsTask,
     QgsFeedback,
     QgsBlockingNetworkRequest,
-    QgsReferencedRectangle
+    QgsReferencedRectangle,
+    QgsSettings
 )
 from qgis.utils import iface
 
@@ -250,6 +251,10 @@ class MapUploaderTask(QgsTask):
 
         self.feedback = QgsFeedback()
 
+        upload_raster_as_styled = QgsSettings().value(
+            "felt/upload_raster_as_styled", True, bool, QgsSettings.Plugins
+        )
+
         multi_step_feedback = MultiStepFeedback(
             total_steps, self.feedback
         )
@@ -342,7 +347,8 @@ class MapUploaderTask(QgsTask):
                 try:
                     result = exporter.export_layer_for_felt(
                         layer,
-                        multi_step_feedback
+                        multi_step_feedback,
+                        upload_raster_as_styled=upload_raster_as_styled
                     )
                 except LayerPackagingException as e:
                     layer.moveToThread(None)
