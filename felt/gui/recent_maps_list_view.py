@@ -338,9 +338,30 @@ class RecentMapsWidget(QWidget):
         self._filter = QgsFilterLineEdit()
         self._filter.setShowSearchIcon(True)
         self._filter.setPlaceholderText(self.tr('Search maps...'))
+        self._filter._additional_stylesheet = """
+        QgsFilterLineEdit{ border-top: 1px solid #bdbdbd;
+        border-right: 1px solid #bdbdbd;
+        border-left: 1px solid #bdbdbd;
+        border-top-right-radius: 2px;
+        border-top-left-radius: 2px;
+        }"""
+
+        def _update_filter_stylesheet():
+            # this widget removes the stylesheet on edits!
+            self._filter.setStyleSheet(
+                self._filter.styleSheet() + self._filter._additional_stylesheet)
+
+        self._filter.valueChanged.connect(_update_filter_stylesheet)
+        _update_filter_stylesheet()
+        self._filter.setFixedHeight(
+            int(QFontMetrics(self._filter.font()).height() * 1.5))
         vl.addWidget(self._filter)
 
         self._view = RecentMapsListView()
+        self._view.setStyleSheet("""
+                QListView { border: 1px solid #bdbdbd; }
+                """)
+
         vl.addWidget(self._view, 1)
         self.setLayout(vl)
 
