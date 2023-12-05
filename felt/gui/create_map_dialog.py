@@ -204,7 +204,7 @@ class CreateMapDialog(QDialog, WIDGET):
             """QToolButton::menu-indicator { image: none }
             QToolButton {
             background: #f9f9f9;
-            border: 1px solid #242424;
+            border: 1px solid #bdbdbd;
             border-radius: 2px; }
             """
         )
