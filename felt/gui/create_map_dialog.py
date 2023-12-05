@@ -202,7 +202,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setting_button.setPopupMode(QToolButton.InstantPopup)
         self.setting_button.setStyleSheet(
             """QToolButton::menu-indicator { image: none }
-            QToolButton { 
+            QToolButton {
             background: #f9f9f9;
             border: 1px solid #242424;
             border-radius: 2px; }
@@ -237,7 +237,7 @@ class CreateMapDialog(QDialog, WIDGET):
         )
         self.workspace_combo.setStyleSheet(
             """
-            QComboBox{ 
+            QComboBox{
                 background: white;
                 color: black;
                 selection-background-color: #fed9e3 !important;
@@ -248,19 +248,19 @@ class CreateMapDialog(QDialog, WIDGET):
                 border-bottom-right-radius: 2px;
                 border-bottom-left-radius: 2px;
             }
-            QComboBox:hover { 
+            QComboBox:hover {
                 background: white;
                 color: black;
                 selection-background-color: #fed9e3 !important;
                 selection-color: black !important;
             }
-            QComboBox:on { 
+            QComboBox:on {
                 background: white;
                 color: black;
                 selection-background-color: #fed9e3 !important;
                 selection-color: black !important;
             }
-            QComboBox QAbstractItemView, QComboBox QListView { 
+            QComboBox QAbstractItemView, QComboBox QListView {
                 background: white;
                 color: black;
                 selection-background-color: #fed9e3 !important;
