@@ -54,7 +54,8 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(layer.startEditing())
         layer.deleteFeature(next(layer.getFeatures()).id())
         self.assertEqual(
-            LayerExporter.can_export_layer(layer)[0], LayerSupport.UnsavedEdits)
+            LayerExporter.can_export_layer(layer)[0],
+            LayerSupport.UnsavedEdits)
 
         layer.rollBack()
 
