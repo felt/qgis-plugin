@@ -363,7 +363,17 @@ class RecentMapsWidget(QWidget):
 
         self._view = RecentMapsListView()
         self._view.setStyleSheet("""
-                QListView { border: 1px solid #bdbdbd; }
+                QListView {
+                    border: 1px solid #bdbdbd;
+                    border-top-right-radius: 0px;
+                    border-top-left-radius: 0px;
+                    border-bottom-right-radius: 2px;
+                    border-bottom-left-radius: 2px;
+                    background: white! important;
+                    }
+                QListView::item::selected {
+                    background-color: #fed9e3;
+                    }
                 """)
 
         vl.addWidget(self._view, 1)
