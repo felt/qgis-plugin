@@ -171,7 +171,7 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0">
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0">
        <item>
         <widget class="QLabel" name="footer_label">
          <property name="text">
