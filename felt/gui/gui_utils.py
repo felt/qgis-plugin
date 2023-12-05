@@ -53,8 +53,8 @@ QLabel {
     }
 
 QPushButton {
-    background: solid #3d521e;
-    color: white;
+    background: solid #3d521e !important;
+    color: white !important;
 }
 
 QLineEdit {
