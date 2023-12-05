@@ -51,6 +51,13 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(layer.isValid())
         self.assertEqual(
             LayerExporter.can_export_layer(layer)[0], LayerSupport.Supported)
+        self.assertTrue(layer.startEditing())
+        layer.deleteFeature(next(layer.getFeatures()).id())
+        self.assertEqual(
+            LayerExporter.can_export_layer(layer)[0],
+            LayerSupport.UnsavedEdits)
+
+        layer.rollBack()
 
         file = str(TEST_DATA_PATH / 'dem.tif')
         layer = QgsRasterLayer(file, 'test')
