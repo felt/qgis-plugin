@@ -349,7 +349,8 @@ class RecentMapsWidget(QWidget):
         def _update_filter_stylesheet():
             # this widget removes the stylesheet on edits!
             self._filter.setStyleSheet(
-                self._filter.styleSheet() + self._filter._additional_stylesheet)
+                self._filter.styleSheet() +
+                self._filter._additional_stylesheet)
 
         self._filter.valueChanged.connect(_update_filter_stylesheet)
         _update_filter_stylesheet()
