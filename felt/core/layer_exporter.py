@@ -123,6 +123,9 @@ class LayerExporter(QObject):
         string if not
         """
         if isinstance(layer, QgsVectorLayer):
+            if layer.editBuffer() and layer.editBuffer().isModified():
+                return LayerSupport.UnsavedEdits, 'Layer has unsaved changes'
+
             # Vector layers must have some features
             if layer.featureCount() == 0:
                 return LayerSupport.EmptyLayer, 'Layer is empty'

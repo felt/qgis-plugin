@@ -164,6 +164,9 @@ class MapUploaderTask(QgsTask):
         unsupported_layer_names = set()
         for layer in layers:
             support, reason = LayerExporter.can_export_layer(layer)
+            if support == LayerSupport.Supported:
+                continue
+
             self.unsupported_layers.append((layer.name(), reason))
             if not support.should_report():
                 continue

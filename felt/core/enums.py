@@ -63,6 +63,7 @@ class LayerSupport(Enum):
     NotImplementedProvider = auto()
     NotImplementedLayerType = auto()
     EmptyLayer = auto()
+    UnsavedEdits = auto()
 
     def should_report(self) -> bool:
         """
@@ -72,6 +73,15 @@ class LayerSupport(Enum):
         return self not in (
             LayerSupport.Supported,
             LayerSupport.EmptyLayer
+        )
+
+    def should_prevent_sharing_maps(self) -> bool:
+        """
+        Returns True if the layer support should completely block sharing
+        maps
+        """
+        return self in (
+            LayerSupport.UnsavedEdits,
         )
 
 
