@@ -202,7 +202,10 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setting_button.setPopupMode(QToolButton.InstantPopup)
         self.setting_button.setStyleSheet(
             """QToolButton::menu-indicator { image: none }
-            QToolButton { border: 1px solid red; border-radius: 2px; }
+            QToolButton { 
+            background: #f9f9f9;
+            border: 1px solid #242424;
+            border-radius: 2px; }
             """
         )
         self.setting_button.setFixedHeight(
