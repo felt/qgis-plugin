@@ -342,8 +342,11 @@ class RecentMapsWidget(QWidget):
         QgsFilterLineEdit{ border-top: 1px solid #bdbdbd;
         border-right: 1px solid #bdbdbd;
         border-left: 1px solid #bdbdbd;
+        border-bottom: none;
         border-top-right-radius: 2px;
         border-top-left-radius: 2px;
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
         }"""
 
         def _update_filter_stylesheet():
@@ -360,7 +363,17 @@ class RecentMapsWidget(QWidget):
 
         self._view = RecentMapsListView()
         self._view.setStyleSheet("""
-                QListView { border: 1px solid #bdbdbd; }
+                QListView {
+                    border: 1px solid #bdbdbd;
+                    border-top-right-radius: 0px;
+                    border-top-left-radius: 0px;
+                    border-bottom-right-radius: 2px;
+                    border-bottom-left-radius: 2px;
+                    background: white! important;
+                    }
+                QListView::item::selected {
+                    background-color: #fed9e3;
+                    }
                 """)
 
         vl.addWidget(self._view, 1)

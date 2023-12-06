@@ -202,7 +202,10 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setting_button.setPopupMode(QToolButton.InstantPopup)
         self.setting_button.setStyleSheet(
             """QToolButton::menu-indicator { image: none }
-            QToolButton { border: 1px solid red; border-radius: 2px; }
+            QToolButton {
+            background: #f9f9f9;
+            border: 1px solid #bdbdbd;
+            border-radius: 2px; }
             """
         )
         self.setting_button.setFixedHeight(
@@ -229,6 +232,45 @@ class CreateMapDialog(QDialog, WIDGET):
         self.maps_widget = RecentMapsWidget()
         self.workspace_combo = WorkspacesComboBox()
         self.workspace_combo.workspace_changed.connect(self._workspace_changed)
+        self.workspace_combo.setFixedHeight(
+            int(QFontMetrics(self.workspace_combo.font()).height() * 1.5)
+        )
+        self.workspace_combo.setStyleSheet(
+            """
+            QComboBox{
+                background: white;
+                color: black;
+                selection-background-color: #fed9e3 !important;
+                selection-color: black !important;
+                border: 1px solid #bdbdbd;
+                border-top-right-radius: 2px;
+                border-top-left-radius: 2px;
+                border-bottom-right-radius: 2px;
+                border-bottom-left-radius: 2px;
+            }
+            QComboBox:hover {
+                background: white;
+                color: black;
+                selection-background-color: #fed9e3 !important;
+                selection-color: black !important;
+            }
+            QComboBox:on {
+                background: white;
+                color: black;
+                selection-background-color: #fed9e3 !important;
+                selection-color: black !important;
+            }
+            QComboBox QAbstractItemView, QComboBox QListView {
+                background: white;
+                color: black;
+                selection-background-color: #fed9e3 !important;
+                selection-color: black !important;
+            }
+            QComboBox::drop-down:editable:hover {
+               background-color: @darkalternativegradient;
+            }
+            """
+        )
 
         maps_layout = QVBoxLayout()
         maps_layout.setContentsMargins(0, 0, 0, 0)
