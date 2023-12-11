@@ -210,20 +210,6 @@ class FeltPlugin(QObject):
             self._create_map_dialog.raise_()
             return
 
-        export_layers = layers if layers else \
-            QgsProject.instance().mapLayers().values()
-        for layer in export_layers:
-            support, reason = LayerExporter.can_export_layer(layer)
-            if support == LayerSupport.UnsavedEdits:
-                QMessageBox.warning(
-                    self.iface.mainWindow(),
-                    self.tr('Share to Felt'),
-                    self.tr(
-                        'Layer "{}" has unsaved changes. Please save '
-                        'the layer before sharing to Felt.').format(
-                        layer.name()))
-                return
-
         def _cleanup_dialog(_dialog):
             """
             Remove references to outdated dialogs

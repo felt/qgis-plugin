@@ -61,6 +61,8 @@ from .gui_utils import (
 )
 from .workspaces_combo import WorkspacesComboBox
 from ..core import (
+    LayerExporter,
+    LayerSupport,
     MapUploaderTask,
     Map
 )
@@ -309,8 +311,36 @@ class CreateMapDialog(QDialog, WIDGET):
             )
 
         self.started = False
-        self._validate()
+        self._validate_initial()
         self.maps_widget.filter_line_edit().setFocus()
+
+    def _fatal_error(self, error: str):
+        """
+        Called when a fatal error which prevents sharing occurs
+        """
+        self.stacked_widget.setCurrentIndex(2)
+        self.error_label.setText(error)
+        self.button_box.button(QDialogButtonBox.Ok).deleteLater()
+
+    def _validate_initial(self):
+
+        error: Optional[str] = None
+
+        export_layers = self.layers if self.layers else \
+            QgsProject.instance().mapLayers().values()
+        for layer in export_layers:
+            support, reason = LayerExporter.can_export_layer(layer)
+            if support == LayerSupport.UnsavedEdits:
+                error = self.tr(
+                        'Layer "{}" has unsaved changes. Please save '
+                        'the layer before sharing to Felt.').format(
+                        layer.name())
+                break
+
+        if error:
+            self._fatal_error(error)
+        else:
+            self._validate()
 
     def _workspace_changed(self, workspace_id: str):
         """
