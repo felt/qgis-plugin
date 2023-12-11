@@ -26,8 +26,7 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtWidgets import (
     QMenu,
-    QAction,
-    QMessageBox
+    QAction
 )
 
 from qgis.core import (
