@@ -18,7 +18,8 @@ from qgis.PyQt.QtCore import (
     Qt,
     QAbstractItemModel,
     QObject,
-    QModelIndex
+    QModelIndex,
+    pyqtSignal
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply
@@ -36,6 +37,8 @@ class WorkspacesModel(QAbstractItemModel):
     NameRole = Qt.UserRole + 1
     UrlRole = Qt.UserRole + 2
     IdRole = Qt.UserRole + 4
+
+    no_workspaces_found = pyqtSignal()
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -80,6 +83,9 @@ class WorkspacesModel(QAbstractItemModel):
             self.workspaces.append(_workspace)
 
         self.endInsertRows()
+
+        if not self.workspaces:
+            self.no_workspaces_found.emit()
 
     # Qt model interface
 
