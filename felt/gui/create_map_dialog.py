@@ -233,6 +233,7 @@ class CreateMapDialog(QDialog, WIDGET):
         # pylint: enable=import-outside-toplevel
         self.maps_widget = RecentMapsWidget()
         self.workspace_combo = WorkspacesComboBox()
+        self.workspace_combo.no_workspaces_found.connect(self._no_workspace)
         self.workspace_combo.workspace_changed.connect(self._workspace_changed)
         self.workspace_combo.setFixedHeight(
             int(QFontMetrics(self.workspace_combo.font()).height() * 1.5)
@@ -322,8 +323,21 @@ class CreateMapDialog(QDialog, WIDGET):
         self.error_label.setText(error)
         self.button_box.button(QDialogButtonBox.Ok).deleteLater()
 
-    def _validate_initial(self):
+    def _no_workspace(self):
+        """
+        Called when no workspaces are available
+        """
+        self._fatal_error(
+            self.tr("You don’t have edit access for any workspaces. "
+                    "Ask your workspace admin for edit access, "
+                    "or create your own workspace."
+                    )
+        )
 
+    def _validate_initial(self):
+        """
+        Performs an initial one-time validated of the environment
+        """
         error: Optional[str] = None
 
         export_layers = self.layers if self.layers else \

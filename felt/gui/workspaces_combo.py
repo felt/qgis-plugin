@@ -23,11 +23,13 @@ class WorkspacesComboBox(QComboBox):
     """
 
     workspace_changed = pyqtSignal(str)
+    no_workspaces_found = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
         self._model = WorkspacesModel(self)
+        self._model.no_workspaces_found.connect(self.no_workspaces_found)
         self.setModel(self._model)
 
         self.currentIndexChanged.connect(self._index_changed)
