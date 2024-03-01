@@ -13,7 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-FELT_API_BASE = "https://felt.com/"
+FELT_API_BASE = "https://felt.com"
 FELT_API_URL = f'{FELT_API_BASE}/api/v1'
 SIGNUP_URL = f'{FELT_API_BASE}/signup'
 TOS_URL = f'{FELT_API_BASE}/terms'
