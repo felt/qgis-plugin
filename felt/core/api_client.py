@@ -41,6 +41,9 @@ from .layer_style import LayerStyle
 from .meta import PLUGIN_METADATA_PARSER
 from .s3_upload_parameters import S3UploadParameters
 from .enums import UsageType
+from .constants import (
+    FELT_API_URL
+)
 
 PLUGIN_VERSION = "0.7.0"
 
@@ -50,7 +53,6 @@ class FeltApiClient:
     Client for the Felt API
     """
 
-    URL = 'https://felt.com/api/v1'
     USER_ENDPOINT = '/user'
     WORKSPACES_ENDPOINT = '/workspaces'
     CREATE_MAP_ENDPOINT = '/maps'
@@ -86,7 +88,7 @@ class FeltApiClient:
         """
         Returns the full url of the specified endpoint
         """
-        return QUrl(FeltApiClient.URL + endpoint)
+        return QUrl(FELT_API_URL + endpoint)
 
     @staticmethod
     def _to_url_query(parameters: Dict[str, object]) -> QUrlQuery:

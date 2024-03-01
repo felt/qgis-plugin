@@ -31,8 +31,11 @@ from qgis.core import (
 )
 
 from .pkce import generate_pkce_pair
+from .constants import (
+    FELT_API_BASE
+)
 
-OAUTH_BASE = "https://felt.com/oauth"
+OAUTH_BASE = f"{FELT_API_BASE}/oauth"
 AUTH_HANDLER_REDIRECT = \
     OAUTH_BASE + "/success?client_id=8cb129bd-6962-4f65-8cc9-14b760e8436a"
 AUTH_HANDLER_REDIRECT_CANCELLED = \
