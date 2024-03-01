@@ -50,7 +50,7 @@ from qgis.gui import QgsGui
 
 from .authorization_manager import AUTHORIZATION_MANAGER
 from .colored_progress_bar import ColorBar
-from .constants import (
+from ..constants import (
     PRIVACY_POLICY_URL,
     TOS_URL
 )

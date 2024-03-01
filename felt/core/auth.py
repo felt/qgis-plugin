@@ -31,7 +31,7 @@ from qgis.core import (
 )
 
 from .pkce import generate_pkce_pair
-from ..gui.constants import (
+from ..constants import (
     FELT_API_BASE
 )
 
