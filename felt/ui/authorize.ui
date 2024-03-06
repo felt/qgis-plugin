@@ -53,7 +53,7 @@
      <item>
       <widget class="QLabel" name="label_login">
        <property name="text">
-        <string>Share, collaborate, and mark up your maps quickly and beautifully on the web using Felt.
+        <string>Share and markup your maps quickly and beautifully on the web using Felt.
 
 Log in or sign up to get started - it’s free!</string>
        </property>
