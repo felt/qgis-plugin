@@ -51,7 +51,7 @@ class RecentMapsModelTest(unittest.TestCase):
         self.assertEqual(model.pretty_format_date(two_weeks_ago),
                          "2 weeks ago")
 
-        one_month_ago = now.addMonths(-1)
+        one_month_ago = now.addDays(-35)
         self.assertEqual(model.pretty_format_date(one_month_ago),
                          "1 month ago")
 
