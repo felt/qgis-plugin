@@ -41,7 +41,7 @@ from .layer_style import LayerStyle
 from .meta import PLUGIN_METADATA_PARSER
 from .s3_upload_parameters import S3UploadParameters
 from .enums import UsageType
-from ..constants import (
+from .constants import (
     FELT_API_URL
 )
 

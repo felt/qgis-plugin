@@ -30,7 +30,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.gui import QgsGui
 
-from ..constants import (
+from ..core import (
     PRIVACY_POLICY_URL,
     TOS_URL,
     SIGNUP_URL
