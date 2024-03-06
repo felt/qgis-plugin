@@ -9,10 +9,13 @@ jobs:
 
     steps:
     - name: Get source code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        # To fetch tags
+        fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
         cache: "pip"
@@ -26,13 +29,19 @@ jobs:
     - name: Install Python requirements
       run: pip install -r requirements/packaging.txt
 
+    - name: Set plugin version environment variables
+      run: |
+        TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        echo "VERSION=$(echo ${TAG} | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}')-alpha" >> $GITHUB_ENV
+        echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
     - name: Build package
       run: |
-        qgis-plugin-ci package dev-${GITHUB_SHA}
+        qgis-plugin-ci --no-validation package ${{ env.VERSION }}
         mkdir tmp
-        unzip felt.dev-${GITHUB_SHA}.zip -d tmp
+        unzip felt.${{ env.VERSION }}.zip -d tmp
 
     - uses: actions/upload-artifact@v2
       with:
-        name: felt_plugin
+        name: felt_plugin.${{ env.VERSION }}.${{ env.SHA_SHORT }}
         path: tmp
