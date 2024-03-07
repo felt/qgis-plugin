@@ -50,10 +50,7 @@ from qgis.gui import QgsGui
 
 from .authorization_manager import AUTHORIZATION_MANAGER
 from .colored_progress_bar import ColorBar
-from .constants import (
-    PRIVACY_POLICY_URL,
-    TOS_URL
-)
+
 from .felt_dialog_header import FeltDialogHeader
 from .gui_utils import (
     GuiUtils,
@@ -64,7 +61,9 @@ from ..core import (
     LayerExporter,
     LayerSupport,
     MapUploaderTask,
-    Map
+    Map,
+    PRIVACY_POLICY_URL,
+    TOS_URL
 )
 
 WIDGET, _ = uic.loadUiType(GuiUtils.get_ui_file_path('create_map.ui'))

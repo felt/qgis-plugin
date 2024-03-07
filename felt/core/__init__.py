@@ -22,6 +22,13 @@ from .layer_exporter import (  # noqa
     LayerExporter,
     ZippedExportResult
 )
+from .constants import (  # noqa
+    FELT_API_BASE,
+    FELT_API_URL,
+    PRIVACY_POLICY_URL,
+    TOS_URL,
+    SIGNUP_URL
+)
 from .multi_step_feedback import MultiStepFeedback  # noqa
 from .meta import PLUGIN_METADATA_PARSER  # noqa
 from .exceptions import LayerPackagingException  # noqa
