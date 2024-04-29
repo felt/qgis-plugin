@@ -12,7 +12,8 @@ from qgis.core import (
     QgsSimpleLineSymbolLayer,
     QgsSimpleFillSymbolLayer,
     QgsUnitTypes,
-    QgsLineSymbol
+    QgsLineSymbol,
+    QgsShapeburstFillSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -350,6 +351,58 @@ class FslConversionTest(unittest.TestCase):
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 3.0}]
+        )
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(0, 255, 0)',
+              'dashArray': [2.5, 2],
+              'lineJoin': 'miter',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'opacity': 0.5,
+              'strokeWidth': 3.0}]
+        )
+
+    def test_shapeburst_fill_to_fsl(self):
+        """
+        Test shapeburst fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsShapeburstFillSymbolLayer(color=QColor(),
+                                            color2=QColor())
+
+        # no color
+        self.assertFalse(
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context)
+        )
+        fill.setColor(QColor(0, 255, 0, 0))
+        self.assertFalse(
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context)
+        )
+
+        fill.setColor(QColor(0, 255, 0))
+        self.assertEqual(
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        fill.setColor(QColor(0, 255, 0, 0))
+        fill.setColor2(QColor(255, 255, 0, 0))
+        self.assertFalse(
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context)
+        )
+
+        fill.setColor2(QColor(255, 255, 0))
+        self.assertEqual(
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(255, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(255, 255, 0)',
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
 

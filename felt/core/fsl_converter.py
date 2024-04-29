@@ -86,19 +86,40 @@ class FslConverter:
         Converts QGIS symbol layers to FSL symbol layers
         """
         SYMBOL_LAYER_CONVERTERS = {
+            # Fill types
+
             QgsSimpleFillSymbolLayer: FslConverter.simple_fill_to_fsl,
-            # QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
+            QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
             # QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
             # QgsRasterFillSymbolLayer: FslConverter.raster_fill_to_fsl,
-            QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
             # QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
+            # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
+            # QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
+            # QgsSVGFillSymbolLayer
+            # QgsRandomMarkerFillSymbolLayer
+
+            # Line types
+            QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
             # QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
             # QgsMarkerLineSymbolLayer: FslConverter.marker_line_to_fsl,
+            # QgsArrowSymbolLayer
+            # QgsInterpolatedLineSymbolLayer
+            # QgsRasterLineSymbolLayer
+            # QgsLineburstSymbolLayer
+
+            # Marker types
             # QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
             # QgsEllipseSymbolLayer: FslConverter.simple_marker_to_fsl,
             # QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
-            # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
-            # QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
+            # QgsFontMarkerSymbolLayer
+            # QgsFilledMarkerSymbolLayer
+            # QgsRasterMarkerSymbolLayer
+            # QgsAnimatedMarkerSymbolLayer
+            # QgsVectorFieldSymbolLayer
+
+            # Special types
+
+            # QgsGeometryGeneratorSymbolLayer
         }
 
         for _class, converter in SYMBOL_LAYER_CONVERTERS.items():
@@ -251,5 +272,34 @@ class FslConverter:
         # not supported:
         # - fill offset
         # - fill style
+
+        return [res]
+
+    @staticmethod
+    def shapeburst_fill_to_fsl(
+            layer: QgsShapeburstFillSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS shapeburst fill symbol layer to FSL
+        """
+        color = layer.color() if layer.color().isValid() and layer.color().alphaF() > 0 else layer.color2()
+        if not color.isValid() or color.alphaF() == 0:
+            return []
+
+        context.push_warning('Shapeburst fills are not supported, converting to a solid fill')
+
+        color_str = FslConverter.color_to_fsl(
+            color, context
+        )
+
+        res = {
+            'color': color_str,
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        res['strokeColor'] = "rgba(0, 0, 0, 0)"
 
         return [res]
