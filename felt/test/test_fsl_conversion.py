@@ -13,7 +13,8 @@ from qgis.core import (
     QgsSimpleFillSymbolLayer,
     QgsUnitTypes,
     QgsLineSymbol,
-    QgsShapeburstFillSymbolLayer
+    QgsShapeburstFillSymbolLayer,
+    QgsGradientFillSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -400,6 +401,49 @@ class FslConversionTest(unittest.TestCase):
 
         self.assertEqual(
             FslConverter.shapeburst_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(255, 255, 0)',
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_gradient_fill_to_fsl(self):
+        """
+        Test gradient fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsGradientFillSymbolLayer(color=QColor(),
+                                          color2=QColor())
+
+        # no color
+        self.assertFalse(
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context)
+        )
+        fill.setColor(QColor(0, 255, 0, 0))
+        self.assertFalse(
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context)
+        )
+
+        fill.setColor(QColor(0, 255, 0))
+        self.assertEqual(
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        fill.setColor(QColor(0, 255, 0, 0))
+        fill.setColor2(QColor(255, 255, 0, 0))
+        self.assertFalse(
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context)
+        )
+
+        fill.setColor2(QColor(255, 255, 0))
+        self.assertEqual(
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(255, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
             [{'color': 'rgb(255, 255, 0)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]

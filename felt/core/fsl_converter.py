@@ -90,7 +90,7 @@ class FslConverter:
 
             QgsSimpleFillSymbolLayer: FslConverter.simple_fill_to_fsl,
             QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
-            # QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
+            QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
             # QgsRasterFillSymbolLayer: FslConverter.raster_fill_to_fsl,
             # QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
             # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
@@ -288,6 +288,35 @@ class FslConverter:
             return []
 
         context.push_warning('Shapeburst fills are not supported, converting to a solid fill')
+
+        color_str = FslConverter.color_to_fsl(
+            color, context
+        )
+
+        res = {
+            'color': color_str,
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        res['strokeColor'] = "rgba(0, 0, 0, 0)"
+
+        return [res]
+
+    @staticmethod
+    def gradient_fill_to_fsl(
+            layer: QgsGradientFillSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS gradient fill symbol layer to FSL
+        """
+        color = layer.color() if layer.color().isValid() and layer.color().alphaF() > 0 else layer.color2()
+        if not color.isValid() or color.alphaF() == 0:
+            return []
+
+        context.push_warning('Gradient fills are not supported, converting to a solid fill')
 
         color_str = FslConverter.color_to_fsl(
             color, context
