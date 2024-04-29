@@ -87,18 +87,18 @@ class FslConverter:
         """
         SYMBOL_LAYER_CONVERTERS = {
             QgsSimpleFillSymbolLayer: FslConverter.simple_fill_to_fsl,
-           #QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
-           #QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
-           #QgsRasterFillSymbolLayer: FslConverter.raster_fill_to_fsl,
+            # QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
+            # QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
+            # QgsRasterFillSymbolLayer: FslConverter.raster_fill_to_fsl,
             QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
-           #QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
-           #QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
-           #QgsMarkerLineSymbolLayer: FslConverter.marker_line_to_fsl,
-           #QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
-           #QgsEllipseSymbolLayer: FslConverter.simple_marker_to_fsl,
-           #QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
-           #QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
-           #QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
+            # QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
+            # QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
+            # QgsMarkerLineSymbolLayer: FslConverter.marker_line_to_fsl,
+            # QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
+            # QgsEllipseSymbolLayer: FslConverter.simple_marker_to_fsl,
+            # QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
+            # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
+            # QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
         }
 
         for _class, converter in SYMBOL_LAYER_CONVERTERS.items():
@@ -182,7 +182,7 @@ class FslConverter:
     def simple_line_to_fsl(
             layer: QgsSimpleLineSymbolLayer,
             context: ConversionContext,
-            symbol_opacity: float=1) -> List[Dict[str, object]]:
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
         """
         Converts a QGIS simple line symbol layer to FSL
         """
@@ -191,7 +191,7 @@ class FslConverter:
 
         color_str = FslConverter.color_to_fsl(
             layer.color(), context
-            )
+        )
         stroke_width = FslConverter.convert_to_pixels(layer.width(), layer.widthUnit(), context)
 
         res = {
@@ -222,7 +222,34 @@ class FslConverter:
     def simple_fill_to_fsl(
             layer: QgsSimpleFillSymbolLayer,
             context: ConversionContext,
-            opacity: float) -> List:
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
         """
-        Converts a QGIS simple fill symbol layer to CIMSymbolLayers
+        Converts a QGIS simple fill symbol layer to FSL
         """
+        if layer.brushStyle() == Qt.NoBrush or not layer.color().isValid() or layer.color().alphaF() == 0:
+            return []
+
+        color_str = FslConverter.color_to_fsl(
+            layer.color(), context
+        )
+
+        res = {
+            'color': color_str,
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        if layer.strokeStyle() != Qt.NoPen and layer.strokeColor().alphaF() > 0:
+            res['strokeColor'] = FslConverter.color_to_fsl(layer.strokeColor(), context)
+            res['strokeWidth'] = FslConverter.convert_to_pixels(layer.strokeWidth(), layer.strokeWidthUnit(), context)
+            res['lineJoin'] = FslConverter.convert_join_style(layer.penJoinStyle())
+
+            if layer.strokeStyle() != Qt.SolidLine:
+                res['dashArray'] = FslConverter.convert_pen_style(layer.strokeStyle())
+
+        # not supported:
+        # - fill offset
+        # - fill style
+
+        return [res]

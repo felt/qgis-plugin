@@ -10,6 +10,7 @@ from qgis.PyQt.QtGui import QColor
 
 from qgis.core import (
     QgsSimpleLineSymbolLayer,
+    QgsSimpleFillSymbolLayer,
     QgsUnitTypes,
     QgsLineSymbol
 )
@@ -271,6 +272,84 @@ class FslConversionTest(unittest.TestCase):
               'lineCap': 'round',
               'lineJoin': 'miter',
               'size': 3.0}]
+        )
+
+    def test_simple_fill_to_fsl(self):
+        """
+        Test simple fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
+
+        # no brush
+        fill.setBrushStyle(Qt.NoBrush)
+        self.assertFalse(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context)
+        )
+
+        # transparent color
+        fill.setBrushStyle(Qt.SolidPattern)
+        fill.setColor(QColor(0, 255, 0, 0))
+        self.assertFalse(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context)
+        )
+
+        fill.setColor(QColor(0, 255, 0))
+        fill.setStrokeWidth(3)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'lineJoin': 'bevel',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 11.337}]
+        )
+
+        fill.setStrokeWidthUnit(QgsUnitTypes.RenderPixels)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'lineJoin': 'bevel',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
+        )
+
+        fill.setPenJoinStyle(Qt.RoundJoin)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'lineJoin': 'round',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
+        )
+
+        fill.setPenJoinStyle(Qt.MiterJoin)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'lineJoin': 'miter',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
+        )
+
+        fill.setPenJoinStyle(Qt.MiterJoin)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(0, 255, 0)',
+              'lineJoin': 'miter',
+              'opacity': 0.5,
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
+        )
+
+        fill.setStrokeStyle(Qt.DashLine)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'dashArray': [2.5, 2],
+              'lineJoin': 'miter',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
         )
 
 
