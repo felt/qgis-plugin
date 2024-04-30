@@ -211,7 +211,8 @@ class FslConversionTest(unittest.TestCase):
 
         line.setPenJoinStyle(Qt.MiterJoin)
         self.assertEqual(
-            FslConverter.simple_line_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            FslConverter.simple_line_to_fsl(line, conversion_context,
+                                            symbol_opacity=0.5),
             [{
                 'color': 'rgb(0, 255, 0)',
                 'size': 3,
@@ -351,7 +352,8 @@ class FslConversionTest(unittest.TestCase):
 
         fill.setPenJoinStyle(Qt.MiterJoin)
         self.assertEqual(
-            FslConverter.simple_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.simple_fill_to_fsl(fill, conversion_context,
+                                            symbol_opacity=0.5),
             [{'color': 'rgb(0, 255, 0)',
               'lineJoin': 'miter',
               'opacity': 0.5,
@@ -369,7 +371,8 @@ class FslConversionTest(unittest.TestCase):
               'strokeWidth': 3.0}]
         )
         self.assertEqual(
-            FslConverter.simple_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.simple_fill_to_fsl(fill, conversion_context,
+                                            symbol_opacity=0.5),
             [{'color': 'rgb(0, 255, 0)',
               'dashArray': [2.5, 2],
               'lineJoin': 'miter',
@@ -415,7 +418,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.shapeburst_fill_to_fsl(fill, conversion_context,
+                                                symbol_opacity=0.5),
             [{'color': 'rgb(255, 255, 0)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
@@ -458,7 +462,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.gradient_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.gradient_fill_to_fsl(fill, conversion_context,
+                                              symbol_opacity=0.5),
             [{'color': 'rgb(255, 255, 0)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
@@ -500,7 +505,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.line_pattern_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.line_pattern_fill_to_fsl(fill, conversion_context,
+                                                  symbol_opacity=0.5),
             [{'color': 'rgb(255, 0, 255)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
@@ -527,7 +533,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.svg_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.svg_fill_to_fsl(fill, conversion_context,
+                                         symbol_opacity=0.5),
             [{'color': 'rgb(255, 0, 255)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
@@ -566,7 +573,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.simple_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            FslConverter.simple_marker_to_fsl(marker, conversion_context,
+                                              symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'opacity': 0.5,
@@ -631,7 +639,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.ellipse_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context,
+                                               symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'opacity': 0.5,
@@ -701,7 +710,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.svg_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            FslConverter.svg_marker_to_fsl(marker, conversion_context,
+                                           symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'opacity': 0.5,
@@ -759,7 +769,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.font_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            FslConverter.font_marker_to_fsl(marker, conversion_context,
+                                            symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'opacity': 0.5,
@@ -841,7 +852,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.filled_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            FslConverter.filled_marker_to_fsl(marker, conversion_context,
+                                              symbol_opacity=0.5),
             [{'color': 'rgb(0, 255, 0)',
               'size': 8,
               'strokeColor': 'rgb(35, 35, 35)',
@@ -894,11 +906,13 @@ class FslConversionTest(unittest.TestCase):
 
         self.assertEqual(
             FslConverter.point_pattern_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(120, 130, 140)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(120, 130, 140)',
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         self.assertEqual(
-            FslConverter.point_pattern_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.point_pattern_fill_to_fsl(fill, conversion_context,
+                                                   symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
@@ -938,11 +952,13 @@ class FslConversionTest(unittest.TestCase):
 
         self.assertEqual(
             FslConverter.centroid_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(120, 130, 140)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(120, 130, 140)',
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         self.assertEqual(
-            FslConverter.centroid_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.centroid_fill_to_fsl(fill, conversion_context,
+                                              symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
@@ -982,11 +998,13 @@ class FslConversionTest(unittest.TestCase):
 
         self.assertEqual(
             FslConverter.random_marker_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(120, 130, 140)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(120, 130, 140)',
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         self.assertEqual(
-            FslConverter.random_marker_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            FslConverter.random_marker_fill_to_fsl(fill, conversion_context,
+                                                   symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
@@ -1032,7 +1050,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.marker_line_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            FslConverter.marker_line_to_fsl(line, conversion_context,
+                                            symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 2,
               'opacity': 0.5}]
@@ -1091,7 +1110,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.hashed_line_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            FslConverter.hashed_line_to_fsl(line, conversion_context,
+                                            symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 1,
               'opacity': 0.5}]
@@ -1149,7 +1169,8 @@ class FslConversionTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            FslConverter.arrow_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            FslConverter.arrow_to_fsl(line, conversion_context,
+                                      symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 18,
               'opacity': 0.5}]
