@@ -91,8 +91,11 @@ class FslConverter:
             QgsSimpleFillSymbolLayer: FslConverter.simple_fill_to_fsl,
             QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
             QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
+            QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
+
+            # Nothing of interest here, there's no properties we can convert
             # QgsRasterFillSymbolLayer: FslConverter.raster_fill_to_fsl,
-            # QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
+
             # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
             # QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
             # QgsSVGFillSymbolLayer
@@ -317,6 +320,44 @@ class FslConverter:
             return []
 
         context.push_warning('Gradient fills are not supported, converting to a solid fill')
+
+        color_str = FslConverter.color_to_fsl(
+            color, context
+        )
+
+        res = {
+            'color': color_str,
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        res['strokeColor'] = "rgba(0, 0, 0, 0)"
+
+        return [res]
+
+    @staticmethod
+    def line_pattern_fill_to_fsl(
+            layer: QgsLinePatternFillSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS line pattern fill symbol layer to FSL
+        """
+        line_symbol = layer.subSymbol()
+        if line_symbol is None:
+            return []
+
+        converted_line = FslConverter.symbol_to_fsl(line_symbol, context)
+        if not converted_line:
+            return []
+
+        # very basic conversion, best we can do is take the color of the line fill...
+        color = layer.subSymbol().color()
+        if not color.isValid() or color.alphaF() == 0:
+            return []
+
+        context.push_warning('Line pattern fills are not supported, converting to a solid fill')
 
         color_str = FslConverter.color_to_fsl(
             color, context

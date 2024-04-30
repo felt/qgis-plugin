@@ -14,7 +14,8 @@ from qgis.core import (
     QgsUnitTypes,
     QgsLineSymbol,
     QgsShapeburstFillSymbolLayer,
-    QgsGradientFillSymbolLayer
+    QgsGradientFillSymbolLayer,
+    QgsLinePatternFillSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -445,6 +446,48 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.gradient_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
             [{'color': 'rgb(255, 255, 0)',
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_line_pattern_fill_to_fsl(self):
+        """
+        Test line pattern fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsLinePatternFillSymbolLayer()
+        # invisible line
+        line = QgsLineSymbol()
+        simple_line = QgsSimpleLineSymbolLayer()
+        simple_line.setPenStyle(Qt.NoPen)
+        line.changeSymbolLayer(0, simple_line.clone())
+        fill.setSubSymbol(line.clone())
+        self.assertFalse(
+            FslConverter.line_pattern_fill_to_fsl(fill, conversion_context)
+        )
+
+        # invisible line color
+        simple_line = QgsSimpleLineSymbolLayer()
+        simple_line.setColor(QColor(255, 0, 0, 0))
+        line.changeSymbolLayer(0, simple_line.clone())
+        fill.setSubSymbol(line.clone())
+        self.assertFalse(
+            FslConverter.line_pattern_fill_to_fsl(fill, conversion_context)
+        )
+
+        # line with color
+        simple_line.setColor(QColor(255, 0, 255))
+        line.changeSymbolLayer(0, simple_line.clone())
+        fill.setSubSymbol(line.clone())
+        self.assertEqual(
+            FslConverter.line_pattern_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(255, 0, 255)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.line_pattern_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(255, 0, 255)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
