@@ -389,8 +389,8 @@ class FslConverter:
             size = 0.5 * (FslConverter.convert_to_pixels(
                 layer.arrowWidth(),
                 layer.arrowWidthUnit(),
-                context)
-                          + FslConverter.convert_to_pixels(
+                context) +
+                          FslConverter.convert_to_pixels(
                         layer.arrowStartWidth(), layer.arrowStartWidthUnit(),
                         context))
 
@@ -685,8 +685,8 @@ class FslConverter:
         """
         Converts a QGIS shapeburst fill symbol layer to FSL
         """
-        color = (layer.color() if (layer.color().isValid()
-                                   and layer.color().alphaF() > 0)
+        color = (layer.color() if (layer.color().isValid() and
+                                   layer.color().alphaF() > 0)
                  else layer.color2())
         if not color.isValid() or color.alphaF() == 0:
             return []
