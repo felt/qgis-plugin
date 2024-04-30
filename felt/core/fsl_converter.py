@@ -19,7 +19,6 @@ from qgis.core import (
     QgsSimpleFillSymbolLayer,
     QgsShapeburstFillSymbolLayer,
     QgsGradientFillSymbolLayer,
-    QgsRasterFillSymbolLayer,
     QgsSimpleLineSymbolLayer,
     QgsLinePatternFillSymbolLayer,
     QgsHashedLineSymbolLayer,
@@ -33,6 +32,7 @@ from qgis.core import (
     QgsSVGFillSymbolLayer,
     QgsFontMarkerSymbolLayer,
     QgsRandomMarkerFillSymbolLayer,
+    QgsArrowSymbolLayer,
     QgsRenderContext,
     QgsUnitTypes
 )
@@ -100,11 +100,8 @@ class FslConverter:
             # Line types
             QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
             QgsMarkerLineSymbolLayer: FslConverter.marker_line_to_fsl,
-            # QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
-            # QgsArrowSymbolLayer
-            # QgsInterpolatedLineSymbolLayer
-            # QgsRasterLineSymbolLayer
-            # QgsLineburstSymbolLayer
+            QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
+            QgsArrowSymbolLayer: FslConverter.arrow_to_fsl,
 
             # Fill types
             QgsSimpleFillSymbolLayer: FslConverter.simple_fill_to_fsl,
@@ -122,6 +119,9 @@ class FslConverter:
             # QgsAnimatedMarkerSymbolLayer
             # QgsVectorFieldSymbolLayer
             # QgsGeometryGeneratorSymbolLayer
+            # QgsInterpolatedLineSymbolLayer
+            # QgsRasterLineSymbolLayer
+            # QgsLineburstSymbolLayer
         }
 
         for _class, converter in SYMBOL_LAYER_CONVERTERS.items():
@@ -269,7 +269,6 @@ class FslConverter:
 
             res = {
                 'color': color_str,
-                'strokeColor': "rgba(0, 0, 0, 0)",
             }
 
             if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
@@ -285,6 +284,96 @@ class FslConverter:
                 # hardcoded size, there's no point using the marker size as it will visually appear
                 # as a much fatter line due to the missing spaces between markers
                 res['size'] = 2
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        return results
+
+    @staticmethod
+    def hashed_line_to_fsl(
+            layer: QgsHashedLineSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS hashed line symbol layer to FSL
+        """
+        hatch_symbol = layer.subSymbol()
+        if hatch_symbol is None:
+            return []
+
+        converted_hatch = FslConverter.symbol_to_fsl(hatch_symbol, context)
+        if not converted_hatch:
+            return []
+
+        context.push_warning('Hatched lines are not supported, converting to a solid line')
+
+        results = []
+        for converted_layer in converted_hatch:
+            color_str = converted_layer.get('color')
+            if not color_str:
+                continue
+
+            res = {
+                'color': color_str,
+            }
+
+            if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
+                interval_pixels = FslConverter.convert_to_pixels(layer.interval(), layer.intervalUnit(), context)
+                try:
+                    hatch_size = float(converted_layer['size'])
+                except TypeError:
+                    continue
+
+                res['dashArray'] = [hatch_size, interval_pixels - hatch_size]
+                res['size'] = hatch_size
+            else:
+                # hardcoded size, there's no point using the marker size as it will visually appear
+                # as a much fatter line due to the missing spaces between markers
+                res['size'] = 1
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        return results
+
+    @staticmethod
+    def arrow_to_fsl(
+            layer: QgsArrowSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS arrow symbol layer to FSL
+        """
+        fill_symbol = layer.subSymbol()
+        if fill_symbol is None:
+            return []
+
+        converted_fill = FslConverter.symbol_to_fsl(fill_symbol, context)
+        if not converted_fill:
+            return []
+
+        context.push_warning('Arrows are not supported, converting to a solid line')
+
+        results = []
+        for converted_layer in converted_fill:
+            color_str = converted_layer.get('color')
+            if not color_str:
+                continue
+
+            # take average of start/end width
+            size = 0.5 * (FslConverter.convert_to_pixels(layer.arrowWidth(), layer.arrowWidthUnit(), context)
+                          + FslConverter.convert_to_pixels(layer.arrowStartWidth(), layer.arrowStartWidthUnit(),
+                                                           context))
+
+            res = {
+                'color': color_str,
+                'size': size
+            }
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity

@@ -27,7 +27,9 @@ from qgis.core import (
     QgsPointPatternFillSymbolLayer,
     QgsCentroidFillSymbolLayer,
     QgsRandomMarkerFillSymbolLayer,
-    QgsMarkerLineSymbolLayer
+    QgsMarkerLineSymbolLayer,
+    QgsHashedLineSymbolLayer,
+    QgsArrowSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -1026,16 +1028,14 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.marker_line_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 2,
-              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+              'size': 2}]
         )
 
         self.assertEqual(
             FslConverter.marker_line_to_fsl(line, conversion_context, symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 2,
-              'opacity': 0.5,
-              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+              'opacity': 0.5}]
         )
 
         # interval mode
@@ -1046,8 +1046,113 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.marker_line_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 8,
-              'dashArray': [8.0, 5.0],
-              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+              'dashArray': [8.0, 5.0]
+              }]
+        )
+
+    def test_hashed_line_to_fsl(self):
+        """
+        Test hashed line conversion
+        """
+        conversion_context = ConversionContext()
+
+        hatch = QgsSimpleLineSymbolLayer()
+        # invisible hatch
+        hatch.setColor(QColor(255, 0, 0, 0))
+
+        hatch_symbol = QgsLineSymbol()
+        hatch_symbol.changeSymbolLayer(0, hatch.clone())
+        line = QgsHashedLineSymbolLayer()
+        line.setSubSymbol(hatch_symbol.clone())
+        line.setPlacement(QgsHashedLineSymbolLayer.Vertex)
+
+        self.assertFalse(
+            FslConverter.hashed_line_to_fsl(line, conversion_context)
+        )
+
+        hatch.setColor(QColor(255, 0, 255))
+        hatch.setPenStyle(Qt.NoPen)
+        hatch_symbol.changeSymbolLayer(0, hatch.clone())
+        line.setSubSymbol(hatch_symbol.clone())
+        self.assertFalse(
+            FslConverter.hashed_line_to_fsl(line, conversion_context)
+        )
+
+        # with hatch
+        hatch.setColor(QColor(120, 130, 140))
+        hatch.setPenStyle(Qt.SolidLine)
+        hatch_symbol.changeSymbolLayer(0, hatch.clone())
+        line.setSubSymbol(hatch_symbol.clone())
+
+        self.assertEqual(
+            FslConverter.hashed_line_to_fsl(line, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 1}]
+        )
+
+        self.assertEqual(
+            FslConverter.hashed_line_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 1,
+              'opacity': 0.5}]
+        )
+
+        # interval mode
+        hatch.setWidth(3)
+        hatch_symbol.changeSymbolLayer(0, hatch.clone())
+        line.setSubSymbol(hatch_symbol.clone())
+        line.setPlacement(QgsHashedLineSymbolLayer.Interval)
+        line.setInterval(10)
+        line.setIntervalUnit(QgsUnitTypes.RenderPoints)
+        self.assertEqual(
+            FslConverter.hashed_line_to_fsl(line, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 11,
+              'dashArray': [11.0, 2.0]
+              }]
+        )
+
+    def test_arrow_to_fsl(self):
+        """
+        Test arrow conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsSimpleFillSymbolLayer()
+        # invisible fill
+        fill.setColor(QColor(255, 0, 0, 0))
+        fill.setStrokeStyle(Qt.NoPen)
+
+        fill_symbol = QgsFillSymbol()
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        line = QgsArrowSymbolLayer()
+        line.setSubSymbol(fill_symbol.clone())
+
+        self.assertFalse(
+            FslConverter.arrow_to_fsl(line, conversion_context)
+        )
+
+        # with fill
+        fill.setColor(QColor(120, 130, 140))
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        line.setSubSymbol(fill_symbol.clone())
+
+        line.setArrowWidth(5)
+        line.setArrowWidthUnit(QgsUnitTypes.RenderPoints)
+        line.setArrowStartWidth(0.3)
+        line.setArrowStartWidthUnit(QgsUnitTypes.RenderInches)
+
+        self.assertEqual(
+            FslConverter.arrow_to_fsl(line, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 18}]
+        )
+
+        self.assertEqual(
+            FslConverter.arrow_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 18,
+              'opacity': 0.5}]
         )
 
 
