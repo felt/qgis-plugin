@@ -29,8 +29,10 @@ from qgis.core import (
     QgsSvgMarkerSymbolLayer,
     QgsPointPatternFillSymbolLayer,
     QgsCentroidFillSymbolLayer,
+    QgsFilledMarkerSymbolLayer,
     QgsSVGFillSymbolLayer,
     QgsFontMarkerSymbolLayer,
+    QgsRandomMarkerFillSymbolLayer,
     QgsRenderContext,
     QgsUnitTypes
 )
@@ -68,7 +70,7 @@ class FslConverter:
         """
         enabled_layers = [symbol[i] for i in range(len(symbol)) if symbol[i].enabled()]
         if not enabled_layers:
-            return None
+            return []
 
         symbol_opacity = symbol.opacity()
         fsl_layers = []
@@ -88,17 +90,31 @@ class FslConverter:
         Converts QGIS symbol layers to FSL symbol layers
         """
         SYMBOL_LAYER_CONVERTERS = {
-            # Fill types
+            # Marker types
+            QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
+            QgsEllipseSymbolLayer: FslConverter.ellipse_marker_to_fsl,
+            QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
+            QgsFontMarkerSymbolLayer: FslConverter.font_marker_to_fsl,
+            QgsFilledMarkerSymbolLayer: FslConverter.filled_marker_to_fsl,
 
+            # Line types
+            QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
+            QgsMarkerLineSymbolLayer: FslConverter.marker_line_to_fsl,
+            # QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
+            # QgsArrowSymbolLayer
+            # QgsInterpolatedLineSymbolLayer
+            # QgsRasterLineSymbolLayer
+            # QgsLineburstSymbolLayer
+
+            # Fill types
             QgsSimpleFillSymbolLayer: FslConverter.simple_fill_to_fsl,
             QgsShapeburstFillSymbolLayer: FslConverter.shapeburst_fill_to_fsl,
             QgsGradientFillSymbolLayer: FslConverter.gradient_fill_to_fsl,
             QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
             QgsSVGFillSymbolLayer: FslConverter.svg_fill_to_fsl,
-
-            # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
-            # QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
-            # QgsRandomMarkerFillSymbolLayer
+            QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
+            QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
+            QgsRandomMarkerFillSymbolLayer: FslConverter.random_marker_fill_to_fsl,
 
             # Nothing of interest here, there's NO properties we can convert!
             # QgsRasterFillSymbolLayer
@@ -106,23 +122,6 @@ class FslConverter:
             # QgsAnimatedMarkerSymbolLayer
             # QgsVectorFieldSymbolLayer
             # QgsGeometryGeneratorSymbolLayer
-
-
-            # Line types
-            QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
-            # QgsHashedLineSymbolLayer: FslConverter.hashed_line_to_fsl,
-            # QgsMarkerLineSymbolLayer: FslConverter.marker_line_to_fsl,
-            # QgsArrowSymbolLayer
-            # QgsInterpolatedLineSymbolLayer
-            # QgsRasterLineSymbolLayer
-            # QgsLineburstSymbolLayer
-
-            # Marker types
-            QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
-            QgsEllipseSymbolLayer: FslConverter.ellipse_marker_to_fsl,
-            QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
-            QgsFontMarkerSymbolLayer: FslConverter.font_marker_to_fsl,
-            # QgsFilledMarkerSymbolLayer
         }
 
         for _class, converter in SYMBOL_LAYER_CONVERTERS.items():
@@ -245,6 +244,56 @@ class FslConverter:
         return [res]
 
     @staticmethod
+    def marker_line_to_fsl(
+            layer: QgsMarkerLineSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS marker line symbol layer to FSL
+        """
+        marker_symbol = layer.subSymbol()
+        if marker_symbol is None:
+            return []
+
+        converted_marker = FslConverter.symbol_to_fsl(marker_symbol, context)
+        if not converted_marker:
+            return []
+
+        context.push_warning('Marker lines are not supported, converting to a solid line')
+
+        results = []
+        for converted_layer in converted_marker:
+            color_str = converted_layer.get('color')
+            if not color_str:
+                continue
+
+            res = {
+                'color': color_str,
+                'strokeColor': "rgba(0, 0, 0, 0)",
+            }
+
+            if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
+                interval_pixels = FslConverter.convert_to_pixels(layer.interval(), layer.intervalUnit(), context)
+                try:
+                    marker_size = float(converted_layer['size'])
+                except TypeError:
+                    continue
+
+                res['dashArray'] = [marker_size, interval_pixels - marker_size]
+                res['size'] = marker_size
+            else:
+                # hardcoded size, there's no point using the marker size as it will visually appear
+                # as a much fatter line due to the missing spaces between markers
+                res['size'] = 2
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        return results
+
+    @staticmethod
     def simple_fill_to_fsl(
             layer: QgsSimpleFillSymbolLayer,
             context: ConversionContext,
@@ -303,7 +352,8 @@ class FslConverter:
         res = {
             'color': color_str,
             'size': size,
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
+                                                     context) if has_stroke else "rgba(0, 0, 0, 0)",
             'strokeWidth': stroke_width
         }
 
@@ -334,14 +384,15 @@ class FslConverter:
             layer.color(), context
         )
         size = max(FslConverter.convert_to_pixels(layer.symbolHeight(), layer.symbolHeightUnit(), context),
-            FslConverter.convert_to_pixels(layer.symbolWidth(), layer.symbolWidthUnit(), context))
+                   FslConverter.convert_to_pixels(layer.symbolWidth(), layer.symbolWidthUnit(), context))
 
         stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(), layer.strokeWidthUnit(), context)
 
         res = {
             'color': color_str,
             'size': size,
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
+                                                     context) if has_stroke else "rgba(0, 0, 0, 0)",
             'strokeWidth': stroke_width
         }
 
@@ -380,7 +431,8 @@ class FslConverter:
         res = {
             'color': color_str,
             'size': size,
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
+                                                     context) if has_stroke else "rgba(0, 0, 0, 0)",
             'strokeWidth': stroke_width
         }
 
@@ -419,7 +471,8 @@ class FslConverter:
         res = {
             'color': color_str,
             'size': size,
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
+                                                     context) if has_stroke else "rgba(0, 0, 0, 0)",
             'strokeWidth': stroke_width
         }
 
@@ -432,6 +485,47 @@ class FslConverter:
         # - rotation
 
         return [res]
+
+    @staticmethod
+    def filled_marker_to_fsl(
+            layer: QgsFontMarkerSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS filled marker symbol layer to FSL. Simplistic color/size conversion only.
+        """
+        converted_subsymbol = FslConverter.symbol_to_fsl(layer.subSymbol(), context)
+        if not converted_subsymbol:
+            return []
+
+        context.push_warning('Filled markers are not supported, converting to a solid marker')
+        results = []
+        for converted_layer in converted_subsymbol:
+            color_str = converted_layer.get('color')
+            stroke_color_str = converted_layer.get('strokeColor')
+            stroke_width = converted_layer.get('strokeWidth')
+
+            size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(), context)
+
+            res = {
+                'size': size,
+                'color': color_str or "rgba(0, 0, 0, 0)",
+                'strokeColor': stroke_color_str or "rgba(0, 0, 0, 0)",
+            }
+            if stroke_width is not None:
+                res['strokeWidth'] = stroke_width
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        # not supported:
+        # - marker shape
+        # - offset
+        # - rotation
+
+        return results
 
     @staticmethod
     def shapeburst_fill_to_fsl(
@@ -528,6 +622,113 @@ class FslConverter:
         res['strokeColor'] = "rgba(0, 0, 0, 0)"
 
         return [res]
+
+    @staticmethod
+    def point_pattern_fill_to_fsl(
+            layer: QgsPointPatternFillSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS point pattern fill symbol layer to FSL
+        """
+        marker_symbol = layer.subSymbol()
+        if marker_symbol is None:
+            return []
+
+        converted_marker = FslConverter.symbol_to_fsl(marker_symbol, context)
+        if not converted_marker:
+            return []
+
+        context.push_warning('Point pattern fills are not supported, converting to a solid fill')
+        results = []
+        for converted_layer in converted_marker:
+            color_str = converted_layer.get('color')
+            if not color_str:
+                continue
+
+            res = {
+                'color': color_str,
+                'strokeColor': "rgba(0, 0, 0, 0)",
+            }
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        return results
+
+    @staticmethod
+    def centroid_fill_to_fsl(
+            layer: QgsCentroidFillSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS centroid fill symbol layer to FSL
+        """
+        marker_symbol = layer.subSymbol()
+        if marker_symbol is None:
+            return []
+
+        converted_marker = FslConverter.symbol_to_fsl(marker_symbol, context)
+        if not converted_marker:
+            return []
+
+        context.push_warning('Centroid fills are not supported, converting to a solid fill')
+
+        results = []
+        for converted_layer in converted_marker:
+            color_str = converted_layer.get('color')
+            if not color_str:
+                continue
+
+            res = {
+                'color': color_str,
+                'strokeColor': "rgba(0, 0, 0, 0)",
+            }
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        return results
+
+    @staticmethod
+    def random_marker_fill_to_fsl(
+            layer: QgsRandomMarkerFillSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS random marker fill symbol layer to FSL
+        """
+        marker_symbol = layer.subSymbol()
+        if marker_symbol is None:
+            return []
+
+        converted_marker = FslConverter.symbol_to_fsl(marker_symbol, context)
+        if not converted_marker:
+            return []
+
+        context.push_warning('Random marker fills are not supported, converting to a solid fill')
+
+        results = []
+        for converted_layer in converted_marker:
+            color_str = converted_layer.get('color')
+            if not color_str:
+                continue
+
+            res = {
+                'color': color_str,
+                'strokeColor': "rgba(0, 0, 0, 0)",
+            }
+
+            if symbol_opacity < 1:
+                res['opacity'] = symbol_opacity
+
+            results.append(res)
+
+        return results
 
     @staticmethod
     def svg_fill_to_fsl(

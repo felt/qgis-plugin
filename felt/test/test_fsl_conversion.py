@@ -13,6 +13,7 @@ from qgis.core import (
     QgsSimpleFillSymbolLayer,
     QgsUnitTypes,
     QgsLineSymbol,
+    QgsFillSymbol,
     QgsShapeburstFillSymbolLayer,
     QgsGradientFillSymbolLayer,
     QgsLinePatternFillSymbolLayer,
@@ -20,7 +21,13 @@ from qgis.core import (
     QgsSimpleMarkerSymbolLayer,
     QgsEllipseSymbolLayer,
     QgsSvgMarkerSymbolLayer,
-    QgsFontMarkerSymbolLayer
+    QgsFontMarkerSymbolLayer,
+    QgsFilledMarkerSymbolLayer,
+    QgsMarkerSymbol,
+    QgsPointPatternFillSymbolLayer,
+    QgsCentroidFillSymbolLayer,
+    QgsRandomMarkerFillSymbolLayer,
+    QgsMarkerLineSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -546,7 +553,7 @@ class FslConversionTest(unittest.TestCase):
 
         # with fill, no stroke
         marker.setSize(5)
-        marker.setColor(QColor(120,130,140))
+        marker.setColor(QColor(120, 130, 140))
 
         self.assertEqual(
             FslConverter.simple_marker_to_fsl(marker, conversion_context),
@@ -611,7 +618,7 @@ class FslConversionTest(unittest.TestCase):
 
         # with fill, no stroke
         marker.setSize(5)
-        marker.setColor(QColor(120,130,140))
+        marker.setColor(QColor(120, 130, 140))
 
         self.assertEqual(
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
@@ -681,7 +688,7 @@ class FslConversionTest(unittest.TestCase):
 
         # with fill, no stroke
         marker.setSize(5)
-        marker.setColor(QColor(120,130,140))
+        marker.setColor(QColor(120, 130, 140))
 
         self.assertEqual(
             FslConverter.svg_marker_to_fsl(marker, conversion_context),
@@ -739,7 +746,7 @@ class FslConversionTest(unittest.TestCase):
 
         # with fill, no stroke
         marker.setSize(5)
-        marker.setColor(QColor(120,130,140))
+        marker.setColor(QColor(120, 130, 140))
 
         self.assertEqual(
             FslConverter.font_marker_to_fsl(marker, conversion_context),
@@ -779,6 +786,268 @@ class FslConversionTest(unittest.TestCase):
               'size': 48,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
+        )
+
+    def test_filled_marker(self):
+        """
+        Test filled marker conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill_symbol = QgsFillSymbol()
+        fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
+
+        # no brush
+        fill.setBrushStyle(Qt.NoBrush)
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        marker = QgsFilledMarkerSymbolLayer()
+        marker.setSubSymbol(fill_symbol.clone())
+        self.assertFalse(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context)
+        )
+
+        # transparent color
+        fill.setBrushStyle(Qt.SolidPattern)
+        fill.setColor(QColor(0, 255, 0, 0))
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        marker.setSubSymbol(fill_symbol.clone())
+        self.assertFalse(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context)
+        )
+
+        fill.setColor(QColor(0, 255, 0))
+        fill.setStrokeWidth(3)
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        marker.setSubSymbol(fill_symbol.clone())
+        self.assertEqual(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'size': 8,
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 11}]
+        )
+
+        fill.setStrokeWidthUnit(QgsUnitTypes.RenderPixels)
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        marker.setSubSymbol(fill_symbol.clone())
+        self.assertEqual(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'size': 8,
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
+        )
+
+        self.assertEqual(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(0, 255, 0)',
+              'size': 8,
+              'strokeColor': 'rgb(35, 35, 35)',
+              'opacity': 0.5,
+              'strokeWidth': 3.0}]
+        )
+
+        marker.setSize(3)
+        marker.setSizeUnit(QgsUnitTypes.RenderPoints)
+        self.assertEqual(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'size': 4,
+              'strokeColor': 'rgb(35, 35, 35)',
+              'strokeWidth': 3.0}]
+        )
+
+    def test_point_pattern_fill_to_fsl(self):
+        """
+        Test point pattern fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        marker = QgsSimpleMarkerSymbolLayer()
+        # invisible fills and strokes
+        marker.setColor(QColor(255, 0, 0, 0))
+        marker.setStrokeColor(QColor(255, 0, 0, 0))
+
+        marker_symbol = QgsMarkerSymbol()
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill = QgsPointPatternFillSymbolLayer()
+        fill.setSubSymbol(marker_symbol.clone())
+
+        self.assertFalse(
+            FslConverter.point_pattern_fill_to_fsl(fill, conversion_context)
+        )
+
+        marker.setStrokeColor(QColor(255, 0, 255))
+        marker.setStrokeStyle(Qt.NoPen)
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill.setSubSymbol(marker_symbol.clone())
+        self.assertFalse(
+            FslConverter.point_pattern_fill_to_fsl(fill, conversion_context)
+        )
+
+        # with fill, no stroke
+        marker.setColor(QColor(120, 130, 140))
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill.setSubSymbol(marker_symbol.clone())
+
+        self.assertEqual(
+            FslConverter.point_pattern_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(120, 130, 140)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.point_pattern_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_centroid_fill_to_fsl(self):
+        """
+        Test centroid fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        marker = QgsSimpleMarkerSymbolLayer()
+        # invisible fills and strokes
+        marker.setColor(QColor(255, 0, 0, 0))
+        marker.setStrokeColor(QColor(255, 0, 0, 0))
+
+        marker_symbol = QgsMarkerSymbol()
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill = QgsCentroidFillSymbolLayer()
+        fill.setSubSymbol(marker_symbol.clone())
+
+        self.assertFalse(
+            FslConverter.centroid_fill_to_fsl(fill, conversion_context)
+        )
+
+        marker.setStrokeColor(QColor(255, 0, 255))
+        marker.setStrokeStyle(Qt.NoPen)
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill.setSubSymbol(marker_symbol.clone())
+        self.assertFalse(
+            FslConverter.centroid_fill_to_fsl(fill, conversion_context)
+        )
+
+        # with fill, no stroke
+        marker.setColor(QColor(120, 130, 140))
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill.setSubSymbol(marker_symbol.clone())
+
+        self.assertEqual(
+            FslConverter.centroid_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(120, 130, 140)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.centroid_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_random_marker_fill_to_fsl(self):
+        """
+        Test random marker fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        marker = QgsSimpleMarkerSymbolLayer()
+        # invisible fills and strokes
+        marker.setColor(QColor(255, 0, 0, 0))
+        marker.setStrokeColor(QColor(255, 0, 0, 0))
+
+        marker_symbol = QgsMarkerSymbol()
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill = QgsRandomMarkerFillSymbolLayer()
+        fill.setSubSymbol(marker_symbol.clone())
+
+        self.assertFalse(
+            FslConverter.random_marker_fill_to_fsl(fill, conversion_context)
+        )
+
+        marker.setStrokeColor(QColor(255, 0, 255))
+        marker.setStrokeStyle(Qt.NoPen)
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill.setSubSymbol(marker_symbol.clone())
+        self.assertFalse(
+            FslConverter.random_marker_fill_to_fsl(fill, conversion_context)
+        )
+
+        # with fill, no stroke
+        marker.setColor(QColor(120, 130, 140))
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        fill.setSubSymbol(marker_symbol.clone())
+
+        self.assertEqual(
+            FslConverter.random_marker_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(120, 130, 140)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.random_marker_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_marker_line_to_fsl(self):
+        """
+        Test marker line conversion
+        """
+        conversion_context = ConversionContext()
+
+        marker = QgsSimpleMarkerSymbolLayer()
+        # invisible fills and strokes
+        marker.setColor(QColor(255, 0, 0, 0))
+        marker.setStrokeColor(QColor(255, 0, 0, 0))
+
+        marker_symbol = QgsMarkerSymbol()
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        line = QgsMarkerLineSymbolLayer()
+        line.setSubSymbol(marker_symbol.clone())
+        line.setPlacement(QgsMarkerLineSymbolLayer.Vertex)
+
+        self.assertFalse(
+            FslConverter.marker_line_to_fsl(line, conversion_context)
+        )
+
+        marker.setStrokeColor(QColor(255, 0, 255))
+        marker.setStrokeStyle(Qt.NoPen)
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        line.setSubSymbol(marker_symbol.clone())
+        self.assertFalse(
+            FslConverter.marker_line_to_fsl(line, conversion_context)
+        )
+
+        # with fill, no stroke
+        marker.setColor(QColor(120, 130, 140))
+        marker_symbol.changeSymbolLayer(0, marker.clone())
+        line.setSubSymbol(marker_symbol.clone())
+
+        self.assertEqual(
+            FslConverter.marker_line_to_fsl(line, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 2,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.marker_line_to_fsl(line, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 2,
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        # interval mode
+        line.setPlacement(QgsMarkerLineSymbolLayer.Interval)
+        line.setInterval(10)
+        line.setIntervalUnit(QgsUnitTypes.RenderPoints)
+        self.assertEqual(
+            FslConverter.marker_line_to_fsl(line, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 8,
+              'dashArray': [8.0, 5.0],
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
 
