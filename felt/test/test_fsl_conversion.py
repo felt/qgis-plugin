@@ -17,7 +17,8 @@ from qgis.core import (
     QgsGradientFillSymbolLayer,
     QgsLinePatternFillSymbolLayer,
     QgsSVGFillSymbolLayer,
-    QgsSimpleMarkerSymbolLayer
+    QgsSimpleMarkerSymbolLayer,
+    QgsEllipseSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -581,6 +582,81 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.simple_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 48,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 3}]
+        )
+
+    def test_ellipse_marker_to_fsl(self):
+        """
+        Test ellipse marker conversion
+        """
+        conversion_context = ConversionContext()
+
+        marker = QgsEllipseSymbolLayer()
+        # invisible fills and strokes
+        marker.setColor(QColor(255, 0, 0, 0))
+        marker.setStrokeColor(QColor(255, 0, 0, 0))
+        self.assertFalse(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context)
+        )
+
+        marker.setStrokeColor(QColor(255, 0, 255))
+        marker.setStrokeStyle(Qt.NoPen)
+        self.assertFalse(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context)
+        )
+
+        # with fill, no stroke
+        marker.setSize(5)
+        marker.setColor(QColor(120,130,140))
+
+        self.assertEqual(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 19,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 0.0}]
+        )
+
+        self.assertEqual(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 19,
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 0.0}]
+        )
+
+        # with stroke
+        marker.setStrokeColor(QColor(255, 100, 0))
+        marker.setStrokeWidth(2)
+        marker.setStrokeWidthUnit(QgsUnitTypes.RenderPoints)
+        self.assertEqual(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 19,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 3}]
+        )
+
+        # size unit
+        marker.setSymbolWidthUnit(QgsUnitTypes.RenderInches)
+        marker.setSymbolWidth(0.5)
+        marker.setSymbolHeightUnit(QgsUnitTypes.RenderPoints)
+        marker.setSymbolHeight(1.5)
+        self.assertEqual(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 48,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 3}]
+        )
+
+        marker.setSymbolHeight(51.5)
+        self.assertEqual(
+            FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 69,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 3}]
         )

@@ -113,7 +113,7 @@ class FslConverter:
 
             # Marker types
             QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
-            # QgsEllipseSymbolLayer: FslConverter.simple_marker_to_fsl,
+            QgsEllipseSymbolLayer: FslConverter.ellipse_marker_to_fsl,
             # QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
             # QgsFontMarkerSymbolLayer
             # QgsFilledMarkerSymbolLayer
@@ -298,6 +298,44 @@ class FslConverter:
             layer.color(), context
         )
         size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(), context)
+
+        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(), layer.strokeWidthUnit(), context)
+
+        res = {
+            'color': color_str,
+            'size': size,
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeWidth': stroke_width
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        # not supported:
+        # - marker shape
+        # - offset
+        # - rotation
+
+        return [res]
+
+    @staticmethod
+    def ellipse_marker_to_fsl(
+            layer: QgsEllipseSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS ellipse marker symbol layer to FSL
+        """
+        has_fill = layer.color().isValid() and layer.color().alphaF() > 0
+        has_stroke = layer.strokeColor().alphaF() > 0 and layer.strokeStyle() != Qt.NoPen
+        if not has_fill and not has_stroke:
+            return []
+
+        color_str = FslConverter.color_to_fsl(
+            layer.color(), context
+        )
+        size = max(FslConverter.convert_to_pixels(layer.symbolHeight(), layer.symbolHeightUnit(), context),
+            FslConverter.convert_to_pixels(layer.symbolWidth(), layer.symbolWidthUnit(), context))
 
         stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(), layer.strokeWidthUnit(), context)
 
