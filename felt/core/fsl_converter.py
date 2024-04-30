@@ -30,6 +30,7 @@ from qgis.core import (
     QgsPointPatternFillSymbolLayer,
     QgsCentroidFillSymbolLayer,
     QgsSVGFillSymbolLayer,
+    QgsFontMarkerSymbolLayer,
     QgsRenderContext,
     QgsUnitTypes
 )
@@ -95,12 +96,17 @@ class FslConverter:
             QgsLinePatternFillSymbolLayer: FslConverter.line_pattern_fill_to_fsl,
             QgsSVGFillSymbolLayer: FslConverter.svg_fill_to_fsl,
 
-            # Nothing of interest here, there's NO properties we can convert!
-            # QgsRasterFillSymbolLayer: FslConverter.raster_fill_to_fsl,
-
             # QgsPointPatternFillSymbolLayer: FslConverter.point_pattern_fill_to_fsl,
             # QgsCentroidFillSymbolLayer: FslConverter.centroid_fill_to_fsl,
             # QgsRandomMarkerFillSymbolLayer
+
+            # Nothing of interest here, there's NO properties we can convert!
+            # QgsRasterFillSymbolLayer
+            # QgsRasterMarkerSymbolLayer
+            # QgsAnimatedMarkerSymbolLayer
+            # QgsVectorFieldSymbolLayer
+            # QgsGeometryGeneratorSymbolLayer
+
 
             # Line types
             QgsSimpleLineSymbolLayer: FslConverter.simple_line_to_fsl,
@@ -114,16 +120,9 @@ class FslConverter:
             # Marker types
             QgsSimpleMarkerSymbolLayer: FslConverter.simple_marker_to_fsl,
             QgsEllipseSymbolLayer: FslConverter.ellipse_marker_to_fsl,
-            # QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
-            # QgsFontMarkerSymbolLayer
+            QgsSvgMarkerSymbolLayer: FslConverter.svg_marker_to_fsl,
+            QgsFontMarkerSymbolLayer: FslConverter.font_marker_to_fsl,
             # QgsFilledMarkerSymbolLayer
-            # QgsRasterMarkerSymbolLayer
-            # QgsAnimatedMarkerSymbolLayer
-            # QgsVectorFieldSymbolLayer
-
-            # Special types
-
-            # QgsGeometryGeneratorSymbolLayer
         }
 
         for _class, converter in SYMBOL_LAYER_CONVERTERS.items():
@@ -351,6 +350,84 @@ class FslConverter:
 
         # not supported:
         # - marker shape
+        # - offset
+        # - rotation
+
+        return [res]
+
+    @staticmethod
+    def svg_marker_to_fsl(
+            layer: QgsSvgMarkerSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS SVG marker symbol layer to FSL. Simplistic color/size conversion only.
+        """
+        has_fill = layer.fillColor().isValid() and layer.fillColor().alphaF() > 0
+        has_stroke = layer.strokeColor().alphaF() > 0
+        if not has_fill and not has_stroke:
+            return []
+
+        context.push_warning('SVG markers are not supported, converting to a solid marker')
+
+        color_str = FslConverter.color_to_fsl(
+            layer.fillColor(), context
+        )
+        size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(), context)
+
+        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(), layer.strokeWidthUnit(), context)
+
+        res = {
+            'color': color_str,
+            'size': size,
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeWidth': stroke_width
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        # not supported:
+        # - SVG graphic
+        # - offset
+        # - rotation
+
+        return [res]
+
+    @staticmethod
+    def font_marker_to_fsl(
+            layer: QgsFontMarkerSymbolLayer,
+            context: ConversionContext,
+            symbol_opacity: float = 1) -> List[Dict[str, object]]:
+        """
+        Converts a QGIS font marker symbol layer to FSL. Simplistic color/size conversion only.
+        """
+        has_fill = layer.color().isValid() and layer.color().alphaF() > 0
+        has_stroke = layer.strokeColor().alphaF() > 0
+        if not has_fill and not has_stroke:
+            return []
+
+        context.push_warning('Font markers are not supported, converting to a solid marker')
+
+        color_str = FslConverter.color_to_fsl(
+            layer.color(), context
+        )
+        size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(), context)
+
+        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(), layer.strokeWidthUnit(), context)
+
+        res = {
+            'color': color_str,
+            'size': size,
+            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(), context) if has_stroke else "rgba(0, 0, 0, 0)",
+            'strokeWidth': stroke_width
+        }
+
+        if symbol_opacity < 1:
+            res['opacity'] = symbol_opacity
+
+        # not supported:
+        # - font graphic
         # - offset
         # - rotation
 
