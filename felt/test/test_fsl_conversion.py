@@ -15,7 +15,9 @@ from qgis.core import (
     QgsLineSymbol,
     QgsShapeburstFillSymbolLayer,
     QgsGradientFillSymbolLayer,
-    QgsLinePatternFillSymbolLayer
+    QgsLinePatternFillSymbolLayer,
+    QgsSVGFillSymbolLayer,
+    QgsSimpleMarkerSymbolLayer
 )
 
 from .utilities import get_qgis_app
@@ -86,7 +88,7 @@ class FslConversionTest(unittest.TestCase):
         ), 50)
         self.assertEqual(FslConverter.convert_to_pixels(
             50, QgsUnitTypes.RenderMillimeters, conversion_context
-        ), 188.95)
+        ), 189)
 
     def test_symbol_conversion(self):
         """
@@ -104,7 +106,7 @@ class FslConversionTest(unittest.TestCase):
               'lineCap': 'square',
               'lineJoin': 'bevel',
               'opacity': 0.5,
-              'size': 0.98254}]
+              'size': 1}]
         )
 
     def test_simple_line_to_fsl(self):
@@ -134,7 +136,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
                 'color': 'rgb(0, 255, 0)',
-                'size': 11.337,
+                'size': 11,
                 'lineCap': 'square',
                 'lineJoin': 'bevel',
             }]
@@ -305,7 +307,7 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(0, 255, 0)',
               'lineJoin': 'bevel',
               'strokeColor': 'rgb(35, 35, 35)',
-              'strokeWidth': 11.337}]
+              'strokeWidth': 11}]
         )
 
         fill.setStrokeWidthUnit(QgsUnitTypes.RenderPixels)
@@ -490,6 +492,97 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(255, 0, 255)',
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_svg_fill_to_fsl(self):
+        """
+        Test SVG fill conversion
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsSVGFillSymbolLayer('my.svg')
+        # invisible fill
+        fill.setSvgFillColor(QColor(255, 0, 0, 0))
+        self.assertFalse(
+            FslConverter.svg_fill_to_fsl(fill, conversion_context)
+        )
+
+        # with color
+        fill.setSvgFillColor(QColor(255, 0, 255))
+        self.assertEqual(
+            FslConverter.svg_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgb(255, 0, 255)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        self.assertEqual(
+            FslConverter.svg_fill_to_fsl(fill, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(255, 0, 255)',
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+    def test_simple_marker_to_fsl(self):
+        """
+        Test simple marker conversion
+        """
+        conversion_context = ConversionContext()
+
+        marker = QgsSimpleMarkerSymbolLayer()
+        # invisible fills and strokes
+        marker.setColor(QColor(255, 0, 0, 0))
+        marker.setStrokeColor(QColor(255, 0, 0, 0))
+        self.assertFalse(
+            FslConverter.simple_marker_to_fsl(marker, conversion_context)
+        )
+
+        marker.setStrokeColor(QColor(255, 0, 255))
+        marker.setStrokeStyle(Qt.NoPen)
+        self.assertFalse(
+            FslConverter.simple_marker_to_fsl(marker, conversion_context)
+        )
+
+        # with fill, no stroke
+        marker.setSize(5)
+        marker.setColor(QColor(120,130,140))
+
+        self.assertEqual(
+            FslConverter.simple_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 19,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 0.0}]
+        )
+
+        self.assertEqual(
+            FslConverter.simple_marker_to_fsl(marker, conversion_context, symbol_opacity=0.5),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 19,
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 0.0}]
+        )
+
+        # with stroke
+        marker.setStrokeColor(QColor(255, 100, 0))
+        marker.setStrokeWidth(2)
+        marker.setStrokeWidthUnit(QgsUnitTypes.RenderPoints)
+        self.assertEqual(
+            FslConverter.simple_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 19,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 3}]
+        )
+
+        # size unit
+        marker.setSizeUnit(QgsUnitTypes.RenderInches)
+        marker.setSize(0.5)
+        self.assertEqual(
+            FslConverter.simple_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(120, 130, 140)',
+              'size': 48,
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'strokeWidth': 3}]
         )
 
 
