@@ -15,6 +15,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis._core import QgsNullSymbolRenderer
 
 from qgis.core import (
+    NULL,
     QgsSymbol,
     QgsSymbolLayer,
     QgsSimpleFillSymbolLayer,
@@ -38,7 +39,8 @@ from qgis.core import (
     QgsUnitTypes,
     QgsFeatureRenderer,
     QgsSingleSymbolRenderer,
-    QgsNullSymbolRenderer
+    QgsNullSymbolRenderer,
+    QgsCategorizedSymbolRenderer
 )
 
 
@@ -70,7 +72,7 @@ class FslConverter:
     @staticmethod
     def vector_renderer_to_fsl(renderer: QgsFeatureRenderer,
                                context: ConversionContext,
-                               layer_opacity: float=1) \
+                               layer_opacity: float = 1) \
             -> Optional[Dict[str, object]]:
         """
         Converts a QGIS vector renderer to FSL
@@ -80,7 +82,8 @@ class FslConverter:
 
         RENDERER_CONVERTERS = {
             QgsSingleSymbolRenderer: FslConverter.single_renderer_to_fsl,
-            # QgsCategorizedSymbolRenderer
+            QgsCategorizedSymbolRenderer:
+                FslConverter.categorized_renderer_to_fsl,
             # QgsGraduatedSymbolRenderer
             # QgsRuleBasedRenderer
             QgsNullSymbolRenderer: FslConverter.null_renderer_to_fsl,
@@ -144,6 +147,90 @@ class FslConverter:
             },
             "legend": {},
             "type": "simple"
+        }
+
+    @staticmethod
+    def categorized_renderer_to_fsl(
+            renderer: QgsCategorizedSymbolRenderer,
+            context: ConversionContext,
+            layer_opacity: float = 1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS categorized symbol renderer to an FSL definition
+        """
+        if not renderer.categories():
+            return None
+
+        converted_symbols = []
+        category_values = []
+        other_symbol = None
+        legend_text = {}
+        for category in renderer.categories():
+            converted_symbol = FslConverter.symbol_to_fsl(category.symbol(),
+                                                          context,
+                                                          layer_opacity)
+            if converted_symbol:
+                if category.value() == NULL:
+                    other_symbol = converted_symbol
+                    legend_text['Other'] = category.label()
+                else:
+                    converted_symbols.append(converted_symbol)
+                    legend_text[str(category.value())] = category.label()
+                    category_values.append(str(category.value()))
+
+        all_symbols = converted_symbols
+        if other_symbol:
+            all_symbols.append(other_symbol)
+
+        if not all_symbols:
+            return None
+
+        style = []
+        # upgrade all properties in first symbol to lists
+        first_symbol = all_symbols[0]
+        for layer in first_symbol:
+            list_dict = {}
+            for property, value in layer.items():
+                list_dict[property] = [value]
+            style.append(list_dict)
+
+        for symbol in all_symbols[1:]:
+            for layer_idx, target_layer in enumerate(style):
+                if layer_idx >= len(symbol):
+                    source_layer = None
+                else:
+                    source_layer = symbol[layer_idx]
+
+                for property, value in target_layer.items():
+                    # if property doesn't exist in this layer, copy from first
+                    # symbol
+                    if source_layer and property in source_layer:
+                        value.append(source_layer[property])
+                    else:
+                        value.append(value[0])
+
+        # re-collapse single value lists to single values
+        cleaned_style = []
+        for layer in style:
+            cleaned_layer = {}
+            for key, value in layer.items():
+                if all(v == value[0] for v in value):
+                    cleaned_layer[key] = value[0]
+                else:
+                    cleaned_layer[key] = value
+            cleaned_style.append(cleaned_layer)
+
+        return {
+            "config": {
+                "categoryAttribute": renderer.classAttribute(),
+                "categories": category_values,
+                "showOther": bool(other_symbol)
+            },
+            "legend": {
+                "displayName": legend_text
+            },
+            "style": cleaned_style,
+            "type": "categorical"
         }
 
     @staticmethod
@@ -478,8 +565,9 @@ class FslConverter:
                 layer.arrowWidthUnit(),
                 context) +
                           FslConverter.convert_to_pixels(
-                        layer.arrowStartWidth(), layer.arrowStartWidthUnit(),
-                        context))
+                              layer.arrowStartWidth(),
+                              layer.arrowStartWidthUnit(),
+                              context))
 
             res = {
                 'color': color_str,

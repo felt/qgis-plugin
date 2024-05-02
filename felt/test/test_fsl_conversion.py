@@ -9,6 +9,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 
 from qgis.core import (
+    NULL,
     QgsSimpleLineSymbolLayer,
     QgsSimpleFillSymbolLayer,
     QgsUnitTypes,
@@ -31,7 +32,9 @@ from qgis.core import (
     QgsHashedLineSymbolLayer,
     QgsArrowSymbolLayer,
     QgsNullSymbolRenderer,
-    QgsSingleSymbolRenderer
+    QgsSingleSymbolRenderer,
+    QgsCategorizedSymbolRenderer,
+    QgsRendererCategory,
 )
 
 from .utilities import get_qgis_app
@@ -1193,21 +1196,21 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
             {'legend': {},
              'style': {'color': 'rgb(255, 0, 0)',
-                        'lineCap': 'square',
-                        'lineJoin': 'bevel',
-                        'size': 1},
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'size': 1},
              'type': 'simple'}
         )
 
         self.assertEqual(
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
-                                      layer_opacity=0.5),
+                                                layer_opacity=0.5),
             {'legend': {},
              'style': {'color': 'rgb(255, 0, 0)',
-                        'lineCap': 'square',
-                        'lineJoin': 'bevel',
-                        'opacity': 0.5,
-                        'size': 1},
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'opacity': 0.5,
+                       'size': 1},
              'type': 'simple'}
         )
 
@@ -1241,8 +1244,114 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
             {'legend': {},
              'style': {'color': 'rgba(0, 0, 0, 0)',
-                        'strokeColor': 'rgba(0, 0, 0, 0)'},
+                       'strokeColor': 'rgba(0, 0, 0, 0)'},
              'type': 'simple'}
+        )
+
+    def test_categorized_renderer(self):
+        """
+        Test converting categorized renderers
+        """
+        conversion_context = ConversionContext()
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+
+        line.setColor(QColor(255, 255, 0))
+        line.setWidth(5)
+        line_symbol.appendSymbolLayer(line.clone())
+
+        line_symbol2 = QgsLineSymbol()
+        line.setColor(QColor(255, 0, 255))
+        line.setWidth(6)
+        line_symbol2.changeSymbolLayer(0, line.clone())
+
+        line_symbol3 = QgsLineSymbol()
+        line.setColor(QColor(0, 255, 255))
+        line.setWidth(7)
+        line_symbol3.changeSymbolLayer(0, line.clone())
+
+        categories = [
+            QgsRendererCategory(1, line_symbol.clone(), 'first cat'),
+            QgsRendererCategory(2, line_symbol2.clone(), 'second cat'),
+            QgsRendererCategory(3, line_symbol3.clone(), 'third cat'),
+        ]
+
+        renderer = QgsCategorizedSymbolRenderer('my_field',
+                                                categories)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'config': {'categories': ['1', '2', '3'],
+                        'categoryAttribute': 'my_field',
+                        'showOther': False},
+             'legend': {'displayName': {'1': 'first cat',
+                                        '2': 'second cat',
+                                        '3': 'third cat'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)',
+                                  'rgb(0, 255, 255)'],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': [1, 23, 26]},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 19}],
+             'type': 'categorical'}
+        )
+
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
+                                                layer_opacity=0.5),
+            {'config': {'categories': ['1', '2', '3'],
+                        'categoryAttribute': 'my_field',
+                        'showOther': False},
+             'legend': {'displayName': {'1': 'first cat',
+                                        '2': 'second cat',
+                                        '3': 'third cat'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)',
+                                  'rgb(0, 255, 255)'],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'opacity': 0.5,
+                        'size': [1, 23, 26]},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'opacity': 0.5,
+                        'size': 19}],
+             'type': 'categorical'}
+        )
+
+        # with "all others"
+        line.setColor(QColor(100, 100, 100))
+        line.setWidth(3)
+        line_symbol3.changeSymbolLayer(0, line.clone())
+        categories.append(
+            QgsRendererCategory(NULL, line_symbol3.clone(), 'all others'))
+        renderer = QgsCategorizedSymbolRenderer('my_field',
+                                                categories)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'config': {'categories': ['1', '2', '3'],
+                        'categoryAttribute': 'my_field',
+                        'showOther': True},
+             'legend': {'displayName': {'1': 'first cat',
+                                        '2': 'second cat',
+                                        '3': 'third cat',
+                                        'Other': 'all others'}},
+             'style': [{'color': ['rgb(255, 0, 0)',
+                                  'rgb(255, 0, 255)',
+                                  'rgb(0, 255, 255)',
+                                  'rgb(100, 100, 100)'],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': [1, 23, 26, 11]},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 19}],
+             'type': 'categorical'}
         )
 
 
