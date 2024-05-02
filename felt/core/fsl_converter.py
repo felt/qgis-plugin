@@ -40,7 +40,8 @@ from qgis.core import (
     QgsFeatureRenderer,
     QgsSingleSymbolRenderer,
     QgsNullSymbolRenderer,
-    QgsCategorizedSymbolRenderer
+    QgsCategorizedSymbolRenderer,
+    QgsGraduatedSymbolRenderer
 )
 
 
@@ -84,7 +85,8 @@ class FslConverter:
             QgsSingleSymbolRenderer: FslConverter.single_renderer_to_fsl,
             QgsCategorizedSymbolRenderer:
                 FslConverter.categorized_renderer_to_fsl,
-            # QgsGraduatedSymbolRenderer
+            QgsGraduatedSymbolRenderer:
+                FslConverter.graduated_renderer_to_fsl,
             # QgsRuleBasedRenderer
             QgsNullSymbolRenderer: FslConverter.null_renderer_to_fsl,
 
@@ -150,6 +152,62 @@ class FslConverter:
         }
 
     @staticmethod
+    def create_varying_style_from_list(
+            styles: List[List[Dict[str, object]]]) -> List[Dict[str, object]]:
+        """
+        Given a list of individual styles, try to create a single
+        varying style from them
+        """
+        if len(styles) < 1:
+            return []
+
+        result = []
+        # upgrade all properties in first symbol to lists
+        first_symbol = styles[0]
+        for layer in first_symbol:
+            list_dict = {}
+            for key, value in layer.items():
+                list_dict[key] = [value]
+            result.append(list_dict)
+
+        for symbol in styles[1:]:
+            for layer_idx, target_layer in enumerate(result):
+                if layer_idx >= len(symbol):
+                    source_layer = None
+                else:
+                    source_layer = symbol[layer_idx]
+
+                for key, value in target_layer.items():
+                    # if property doesn't exist in this layer, copy from first
+                    # symbol
+                    if source_layer and key in source_layer:
+                        value.append(source_layer[key])
+                    else:
+                        value.append(value[0])
+
+        return FslConverter.simplify_style(result)
+
+    @staticmethod
+    def simplify_style(style: List[Dict[str, object]]) \
+            -> List[Dict[str, object]]:
+        """
+        Tries to simplify a style, by collapsing lists of the same
+        value to a single value
+        """
+        # re-collapse single value lists to single values
+        cleaned_style = []
+        for layer in style:
+            cleaned_layer = {}
+            for key, value in layer.items():
+                if (isinstance(value, list) and
+                        all(v == value[0] for v in value)):
+                    cleaned_layer[key] = value[0]
+                else:
+                    cleaned_layer[key] = value
+            cleaned_style.append(cleaned_layer)
+        return cleaned_style
+
+    @staticmethod
     def categorized_renderer_to_fsl(
             renderer: QgsCategorizedSymbolRenderer,
             context: ConversionContext,
@@ -185,40 +243,9 @@ class FslConverter:
         if not all_symbols:
             return None
 
-        style = []
-        # upgrade all properties in first symbol to lists
-        first_symbol = all_symbols[0]
-        for layer in first_symbol:
-            list_dict = {}
-            for property, value in layer.items():
-                list_dict[property] = [value]
-            style.append(list_dict)
-
-        for symbol in all_symbols[1:]:
-            for layer_idx, target_layer in enumerate(style):
-                if layer_idx >= len(symbol):
-                    source_layer = None
-                else:
-                    source_layer = symbol[layer_idx]
-
-                for property, value in target_layer.items():
-                    # if property doesn't exist in this layer, copy from first
-                    # symbol
-                    if source_layer and property in source_layer:
-                        value.append(source_layer[property])
-                    else:
-                        value.append(value[0])
-
-        # re-collapse single value lists to single values
-        cleaned_style = []
-        for layer in style:
-            cleaned_layer = {}
-            for key, value in layer.items():
-                if all(v == value[0] for v in value):
-                    cleaned_layer[key] = value[0]
-                else:
-                    cleaned_layer[key] = value
-            cleaned_style.append(cleaned_layer)
+        style = FslConverter.create_varying_style_from_list(
+            all_symbols
+        )
 
         return {
             "config": {
@@ -229,8 +256,53 @@ class FslConverter:
             "legend": {
                 "displayName": legend_text
             },
-            "style": cleaned_style,
+            "style": style,
             "type": "categorical"
+        }
+
+    @staticmethod
+    def graduated_renderer_to_fsl(
+            renderer: QgsGraduatedSymbolRenderer,
+            context: ConversionContext,
+            layer_opacity: float = 1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS categorized symbol renderer to an FSL definition
+        """
+        if not renderer.ranges():
+            return None
+
+        converted_symbols = []
+        range_breaks = []
+        legend_text = {}
+        for idx, _range in enumerate(renderer.ranges()):
+            converted_symbol = FslConverter.symbol_to_fsl(_range.symbol(),
+                                                          context,
+                                                          layer_opacity)
+            if converted_symbol:
+                converted_symbols.append(converted_symbol)
+                legend_text[str(idx)] = _range.label()
+                if idx == 0:
+                    range_breaks.append(_range.lowerValue())
+                range_breaks.append(_range.upperValue())
+
+        if not converted_symbols:
+            return None
+
+        style = FslConverter.create_varying_style_from_list(
+            converted_symbols
+        )
+
+        return {
+            "config": {
+                "numericAttribute": renderer.classAttribute(),
+                "steps": range_breaks
+            },
+            "legend": {
+                "displayName": legend_text
+            },
+            "style": style,
+            "type": "numeric"
         }
 
     @staticmethod

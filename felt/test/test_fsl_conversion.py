@@ -35,6 +35,8 @@ from qgis.core import (
     QgsSingleSymbolRenderer,
     QgsCategorizedSymbolRenderer,
     QgsRendererCategory,
+    QgsGraduatedSymbolRenderer,
+    QgsRendererRange,
 )
 
 from .utilities import get_qgis_app
@@ -1352,6 +1354,79 @@ class FslConversionTest(unittest.TestCase):
                         'lineJoin': 'bevel',
                         'size': 19}],
              'type': 'categorical'}
+        )
+
+    def test_graduated_renderer(self):
+        """
+        Test converting graduated renderers
+        """
+        conversion_context = ConversionContext()
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+
+        line.setColor(QColor(255, 255, 0))
+        line.setWidth(5)
+        line_symbol.appendSymbolLayer(line.clone())
+
+        line_symbol2 = QgsLineSymbol()
+        line.setColor(QColor(255, 0, 255))
+        line.setWidth(6)
+        line_symbol2.changeSymbolLayer(0, line.clone())
+
+        line_symbol3 = QgsLineSymbol()
+        line.setColor(QColor(0, 255, 255))
+        line.setWidth(7)
+        line_symbol3.changeSymbolLayer(0, line.clone())
+
+        ranges = [
+            QgsRendererRange(1, 2, line_symbol.clone(), 'first range'),
+            QgsRendererRange(2, 3, line_symbol2.clone(), 'second range'),
+            QgsRendererRange(3, 4, line_symbol3.clone(), 'third range'),
+        ]
+
+        renderer = QgsGraduatedSymbolRenderer('my_field',
+                                              ranges)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'config': {'numericAttribute': 'my_field',
+                        'steps': [1.0, 2.0, 3.0, 4.0]},
+             'legend': {'displayName': {'0': 'first range',
+                                        '1': 'second range',
+                                        '2': 'third range'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)',
+                                  'rgb(0, 255, 255)'],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': [1, 23, 26]},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 19}],
+             'type': 'numeric'}
+        )
+
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
+                                                layer_opacity=0.5),
+            {'config': {'numericAttribute': 'my_field',
+                        'steps': [1.0, 2.0, 3.0, 4.0]},
+             'legend': {'displayName': {'0': 'first range',
+                                        '1': 'second range',
+                                        '2': 'third range'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)',
+                                  'rgb(0, 255, 255)'],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'opacity': 0.5,
+                        'size': [1, 23, 26]},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'opacity': 0.5,
+                        'size': 19}],
+             'type': 'numeric'}
         )
 
 
