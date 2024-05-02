@@ -29,7 +29,9 @@ from qgis.core import (
     QgsRandomMarkerFillSymbolLayer,
     QgsMarkerLineSymbolLayer,
     QgsHashedLineSymbolLayer,
-    QgsArrowSymbolLayer
+    QgsArrowSymbolLayer,
+    QgsNullSymbolRenderer,
+    QgsSingleSymbolRenderer
 )
 
 from .utilities import get_qgis_app
@@ -1174,6 +1176,73 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 18,
               'opacity': 0.5}]
+        )
+
+    def test_single_symbol_renderer(self):
+        """
+        Test converting single symbol renderers
+        """
+        conversion_context = ConversionContext()
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+
+        renderer = QgsSingleSymbolRenderer(line_symbol.clone())
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 1},
+             'type': 'simple'}
+        )
+
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
+                                      layer_opacity=0.5),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'opacity': 0.5,
+                        'size': 1},
+             'type': 'simple'}
+        )
+
+        # with casing
+        line_casing = QgsSimpleLineSymbolLayer(color=QColor(255, 255, 0))
+        line_casing.setWidth(10)
+        line_symbol.appendSymbolLayer(line_casing.clone())
+        renderer.setSymbol(line_symbol.clone())
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': [{'color': 'rgb(255, 0, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 1},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 38}],
+             'type': 'simple'}
+        )
+
+    def test_null_symbol_renderer(self):
+        """
+        Test converting null symbol renderers
+        """
+        conversion_context = ConversionContext()
+
+        renderer = QgsNullSymbolRenderer()
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgba(0, 0, 0, 0)',
+                        'strokeColor': 'rgba(0, 0, 0, 0)'},
+             'type': 'simple'}
         )
 
 

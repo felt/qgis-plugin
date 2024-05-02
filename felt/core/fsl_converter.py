@@ -12,6 +12,7 @@ from qgis.PyQt.QtCore import (
     Qt,
 )
 from qgis.PyQt.QtGui import QColor
+from qgis._core import QgsNullSymbolRenderer
 
 from qgis.core import (
     QgsSymbol,
@@ -34,7 +35,10 @@ from qgis.core import (
     QgsRandomMarkerFillSymbolLayer,
     QgsArrowSymbolLayer,
     QgsRenderContext,
-    QgsUnitTypes
+    QgsUnitTypes,
+    QgsFeatureRenderer,
+    QgsSingleSymbolRenderer,
+    QgsNullSymbolRenderer
 )
 
 
@@ -61,20 +65,103 @@ class ConversionContext:
 
 class FslConverter:
 
+    NULL_COLOR = "rgba(0, 0, 0, 0)"
+
     @staticmethod
-    def symbol_to_fsl(symbol: QgsSymbol, context: ConversionContext) \
+    def vector_renderer_to_fsl(renderer: QgsFeatureRenderer,
+                               context: ConversionContext,
+                               layer_opacity: float=1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS vector renderer to FSL
+        """
+        if not renderer:
+            return None
+
+        RENDERER_CONVERTERS = {
+            QgsSingleSymbolRenderer: FslConverter.single_renderer_to_fsl,
+            # QgsCategorizedSymbolRenderer
+            # QgsGraduatedSymbolRenderer
+            # QgsRuleBasedRenderer
+            QgsNullSymbolRenderer: FslConverter.null_renderer_to_fsl,
+
+            # Could potentially be supported:
+            # QgsHeatmapRenderer
+
+            # No meaningful conversions for these types:
+            # Qgs25DRenderer
+            # QgsEmbeddedSymbolRenderer
+            # QgsPointClusterRenderer
+            # QgsPointDisplacementRenderer
+            # QgsInvertedPolygonRenderer
+        }
+
+        for _class, converter in RENDERER_CONVERTERS.items():
+            if isinstance(renderer, _class):
+                return converter(renderer, context, layer_opacity)
+
+        context.push_warning('{} renderers cannot be converted yet'.format(
+            renderer.__class__.__name__),
+            LogLevel.Error)
+        return None
+
+    @staticmethod
+    def single_renderer_to_fsl(renderer: QgsSingleSymbolRenderer,
+                               context: ConversionContext,
+                               layer_opacity: float = 1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS single symbol renderer to an FSL definition
+        """
+        if not renderer.symbol():
+            return None
+
+        converted_symbol = FslConverter.symbol_to_fsl(renderer.symbol(),
+                                                      context,
+                                                      layer_opacity)
+        if not converted_symbol:
+            return None
+
+        return {
+            "style": converted_symbol[0] if len(converted_symbol) == 1
+            else converted_symbol,
+            "legend": {},
+            "type": "simple"
+        }
+
+    @staticmethod
+    def null_renderer_to_fsl(renderer: QgsNullSymbolRenderer,
+                             context: ConversionContext,
+                             layer_opacity: float = 1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS null renderer to an FSL definition
+        """
+        return {
+            "style": {
+                "color": FslConverter.NULL_COLOR,
+                "strokeColor": FslConverter.NULL_COLOR
+            },
+            "legend": {},
+            "type": "simple"
+        }
+
+    @staticmethod
+    def symbol_to_fsl(symbol: QgsSymbol,
+                      context: ConversionContext,
+                      opacity: float = 1) \
             -> List[Dict[str, object]]:
         """
         Converts a QGIS symbol to an FSL definition
 
-        Returns None if no symbol should be used
+        Returns an empty list if no symbol should be used
         """
         enabled_layers = [symbol[i] for i in range(len(symbol)) if
                           symbol[i].enabled()]
         if not enabled_layers:
             return []
 
-        symbol_opacity = symbol.opacity()
+        symbol_opacity = opacity * symbol.opacity()
         fsl_layers = []
         for layer in enabled_layers:
             fsl_layers.extend(
@@ -478,7 +565,7 @@ class FslConverter:
             'size': size,
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context) if has_stroke
-            else "rgba(0, 0, 0, 0)",
+            else FslConverter.NULL_COLOR,
             'strokeWidth': stroke_width
         }
 
@@ -525,7 +612,7 @@ class FslConverter:
             'size': size,
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context)
-            if has_stroke else "rgba(0, 0, 0, 0)",
+            if has_stroke else FslConverter.NULL_COLOR,
             'strokeWidth': stroke_width
         }
 
@@ -572,7 +659,7 @@ class FslConverter:
             'size': size,
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context)
-            if has_stroke else "rgba(0, 0, 0, 0)",
+            if has_stroke else FslConverter.NULL_COLOR,
             'strokeWidth': stroke_width
         }
 
@@ -618,7 +705,7 @@ class FslConverter:
             'size': size,
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context)
-            if has_stroke else "rgba(0, 0, 0, 0)",
+            if has_stroke else FslConverter.NULL_COLOR,
             'strokeWidth': stroke_width
         }
 
@@ -659,8 +746,8 @@ class FslConverter:
 
             res = {
                 'size': size,
-                'color': color_str or "rgba(0, 0, 0, 0)",
-                'strokeColor': stroke_color_str or "rgba(0, 0, 0, 0)",
+                'color': color_str or FslConverter.NULL_COLOR,
+                'strokeColor': stroke_color_str or FslConverter.NULL_COLOR,
             }
             if stroke_width is not None:
                 res['strokeWidth'] = stroke_width
@@ -705,7 +792,7 @@ class FslConverter:
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
 
-        res['strokeColor'] = "rgba(0, 0, 0, 0)"
+        res['strokeColor'] = FslConverter.NULL_COLOR
 
         return [res]
 
@@ -737,7 +824,7 @@ class FslConverter:
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
 
-        res['strokeColor'] = "rgba(0, 0, 0, 0)"
+        res['strokeColor'] = FslConverter.NULL_COLOR
 
         return [res]
 
@@ -777,7 +864,7 @@ class FslConverter:
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
 
-        res['strokeColor'] = "rgba(0, 0, 0, 0)"
+        res['strokeColor'] = FslConverter.NULL_COLOR
 
         return [res]
 
@@ -808,7 +895,7 @@ class FslConverter:
 
             res = {
                 'color': color_str,
-                'strokeColor': "rgba(0, 0, 0, 0)",
+                'strokeColor': FslConverter.NULL_COLOR,
             }
 
             if symbol_opacity < 1:
@@ -845,7 +932,7 @@ class FslConverter:
 
             res = {
                 'color': color_str,
-                'strokeColor': "rgba(0, 0, 0, 0)",
+                'strokeColor': FslConverter.NULL_COLOR,
             }
 
             if symbol_opacity < 1:
@@ -883,7 +970,7 @@ class FslConverter:
 
             res = {
                 'color': color_str,
-                'strokeColor': "rgba(0, 0, 0, 0)",
+                'strokeColor': FslConverter.NULL_COLOR,
             }
 
             if symbol_opacity < 1:
@@ -920,6 +1007,6 @@ class FslConverter:
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
 
-        res['strokeColor'] = "rgba(0, 0, 0, 0)"
+        res['strokeColor'] = FslConverter.NULL_COLOR
 
         return [res]
