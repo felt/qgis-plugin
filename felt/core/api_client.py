@@ -422,7 +422,7 @@ class FeltApiClient:
     def patch_style(self,
                               map_id: str,
                               layer_id: str,
-                    data: Dict) \
+                    fsl: Dict) \
             -> QNetworkReply:
         """
         Patches a layer's style
@@ -432,12 +432,14 @@ class FeltApiClient:
             {'Content-Type': 'application/json'}
         )
 
-        json_data = json.dumps(data)
-        print(json_data)
+        style_post_data = {
+            'style': json.dumps(fsl)
+        }
+
         return QgsNetworkAccessManager.instance().sendCustomRequest(
             request,
             b"PATCH",
-            json_data.encode()
+            json.dumps(style_post_data).encode()
         )
 
     def report_usage(self,

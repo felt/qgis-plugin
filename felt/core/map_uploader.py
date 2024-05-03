@@ -488,7 +488,7 @@ class MapUploaderTask(QgsTask):
                     reply = API_CLIENT.patch_style(
                         map_id=self.associated_map.id,
                         layer_id=layer_id,
-                        data=details.style.fsl
+                        fsl=details.style.fsl
                     )
                     loop = QEventLoop()
                     reply.finished.connect(loop.exit)
