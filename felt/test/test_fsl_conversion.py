@@ -6,7 +6,10 @@ import unittest
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtGui import (
+    QColor,
+    QFont
+)
 
 from qgis.core import (
     NULL,
@@ -37,6 +40,8 @@ from qgis.core import (
     QgsRendererCategory,
     QgsGraduatedSymbolRenderer,
     QgsRendererRange,
+    QgsTextFormat,
+    QgsStringUtils
 )
 
 from .utilities import get_qgis_app
@@ -1427,6 +1432,157 @@ class FslConversionTest(unittest.TestCase):
                         'opacity': 0.5,
                         'size': 19}],
              'type': 'numeric'}
+        )
+
+    def test_text_format_conversion(self):
+        """
+        Test converting text formats
+        """
+        context = ConversionContext()
+
+        f = QgsTextFormat()
+        font = QFont('Arial')
+        f.setFont(font)
+        f.setSize(13)
+        f.setSizeUnit(QgsUnitTypes.RenderPixels)
+        f.setColor(QColor(255, 0, 0))
+        f.setOpacity(0.3)
+
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 4,
+             'letterSpacing': 0.0,
+             'lineHeight': 1.0}
+        )
+
+        # with buffer
+        f.buffer().setEnabled(True)
+        f.buffer().setColor(QColor(0, 255, 0))
+        f.buffer().setOpacity(0.7)
+        f.buffer().setSize(4)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 255, 0, 0.7)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 1.0}
+        )
+
+        # bold
+        f.buffer().setEnabled(False)
+        font.setBold(True)
+        f.setFont(font)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 700,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 1.0}
+        )
+        # italic
+        font.setBold(False)
+        font.setItalic(True)
+        f.setFont(font)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'italic',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 1.0}
+        )
+
+        font.setItalic(False)
+        # letter spacing
+        font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, 5)
+        f.setFont(font)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.54,
+             'lineHeight': 1.0}
+        )
+
+        # line height relative
+        font = QFont()
+        f.setFont(font)
+        f.setLineHeight(1.5)
+        f.setLineHeightUnit(QgsUnitTypes.RenderPercentage)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 1.5}
+        )
+        # line height absolute
+        f.setLineHeight(15)
+        f.setLineHeightUnit(QgsUnitTypes.RenderMillimeters)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 4.38}
+        )
+
+        # uppercase
+        f.setCapitalization(QgsStringUtils.AllUppercase)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 4.38,
+             'textTransform': 'uppercase'}
+        )
+
+        # lowercase
+        f.setCapitalization(QgsStringUtils.AllLowercase)
+        self.assertEqual(
+            FslConverter.text_format_to_fsl(f, context),
+            {'color': 'rgba(255, 0, 0, 0.3)',
+             'fontSize': 13,
+             'fontStyle': 'normal',
+             'fontWeight': 400,
+             'haloColor': 'rgba(0, 0, 0, 0)',
+             'haloWidth': 15,
+             'letterSpacing': 0.0,
+             'lineHeight': 4.38,
+             'textTransform': 'lowercase'}
         )
 
 

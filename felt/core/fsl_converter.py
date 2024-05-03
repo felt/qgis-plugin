@@ -40,7 +40,10 @@ from qgis.core import (
     QgsSingleSymbolRenderer,
     QgsNullSymbolRenderer,
     QgsCategorizedSymbolRenderer,
-    QgsGraduatedSymbolRenderer
+    QgsGraduatedSymbolRenderer,
+    QgsPalLayerSettings,
+    QgsTextFormat,
+    QgsStringUtils
 )
 
 
@@ -1169,3 +1172,94 @@ class FslConverter:
         res['strokeColor'] = FslConverter.NULL_COLOR
 
         return [res]
+
+    @staticmethod
+    def label_settings_to_fsl(settings: QgsPalLayerSettings,
+                              context: ConversionContext) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts label settings to FSL
+        """
+        if not settings.drawLabels:
+            return None
+
+        if settings.isExpression:
+            context.push_warning('Expression based labels are not supported', LogLevel.Warning)
+            return None
+
+        res = FslConverter.text_format_to_fsl(
+            settings.format(), context
+        )
+
+        if settings.autoWrapLength > 0:
+            res['maxLineChars'] = settings.autoWrapLength
+
+        # maxZoom
+        # minZoom
+        # offset
+        # placement
+
+        return res
+
+    @staticmethod
+    def text_format_to_fsl(text_format: QgsTextFormat,
+                           context: ConversionContext) \
+            -> Dict[str, object]:
+        """
+        Converts a QGIS text format to FSL
+        """
+        res = {
+            'color': FslConverter.color_to_fsl(
+                text_format.color(), context,
+                opacity=text_format.opacity()),
+            'fontSize': FslConverter.convert_to_pixels(
+                text_format.size(), text_format.sizeUnit(),
+                context
+            ),
+            'fontStyle': 'italic' if text_format.font().italic() else 'normal',
+            'fontWeight': 700 if text_format.font().bold() else 400,
+            'haloColor': FslConverter.color_to_fsl(
+                text_format.buffer().color(), context,
+                text_format.buffer().opacity()
+            ) if text_format.buffer().enabled() else FslConverter.NULL_COLOR,
+            'haloWidth': FslConverter.convert_to_pixels(
+                text_format.buffer().size(),
+                text_format.buffer().sizeUnit(),
+                context
+            )
+        }
+
+        # letterSpacing
+        absolute_spacing = FslConverter.convert_to_pixels(
+            text_format.font().letterSpacing(),
+            QgsUnitTypes.RenderPoints, context
+        )
+        res['letterSpacing'] = round(absolute_spacing / res['fontSize'], 2)
+
+        # line height conversion
+        try:
+            if text_format.lineHeightUnit() == QgsUnitTypes.RenderPercentage:
+                res['lineHeight'] = round(text_format.lineHeight(), 2)
+            else:
+                # absolute line height, convert to relative to font size
+                line_height_pixels = FslConverter.convert_to_pixels(
+                    text_format.lineHeight(),
+                    text_format.lineHeightUnit(),
+                    context)
+                res['lineHeight'] = round(
+                    line_height_pixels / res['fontSize'], 2)
+        except AttributeError:
+            # QGIS < 3.28, don't convert line height
+            pass
+
+        if text_format.capitalization() == QgsStringUtils.AllUppercase:
+            res['textTransform'] = 'uppercase'
+        elif text_format.capitalization() == QgsStringUtils.AllLowercase:
+            res['textTransform'] = 'lowercase'
+        elif text_format.capitalization() != QgsStringUtils.MixedCase:
+            try:
+                context.push_warning('Text transform {} is not supported'.format(text_format.capitalization().name))
+            except AttributeError:
+                context.push_warning('Text transform option {} is not supported'.format(text_format.capitalization()))
+
+        return res
