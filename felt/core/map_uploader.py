@@ -27,7 +27,8 @@ from qgis.PyQt.QtCore import (
     QDate,
     pyqtSignal,
     QThread,
-    QSize
+    QSize,
+    QEventLoop
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply,
@@ -473,6 +474,25 @@ class MapUploaderTask(QgsTask):
 
             if self.isCanceled():
                 return False
+
+            layer_id = upload_details.get('data', {}).get('attributes', {}).get('first_layer_id')
+            if details.style.fsl is not None:
+                if not layer_id:
+                    Logger.instance().log_error_json(
+                        {
+                            'type': Logger.S3_UPLOAD,
+                            'error': 'Didn\'t get layer id to use for patching style'
+                        }
+                    )
+                else:
+                    reply = API_CLIENT.patch_style(
+                        map_id=self.associated_map.id,
+                        layer_id=layer_id,
+                        data=details.style.fsl
+                    )
+                    loop = QEventLoop()
+                    reply.finished.connect(loop.exit)
+                    loop.exec()
 
             multi_step_feedback.step_finished()
 

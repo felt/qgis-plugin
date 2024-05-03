@@ -14,7 +14,10 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import (
+    Optional,
+    Dict
+)
 
 from qgis.PyQt.QtGui import QColor
 
@@ -26,3 +29,4 @@ class LayerStyle:
     """
     fill_color: Optional[QColor] = None
     stroke_color: Optional[QColor] = None
+    fsl: Optional[Dict[str, object]] = None

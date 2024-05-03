@@ -63,6 +63,7 @@ class FeltApiClient:
     USAGE_ENDPOINT = '/internal/reports'
     RECENT_MAPS_ENDPOINT = '/maps/recent'
     UPLOAD_V2_ENDPOINT = '/maps/{}/upload'
+    PATCH_STYLE_ENDPOINT = '/maps/{}/layers/{}/style'
 
     def __init__(self):
         # default headers to add to all requests
@@ -415,6 +416,27 @@ class FeltApiClient:
 
         return QgsNetworkAccessManager.instance().post(
             request,
+            json_data.encode()
+        )
+
+    def patch_style(self,
+                              map_id: str,
+                              layer_id: str,
+                    data: Dict) \
+            -> QNetworkReply:
+        """
+        Patches a layer's style
+        """
+        request = self._build_request(
+            self.PATCH_STYLE_ENDPOINT.format(map_id, layer_id),
+            {'Content-Type': 'application/json'}
+        )
+
+        json_data = json.dumps(data)
+        print(json_data)
+        return QgsNetworkAccessManager.instance().sendCustomRequest(
+            request,
+            b"PATCH",
             json_data.encode()
         )
 

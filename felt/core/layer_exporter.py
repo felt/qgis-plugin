@@ -72,6 +72,10 @@ from .exceptions import LayerPackagingException
 from .layer_style import LayerStyle
 from .logger import Logger
 from .map import Map
+from .fsl_converter import (
+    FslConverter,
+    ConversionContext
+)
 
 
 @dataclass
@@ -207,31 +211,16 @@ class LayerExporter(QObject):
         if not layer.isSpatial() or not layer.renderer():
             return LayerStyle()
 
-        if isinstance(layer.renderer(), QgsSingleSymbolRenderer):
-            return LayerExporter.symbol_to_layer_style(
-                layer.renderer().symbol()
-            )
-        if isinstance(layer.renderer(), QgsCategorizedSymbolRenderer) and \
-                layer.renderer().categories():
-            first_category = layer.renderer().categories()[0]
-            return LayerExporter.symbol_to_layer_style(
-                first_category.symbol()
-            )
-        if isinstance(layer.renderer(), QgsGraduatedSymbolRenderer) and \
-                layer.renderer().ranges():
-            first_range = layer.renderer().ranges()[0]
-            return LayerExporter.symbol_to_layer_style(
-                first_range.symbol()
-            )
-        if isinstance(layer.renderer(), QgsRuleBasedRenderer) and \
-                layer.renderer().rootRule().children():
-            for child in layer.renderer().rootRule().children():
-                if child.symbol():
-                    return LayerExporter.symbol_to_layer_style(
-                        child.symbol()
-                    )
-
-        return LayerStyle()
+        context = ConversionContext()
+        fsl = FslConverter.vector_renderer_to_fsl(
+            layer.renderer(), context, layer.opacity()
+        )
+        if fsl:
+            fsl['version'] = '2.1'
+        # TODO -- labeling
+        return LayerStyle(
+            fsl=fsl
+        )
 
     @staticmethod
     def symbol_to_layer_style(symbol: QgsSymbol) -> LayerStyle:
