@@ -56,11 +56,10 @@ class S3UploadParameters:
         }
 
     @staticmethod
-    def from_json(jsons: str) -> 'S3UploadParameters':
+    def from_json(res: str) -> 'S3UploadParameters':
         """
         Creates upload parameters from a JSON string
         """
-        res = json.loads(jsons)
         return S3UploadParameters(
             type=res.get('data', {}).get('type'),
             aws_access_key_id=res.get('data', {}).get('attributes', {}).get(

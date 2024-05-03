@@ -15,6 +15,7 @@ __copyright__ = 'Copyright 2022, North Road'
 __revision__ = '$Format:%H$'
 
 import unittest
+import json
 from pathlib import Path
 
 from qgis.PyQt.QtCore import (
@@ -214,7 +215,7 @@ class ApiClientTest(unittest.TestCase):
                          QNetworkReply.NoError)
 
         json_params = reply.readAll().data().decode()
-        params = S3UploadParameters.from_json(json_params)
+        params = S3UploadParameters.from_json(json.loads(json_params))
         self.assertEqual(params.type, 'presigned_upload')
         self.assertTrue(params.aws_access_key_id, 'presigned_upload')
         # self.assertTrue(params.acl)

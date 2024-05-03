@@ -42,7 +42,8 @@ from .meta import PLUGIN_METADATA_PARSER
 from .s3_upload_parameters import S3UploadParameters
 from .enums import UsageType
 from .constants import (
-    FELT_API_URL
+    FELT_API_URL,
+    FELT_APIV2_URL
 )
 
 PLUGIN_VERSION = "0.7.0"
@@ -61,6 +62,7 @@ class FeltApiClient:
     URL_IMPORT_ENDPOINT = '/maps/{}/layers/url_import'
     USAGE_ENDPOINT = '/internal/reports'
     RECENT_MAPS_ENDPOINT = '/maps/recent'
+    UPLOAD_V2_ENDPOINT = '/maps/{}/upload'
 
     def __init__(self):
         # default headers to add to all requests
@@ -84,11 +86,14 @@ class FeltApiClient:
                 pass
 
     @staticmethod
-    def build_url(endpoint: str) -> QUrl:
+    def build_url(endpoint: str, version: int = 1) -> QUrl:
         """
         Returns the full url of the specified endpoint
         """
-        return QUrl(FELT_API_URL + endpoint)
+        if version == 1:
+            return QUrl(FELT_API_URL + endpoint)
+        elif version == 2:
+            return QUrl(FELT_APIV2_URL + endpoint)
 
     @staticmethod
     def _to_url_query(parameters: Dict[str, object]) -> QUrlQuery:
@@ -104,12 +109,13 @@ class FeltApiClient:
                 query.addQueryItem(name, str(value))
         return query
 
-    def _build_request(self, endpoint: str, headers=None, params=None) \
+    def _build_request(self, endpoint: str, headers=None, params=None,
+                       version: int = 1) \
             -> QNetworkRequest:
         """
         Builds a network request
         """
-        url = self.build_url(endpoint)
+        url = self.build_url(endpoint, version)
 
         if params:
             url.setQuery(FeltApiClient._to_url_query(params))
@@ -280,6 +286,33 @@ class FeltApiClient:
             request,
             json_data.encode()
         )
+
+    def prepare_layer_upload_v2(self,
+                             map_id: str,
+                             name: str,
+                             feedback: Optional[QgsFeedback] = None) \
+            -> Union[QNetworkReply, QgsNetworkReplyContent]:
+        """
+        Prepares a layer upload, using v2 api
+        """
+        request = self._build_request(
+            self.UPLOAD_V2_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'},
+            version=2
+        )
+
+        request_params = {
+            'name': name
+        }
+
+        json_data = json.dumps(request_params)
+        reply = QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                json_data.encode(),
+                feedback=feedback
+            )
+
+        return reply
 
     def create_upload_file_request(self,
                                    filename: str,

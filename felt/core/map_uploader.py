@@ -13,6 +13,7 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
+import json
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -381,14 +382,12 @@ class MapUploaderTask(QgsTask):
             )
 
             while True:
-                reply = API_CLIENT.prepare_layer_upload(
+                reply = API_CLIENT.prepare_layer_upload_v2(
                     map_id=self.associated_map.id,
                     name=layer.name(),
-                    file_names=[Path(details.filename).name],
-                    style=details.style,
-                    blocking=True,
                     feedback=self.feedback
                 )
+
                 if reply.attribute(
                         QNetworkRequest.HttpStatusCodeAttribute) == 429:
                     self.status_changed.emit(
@@ -413,9 +412,14 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
+            upload_details = json.loads(reply.content().data().decode())
             upload_params = S3UploadParameters.from_json(
-                reply.content().data().decode()
-            )
+                upload_details)
+
+            # unused in api v2?
+            # file_names = [Path(details.filename).name],
+            # style = details.style,
+
             if not upload_params.url:
                 self.error_string = self.tr('Could not prepare layer upload')
                 message = "Error retrieving upload parameters: {}".format(
@@ -469,40 +473,6 @@ class MapUploaderTask(QgsTask):
 
             if self.isCanceled():
                 return False
-
-            self.status_changed.emit(
-                self.tr('Finalizing {}').format(layer.name())
-            )
-
-            while True:
-                reply = API_CLIENT.finalize_layer_upload(
-                    self.associated_map.id,
-                    upload_params.layer_id,
-                    Path(details.filename).name,
-                    blocking=True,
-                    feedback=self.feedback
-                )
-                if reply.attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute) == 429:
-                    self.status_changed.emit(
-                        self.tr('Rate throttled -- waiting')
-                    )
-                    QThread.sleep(5)
-                    continue
-
-                if reply.error() != QNetworkReply.NoError:
-                    self.error_string = reply.errorString()
-                    Logger.instance().log_error_json(
-                        {
-                            'type': Logger.MAP_EXPORT,
-                            'error':
-                                'Error finalizing layer upload: {}'.format(
-                                    self.error_string)
-                        }
-                    )
-                    return False
-
-                break
 
             multi_step_feedback.step_finished()
 
