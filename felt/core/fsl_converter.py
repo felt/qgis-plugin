@@ -46,6 +46,8 @@ from qgis.core import (
     QgsStringUtils
 )
 
+from .map_utils import MapUtils
+
 
 class LogLevel(Enum):
     """
@@ -1192,6 +1194,11 @@ class FslConverter:
         )
         if settings.autoWrapLength > 0:
             converted_format['maxLineChars'] = settings.autoWrapLength
+        if settings.scaleVisibility:
+            converted_format['minZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
+                settings.minimumScale)
+            converted_format['maxZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
+                settings.maximumScale)
 
         res = {
             'config': {
@@ -1199,9 +1206,6 @@ class FslConverter:
             },
             'label': converted_format
         }
-
-        # maxZoom
-        # minZoom
 
         # For now, we don't convert these and leave them to the Felt
         # defaults -- there's too many other unsupported placement

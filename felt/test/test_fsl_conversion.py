@@ -1655,6 +1655,25 @@ class FslConversionTest(unittest.TestCase):
         )
         label_settings.autoWrapLength = 0
 
+        # zoom ranges
+        label_settings.scaleVisibility = True
+        label_settings.minimumScale = 5677474
+        label_settings.maximumScale = 34512
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'config': {'labelAttribute': 'my_field'},
+             'label': {'color': 'rgba(255, 0, 0, 0.3)',
+                       'fontSize': 13,
+                       'fontStyle': 'normal',
+                       'fontWeight': 400,
+                       'haloColor': 'rgba(0, 0, 0, 0)',
+                       'haloWidth': 4,
+                       'letterSpacing': 0.0,
+                       'lineHeight': 1.0,
+                       'maxZoom': 14,
+                       'minZoom': 6}}
+        )
+
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(FslConversionTest)
