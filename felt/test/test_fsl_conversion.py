@@ -41,7 +41,8 @@ from qgis.core import (
     QgsGraduatedSymbolRenderer,
     QgsRendererRange,
     QgsTextFormat,
-    QgsStringUtils
+    QgsStringUtils,
+    QgsPalLayerSettings
 )
 
 from .utilities import get_qgis_app
@@ -1584,6 +1585,75 @@ class FslConversionTest(unittest.TestCase):
              'lineHeight': 4.38,
              'textTransform': 'lowercase'}
         )
+
+    def test_label_settings(self):
+        """
+        Test converting label settings
+        """
+
+        context = ConversionContext()
+
+        f = QgsTextFormat()
+        font = QFont('Arial')
+        f.setFont(font)
+        f.setSize(13)
+        f.setSizeUnit(QgsUnitTypes.RenderPixels)
+        f.setColor(QColor(255, 0, 0))
+        f.setOpacity(0.3)
+
+        label_settings = QgsPalLayerSettings()
+        label_settings.setFormat(f)
+
+        # no labels
+        label_settings.drawLabels = False
+        self.assertIsNone(
+            FslConverter.label_settings_to_fsl(label_settings, context)
+        )
+        label_settings.drawLabels = True
+        label_settings.fieldName = ''
+        self.assertIsNone(
+            FslConverter.label_settings_to_fsl(label_settings, context)
+        )
+
+        # expression labels, unsupported
+        label_settings.fieldName = '1 + 2'
+        label_settings.isExpression = True
+        self.assertIsNone(
+            FslConverter.label_settings_to_fsl(label_settings, context)
+        )
+
+        # simple field
+        label_settings.fieldName = 'my_field'
+        label_settings.isExpression = False
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'config': {'labelAttribute': 'my_field'},
+             'label': {'color': 'rgba(255, 0, 0, 0.3)',
+                       'fontSize': 13,
+                       'fontStyle': 'normal',
+                       'fontWeight': 400,
+                       'haloColor': 'rgba(0, 0, 0, 0)',
+                       'haloWidth': 4,
+                       'letterSpacing': 0.0,
+                       'lineHeight': 1.0}}
+        )
+
+        # with line wrap
+        label_settings.autoWrapLength = 15
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'config': {'labelAttribute': 'my_field'},
+             'label': {'color': 'rgba(255, 0, 0, 0.3)',
+                       'fontSize': 13,
+                       'fontStyle': 'normal',
+                       'fontWeight': 400,
+                       'haloColor': 'rgba(0, 0, 0, 0)',
+                       'haloWidth': 4,
+                       'letterSpacing': 0.0,
+                       'lineHeight': 1.0,
+                       'maxLineChars': 15}}
+        )
+        label_settings.autoWrapLength = 0
 
 
 if __name__ == "__main__":

@@ -1180,19 +1180,25 @@ class FslConverter:
         """
         Converts label settings to FSL
         """
-        if not settings.drawLabels:
+        if not settings.drawLabels or not settings.fieldName:
             return None
 
         if settings.isExpression:
             context.push_warning('Expression based labels are not supported', LogLevel.Warning)
             return None
 
-        res = FslConverter.text_format_to_fsl(
+        converted_format = FslConverter.text_format_to_fsl(
             settings.format(), context
         )
-
         if settings.autoWrapLength > 0:
-            res['maxLineChars'] = settings.autoWrapLength
+            converted_format['maxLineChars'] = settings.autoWrapLength
+
+        res = {
+            'config': {
+                'labelAttribute': settings.fieldName
+            },
+            'label': converted_format
+        }
 
         # maxZoom
         # minZoom
