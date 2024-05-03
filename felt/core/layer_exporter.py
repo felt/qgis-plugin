@@ -204,6 +204,22 @@ class LayerExporter(QObject):
         return json.loads(reply.content().data().decode())
 
     @staticmethod
+    def merge_dicts(tgt: Dict, enhancer: Dict) -> Dict:
+        """
+        Recursively merges two dictionaries
+        """
+        for key, val in enhancer.items():
+            if key not in tgt:
+                tgt[key] = val
+                continue
+
+            if isinstance(val, dict):
+                LayerExporter.merge_dicts(tgt[key], val)
+            else:
+                tgt[key] = val
+        return tgt
+
+    @staticmethod
     def representative_layer_style(layer: QgsVectorLayer) -> LayerStyle:
         """
         Returns a decent representative style for a layer
@@ -217,7 +233,15 @@ class LayerExporter(QObject):
         )
         if fsl:
             fsl['version'] = '2.1'
-        # TODO -- labeling
+
+        if layer.labelsEnabled():
+            label_def = FslConverter.label_settings_to_fsl(
+                layer.labeling().settings(),
+                context
+            )
+            if label_def:
+                LayerExporter.merge_dicts(fsl, label_def)
+
         return LayerStyle(
             fsl=fsl
         )

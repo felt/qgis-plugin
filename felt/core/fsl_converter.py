@@ -1199,6 +1199,10 @@ class FslConverter:
                 settings.minimumScale)
             converted_format['maxZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
                 settings.maximumScale)
+        else:
+            # these are mandatory!
+            converted_format['minZoom'] = 1
+            converted_format['maxZoom'] = 24
 
         res = {
             'config': {
