@@ -1202,8 +1202,15 @@ class FslConverter:
 
         # maxZoom
         # minZoom
-        # offset
-        # placement
+
+        # For now, we don't convert these and leave them to the Felt
+        # defaults -- there's too many other unsupported placement
+        # related configuration settings in QGIS which impact on the
+        # actual placement of labels in QGIS, we are likely to get an
+        # inferior result if we force an offset/fixed placement in Felt
+        # to just the corresponding values from the QGIS layer...
+        # - offset
+        # - placement
 
         return res
 
