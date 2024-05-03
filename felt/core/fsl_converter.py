@@ -253,7 +253,7 @@ class FslConverter:
 
         return {
             "config": {
-                "categoryAttribute": renderer.classAttribute(),
+                "categoricalAttribute": renderer.classAttribute(),
                 "categories": category_values,
                 "showOther": bool(other_symbol)
             },

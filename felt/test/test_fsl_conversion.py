@@ -1291,7 +1291,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
             {'config': {'categories': ['1', '2', '3'],
-                        'categoryAttribute': 'my_field',
+                        'categoricalAttribute': 'my_field',
                         'showOther': False},
              'legend': {'displayName': {'1': 'first cat',
                                         '2': 'second cat',
@@ -1312,7 +1312,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
                                                 layer_opacity=0.5),
             {'config': {'categories': ['1', '2', '3'],
-                        'categoryAttribute': 'my_field',
+                        'categoricalAttribute': 'my_field',
                         'showOther': False},
              'legend': {'displayName': {'1': 'first cat',
                                         '2': 'second cat',
@@ -1342,7 +1342,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
             {'config': {'categories': ['1', '2', '3'],
-                        'categoryAttribute': 'my_field',
+                        'categoricalAttribute': 'my_field',
                         'showOther': True},
              'legend': {'displayName': {'1': 'first cat',
                                         '2': 'second cat',
