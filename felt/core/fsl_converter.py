@@ -90,11 +90,13 @@ class FslConverter:
 
         if layer.hasScaleBasedVisibility():
             if layer.minimumScale():
-                fsl['style']['minZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
-                    layer.minimumScale())
+                fsl['style']['minZoom'] = (
+                    MapUtils.map_scale_to_leaflet_tile_zoom(
+                        layer.minimumScale()))
             if layer.maximumScale():
-                fsl['style']['maxZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
-                    layer.maximumScale())
+                fsl['style']['maxZoom'] = (
+                    MapUtils.map_scale_to_leaflet_tile_zoom(
+                        layer.maximumScale()))
 
         return fsl
 
