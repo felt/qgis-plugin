@@ -352,8 +352,7 @@ class MapUploaderTask(QgsTask):
                 try:
                     result = exporter.export_layer_for_felt(
                         layer,
-                        multi_step_feedback,
-                        upload_raster_as_styled=upload_raster_as_styled
+                        multi_step_feedback
                     )
                 except LayerPackagingException as e:
                     layer.moveToThread(None)

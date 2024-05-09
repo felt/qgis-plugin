@@ -216,7 +216,8 @@ class LayerExporter(QObject):
         return tgt
 
     @staticmethod
-    def representative_layer_style(layer: QgsVectorLayer) -> LayerStyle:
+    def representative_layer_style(
+            layer: QgsMapLayer) -> LayerStyle:
         """
         Returns a decent representative style for a layer
         """
@@ -224,19 +225,25 @@ class LayerExporter(QObject):
             return LayerStyle()
 
         context = ConversionContext()
-        fsl = FslConverter.vector_layer_to_fsl(
-            layer, context
-        )
+        fsl = None
+        if isinstance(layer, QgsVectorLayer):
+            fsl = FslConverter.vector_layer_to_fsl(
+                layer, context
+            )
+            if layer.labelsEnabled():
+                label_def = FslConverter.label_settings_to_fsl(
+                    layer.labeling().settings(),
+                    context
+                )
+                if label_def:
+                    LayerExporter.merge_dicts(fsl, label_def)
+        elif isinstance(layer, QgsRasterLayer):
+            fsl = FslConverter.raster_layer_to_fsl(
+                layer, context
+            )
+
         if fsl:
             fsl['version'] = '2.1'
-
-        if layer.labelsEnabled():
-            label_def = FslConverter.label_settings_to_fsl(
-                layer.labeling().settings(),
-                context
-            )
-            if label_def:
-                LayerExporter.merge_dicts(fsl, label_def)
 
         return LayerStyle(
             fsl=fsl
@@ -280,7 +287,7 @@ class LayerExporter(QObject):
             self,
             layer: QgsMapLayer,
             feedback: Optional[QgsFeedback] = None,
-            upload_raster_as_styled: bool = True
+            force_upload_raster_as_styled: bool = False
     ) -> ZippedExportResult:
         """
         Exports a layer into a format acceptable for Felt
@@ -290,8 +297,7 @@ class LayerExporter(QObject):
             res = self.export_vector_layer(layer, feedback)
         elif isinstance(layer, QgsRasterLayer):
             res = self.export_raster_layer(
-                layer, feedback,
-                upload_raster_as_styled)
+                layer, feedback, force_upload_raster_as_styled)
         else:
             assert False
 
@@ -520,12 +526,15 @@ class LayerExporter(QObject):
             self,
             layer: QgsRasterLayer,
             feedback: Optional[QgsFeedback] = None,
-            upload_raster_as_styled: bool = True) -> LayerExportDetails:
+            force_upload_raster_as_styled: bool = False) -> LayerExportDetails:
         """
         Exports a raster layer into a format acceptable for Felt
         """
         dest_file = self.generate_file_name('.tif')
 
+        fsl_style = self.representative_layer_style(layer)
+        upload_raster_as_styled = (force_upload_raster_as_styled or
+                                   not fsl_style)
         layer_export_result, error_message = self.run_raster_writer(
             layer,
             file_name=dest_file,
@@ -546,5 +555,6 @@ class LayerExporter(QObject):
             filenames=[dest_file],
             result=layer_export_result,
             error_message=error_message,
-            qgis_style_xml=self._get_original_style_xml(layer)
+            qgis_style_xml=self._get_original_style_xml(layer),
+            style=fsl_style
         )

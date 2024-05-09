@@ -7,6 +7,7 @@ from typing import (
     List,
     Optional
 )
+import math
 
 from qgis.PyQt.QtCore import (
     Qt,
@@ -1564,8 +1565,11 @@ class FslConverter:
         colors = []
         labels = {}
         for i, item in enumerate(shader_function.colorRampItemList()):
-            steps.append(item.value)
-            colors.append(FslConverter.color_to_fsl(item.color, context))
+            if math.isinf(item.value):
+                steps.append(shader_function.maximumValue())
+            else:
+                steps.append(item.value)
+            colors.append(item.color.name())
             labels[str(i)] = item.label
         return {
             "config": {

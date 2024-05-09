@@ -236,7 +236,7 @@ class LayerExporterTest(unittest.TestCase):
             QgsCoordinateTransformContext()
         )
         result = exporter.export_layer_for_felt(layer,
-                                                upload_raster_as_styled=False)
+                                                force_upload_raster_as_styled=False)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')
@@ -281,7 +281,7 @@ class LayerExporterTest(unittest.TestCase):
             QgsCoordinateTransformContext()
         )
         result = exporter.export_layer_for_felt(layer,
-                                                upload_raster_as_styled=True)
+                                                force_upload_raster_as_styled=True)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')
