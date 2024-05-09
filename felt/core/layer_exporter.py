@@ -224,8 +224,8 @@ class LayerExporter(QObject):
             return LayerStyle()
 
         context = ConversionContext()
-        fsl = FslConverter.vector_renderer_to_fsl(
-            layer.renderer(), context, layer.opacity()
+        fsl = FslConverter.vector_layer_to_fsl(
+            layer, context
         )
         if fsl:
             fsl['version'] = '2.1'

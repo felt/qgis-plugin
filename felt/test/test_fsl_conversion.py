@@ -43,7 +43,8 @@ from qgis.core import (
     QgsRendererRange,
     QgsTextFormat,
     QgsStringUtils,
-    QgsPalLayerSettings
+    QgsPalLayerSettings,
+    QgsVectorLayer
 )
 
 from .utilities import get_qgis_app
@@ -1691,6 +1692,90 @@ class FslConversionTest(unittest.TestCase):
                        'lineHeight': 1.0,
                        'maxZoom': 14,
                        'minZoom': 6}}
+        )
+
+    def test_layer_to_fsl(self):
+        """
+        Test converting whole layer to FSL
+        """
+        conversion_context = ConversionContext()
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+
+        renderer = QgsSingleSymbolRenderer(line_symbol.clone())
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'size': 1},
+             'type': 'simple'}
+        )
+        layer = QgsVectorLayer('x', '', 'memory')
+        layer.setRenderer(renderer)
+
+        self.assertEqual(
+            FslConverter.vector_layer_to_fsl(layer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'size': 1},
+             'type': 'simple'}
+        )
+
+        # layer opacity
+        layer.setOpacity(0.5)
+        self.assertEqual(
+            FslConverter.vector_layer_to_fsl(layer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'opacity': 0.5,
+                       'size': 1},
+             'type': 'simple'}
+        )
+        layer.setOpacity(1)
+
+        # zoom range
+        layer.setScaleBasedVisibility(True)
+        layer.setMinimumScale(10000)
+        self.assertEqual(
+            FslConverter.vector_layer_to_fsl(layer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'minZoom': 15,
+                       'size': 1},
+             'type': 'simple'}
+        )
+        layer.setMaximumScale(1000)
+        self.assertEqual(
+            FslConverter.vector_layer_to_fsl(layer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'minZoom': 15,
+                       'maxZoom': 19,
+                       'size': 1},
+             'type': 'simple'}
+        )
+        layer.setMinimumScale(0)
+        self.assertEqual(
+            FslConverter.vector_layer_to_fsl(layer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'maxZoom': 19,
+                       'size': 1},
+             'type': 'simple'}
         )
 
 

@@ -15,6 +15,7 @@ from qgis.PyQt.QtGui import QColor
 
 from qgis.core import (
     NULL,
+    QgsVectorLayer,
     QgsSymbol,
     QgsSymbolLayer,
     QgsSimpleFillSymbolLayer,
@@ -71,8 +72,31 @@ class ConversionContext:
 
 
 class FslConverter:
-
     NULL_COLOR = "rgba(0, 0, 0, 0)"
+
+    @staticmethod
+    def vector_layer_to_fsl(
+            layer: QgsVectorLayer,
+            context: ConversionContext
+    ) -> Optional[Dict[str, object]]:
+        """
+        Converts a vector layer to FSL
+        """
+        fsl = FslConverter.vector_renderer_to_fsl(
+            layer.renderer(), context, layer.opacity()
+        )
+        if not fsl:
+            return None
+
+        if layer.hasScaleBasedVisibility():
+            if layer.minimumScale():
+                fsl['style']['minZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
+                    layer.minimumScale())
+            if layer.maximumScale():
+                fsl['style']['maxZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
+                    layer.maximumScale())
+
+        return fsl
 
     @staticmethod
     def vector_renderer_to_fsl(renderer: QgsFeatureRenderer,
