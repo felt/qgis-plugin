@@ -45,7 +45,11 @@ from qgis.core import (
     QgsStringUtils,
     QgsPalLayerSettings,
     QgsVectorLayer,
-    QgsRuleBasedRenderer
+    QgsRuleBasedRenderer,
+    QgsSingleBandPseudoColorRenderer,
+    QgsRasterShader,
+    QgsColorRampShader,
+    QgsGradientColorRamp
 )
 
 from .utilities import get_qgis_app
@@ -1900,6 +1904,70 @@ class FslConversionTest(unittest.TestCase):
                        'maxZoom': 19,
                        'size': 1},
              'type': 'simple'}
+        )
+
+    def test_convert_singleband_pseudocolor(self):
+        """
+        Convert singleband pseudocolor renderer
+        """
+        context = ConversionContext()
+        gradient = QgsGradientColorRamp(
+            QColor(255, 0, 0),
+            QColor(0, 255, 0)
+        )
+        color_ramp_shader = QgsColorRampShader(50, 200)
+        color_ramp_shader.setSourceColorRamp(
+            gradient.clone()
+        )
+        color_ramp_shader.setColorRampItemList(
+            [
+                QgsColorRampShader.ColorRampItem(
+                    120, QColor(0, 255, 0), 'lowest'
+                ),
+                QgsColorRampShader.ColorRampItem(
+                    125, QColor(255, 255, 0), 'mid'
+                ),
+                QgsColorRampShader.ColorRampItem(
+                    130, QColor(0, 255, 255), 'highest'
+                )
+            ]
+        )
+        renderer = QgsSingleBandPseudoColorRenderer(None,
+                                                    band=1)
+        shader = QgsRasterShader()
+        shader.setRasterShaderFunction(QgsColorRampShader(color_ramp_shader))
+        renderer.setShader(shader)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 1,
+                        'steps': [50.0, 120.0, 125.0, 130.0]},
+             'legend': {
+                 'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
+             'style': {'color': ['rgb(0, 255, 0)', 'rgb(255, 255, 0)',
+                                 'rgb(0, 255, 255)'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+        renderer = QgsSingleBandPseudoColorRenderer(None,
+                                                    band=2)
+        shader = QgsRasterShader()
+        shader.setRasterShaderFunction(QgsColorRampShader(color_ramp_shader))
+        renderer.setShader(shader)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 2,
+                        'steps': [50.0, 120.0, 125.0, 130.0]},
+             'legend': {
+                 'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
+             'style': {'color': ['rgb(0, 255, 0)', 'rgb(255, 255, 0)',
+                                 'rgb(0, 255, 255)'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
         )
 
 

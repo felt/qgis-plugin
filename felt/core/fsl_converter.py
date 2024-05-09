@@ -16,6 +16,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     NULL,
     QgsVectorLayer,
+    QgsRasterLayer,
     QgsSymbol,
     QgsSymbolLayer,
     QgsSimpleFillSymbolLayer,
@@ -50,7 +51,9 @@ from qgis.core import (
     QgsExpressionNode,
     QgsExpressionNodeBinaryOperator,
     QgsExpressionNodeInOperator,
-    QgsExpressionContext
+    QgsExpressionContext,
+    QgsRasterRenderer,
+    QgsSingleBandPseudoColorRenderer
 )
 
 from .map_utils import MapUtils
@@ -1502,3 +1505,81 @@ class FslConverter:
                         text_format.capitalization()))
 
         return res
+
+    @staticmethod
+    def raster_layer_to_fsl(
+            layer: QgsRasterLayer,
+            context: ConversionContext
+    ) -> Optional[Dict[str, object]]:
+        """
+        Converts a raster layer to FSL
+        """
+        fsl = FslConverter.raster_renderer_to_fsl(
+            layer.renderer(), context, layer.opacity()
+        )
+        if not fsl:
+            return None
+
+        if layer.hasScaleBasedVisibility():
+            if layer.minimumScale():
+                fsl['style']['minZoom'] = (
+                    MapUtils.map_scale_to_leaflet_tile_zoom(
+                        layer.minimumScale()))
+            if layer.maximumScale():
+                fsl['style']['maxZoom'] = (
+                    MapUtils.map_scale_to_leaflet_tile_zoom(
+                        layer.maximumScale()))
+
+        return fsl
+
+    @staticmethod
+    def raster_renderer_to_fsl(
+            renderer: QgsRasterRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ) -> Optional[Dict[str, object]]:
+        """
+        Converts a raster renderer to FSL
+        """
+        if isinstance(renderer, QgsSingleBandPseudoColorRenderer):
+            return FslConverter.singleband_pseudocolor_renderer_to_fsl(
+                renderer, context, opacity
+            )
+
+        return None
+
+    @staticmethod
+    def singleband_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ) -> Optional[Dict[str, object]]:
+        """
+        Converts a singleband pseudocolor renderer to FSL
+        """
+
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
+        steps = [shader_function.minimumValue()]
+        colors = []
+        labels = {}
+        for i, item in enumerate(shader_function.colorRampItemList()):
+            steps.append(item.value)
+            colors.append(FslConverter.color_to_fsl(item.color, context))
+            labels[str(i)] = item.label
+        return {
+            "config": {
+                "band": renderer.band(),
+                "steps": steps
+            },
+            "legend": {
+                "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "numeric"
+        }
