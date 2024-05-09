@@ -13,7 +13,6 @@ __copyright__ = 'Copyright 2022, North Road'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-import json
 from dataclasses import dataclass
 from typing import (
     Optional,

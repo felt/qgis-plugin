@@ -483,7 +483,8 @@ class MapUploaderTask(QgsTask):
                     Logger.instance().log_error_json(
                         {
                             'type': Logger.S3_UPLOAD,
-                            'error': 'Didn\'t get layer id to use for patching style'
+                            'error': 'Didn\'t get layer id '
+                                     'to use for patching style'
                         }
                     )
                 else:
