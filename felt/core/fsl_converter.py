@@ -103,7 +103,8 @@ class FslConverter:
             return None
 
         if exp.rootNode():
-            success, res = FslConverter.walk_expression(exp.rootNode(), context)
+            success, res = (
+                FslConverter.walk_expression(exp.rootNode(), context))
             if success:
                 return res
 
@@ -1179,7 +1180,7 @@ class FslConverter:
         Converts a QGIS gradient fill symbol layer to FSL
         """
         color = (layer.color() if layer.color().isValid() and
-                 layer.color().alphaF() > 0 else
+                                  layer.color().alphaF() > 0 else
                  layer.color2())
         if not color.isValid() or color.alphaF() == 0:
             return []
