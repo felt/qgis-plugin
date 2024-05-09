@@ -13,6 +13,7 @@ from qgis.PyQt.QtGui import (
 
 from qgis.core import (
     NULL,
+    Qgis,
     QgsSimpleLineSymbolLayer,
     QgsSimpleFillSymbolLayer,
     QgsUnitTypes,
@@ -1586,11 +1587,11 @@ class FslConversionTest(unittest.TestCase):
              'textTransform': 'lowercase'}
         )
 
+    @unittest.skipIf(Qgis.QGIS_VERSION_INT < 32400, 'QGIS too old')
     def test_label_settings(self):
         """
         Test converting label settings
         """
-
         context = ConversionContext()
 
         f = QgsTextFormat()
