@@ -289,9 +289,9 @@ class FeltApiClient:
         )
 
     def prepare_layer_upload_v2(self,
-                             map_id: str,
-                             name: str,
-                             feedback: Optional[QgsFeedback] = None) \
+                                map_id: str,
+                                name: str,
+                                feedback: Optional[QgsFeedback] = None) \
             -> Union[QNetworkReply, QgsNetworkReplyContent]:
         """
         Prepares a layer upload, using v2 api
@@ -308,10 +308,10 @@ class FeltApiClient:
 
         json_data = json.dumps(request_params)
         reply = QgsNetworkAccessManager.instance().blockingPost(
-                request,
-                json_data.encode(),
-                feedback=feedback
-            )
+            request,
+            json_data.encode(),
+            feedback=feedback
+        )
 
         return reply
 
@@ -420,8 +420,8 @@ class FeltApiClient:
         )
 
     def patch_style(self,
-                              map_id: str,
-                              layer_id: str,
+                    map_id: str,
+                    layer_id: str,
                     fsl: Dict) \
             -> QNetworkReply:
         """

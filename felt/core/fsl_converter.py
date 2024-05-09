@@ -1186,7 +1186,8 @@ class FslConverter:
             return None
 
         if settings.isExpression:
-            context.push_warning('Expression based labels are not supported', LogLevel.Warning)
+            context.push_warning('Expression based labels are not supported',
+                                 LogLevel.Warning)
             return None
 
         converted_format = FslConverter.text_format_to_fsl(
@@ -1195,9 +1196,11 @@ class FslConverter:
         if settings.autoWrapLength > 0:
             converted_format['maxLineChars'] = settings.autoWrapLength
         if settings.scaleVisibility:
-            converted_format['minZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
+            converted_format[
+                'minZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
                 settings.minimumScale)
-            converted_format['maxZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
+            converted_format[
+                'maxZoom'] = MapUtils.map_scale_to_leaflet_tile_zoom(
                 settings.maximumScale)
         else:
             # these are mandatory!
@@ -1279,8 +1282,12 @@ class FslConverter:
             res['textTransform'] = 'lowercase'
         elif text_format.capitalization() != QgsStringUtils.MixedCase:
             try:
-                context.push_warning('Text transform {} is not supported'.format(text_format.capitalization().name))
+                context.push_warning(
+                    'Text transform {} is not supported'.format(
+                        text_format.capitalization().name))
             except AttributeError:
-                context.push_warning('Text transform option {} is not supported'.format(text_format.capitalization()))
+                context.push_warning(
+                    'Text transform option {} is not supported'.format(
+                        text_format.capitalization()))
 
         return res

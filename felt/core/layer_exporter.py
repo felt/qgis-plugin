@@ -541,7 +541,7 @@ class LayerExporter(QObject):
                 {
                     'type': Logger.PACKAGING_RASTER,
                     'error': 'Error packaging layer: {}'.format(error_message)
-                 }
+                }
             )
             raise LayerPackagingException(error_message)
 

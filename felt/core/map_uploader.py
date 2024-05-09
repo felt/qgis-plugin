@@ -475,7 +475,9 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
-            layer_id = upload_details.get('data', {}).get('attributes', {}).get('first_layer_id')
+            layer_id = upload_details.get('data', {}).get('attributes',
+                                                          {}).get(
+                'first_layer_id')
             if details.style.fsl is not None:
                 if not layer_id:
                     Logger.instance().log_error_json(
