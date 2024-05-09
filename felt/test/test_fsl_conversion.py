@@ -1627,22 +1627,7 @@ class FslConversionTest(unittest.TestCase):
         label_settings.isExpression = False
         self.assertEqual(
             FslConverter.label_settings_to_fsl(label_settings, context),
-            {'config': {'labelAttribute': 'my_field'},
-             'label': {'color': 'rgba(255, 0, 0, 0.3)',
-                       'fontSize': 13,
-                       'fontStyle': 'normal',
-                       'fontWeight': 400,
-                       'haloColor': 'rgba(0, 0, 0, 0)',
-                       'haloWidth': 4,
-                       'letterSpacing': 0.0,
-                       'lineHeight': 1.0}}
-        )
-
-        # with line wrap
-        label_settings.autoWrapLength = 15
-        self.assertEqual(
-            FslConverter.label_settings_to_fsl(label_settings, context),
-            {'config': {'labelAttribute': 'my_field'},
+            {'config': {'labelAttribute': ['my_field']},
              'label': {'color': 'rgba(255, 0, 0, 0.3)',
                        'fontSize': 13,
                        'fontStyle': 'normal',
@@ -1651,7 +1636,26 @@ class FslConversionTest(unittest.TestCase):
                        'haloWidth': 4,
                        'letterSpacing': 0.0,
                        'lineHeight': 1.0,
-                       'maxLineChars': 15}}
+                       'maxZoom': 24,
+                       'minZoom': 1}}
+        )
+
+        # with line wrap
+        label_settings.autoWrapLength = 15
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'config': {'labelAttribute': ['my_field']},
+             'label': {'color': 'rgba(255, 0, 0, 0.3)',
+                       'fontSize': 13,
+                       'fontStyle': 'normal',
+                       'fontWeight': 400,
+                       'haloColor': 'rgba(0, 0, 0, 0)',
+                       'haloWidth': 4,
+                       'letterSpacing': 0.0,
+                       'lineHeight': 1.0,
+                       'maxLineChars': 15,
+                       'maxZoom': 24,
+                       'minZoom': 1}}
         )
         label_settings.autoWrapLength = 0
 
@@ -1661,7 +1665,7 @@ class FslConversionTest(unittest.TestCase):
         label_settings.maximumScale = 34512
         self.assertEqual(
             FslConverter.label_settings_to_fsl(label_settings, context),
-            {'config': {'labelAttribute': 'my_field'},
+            {'config': {'labelAttribute': ['my_field']},
              'label': {'color': 'rgba(255, 0, 0, 0.3)',
                        'fontSize': 13,
                        'fontStyle': 'normal',

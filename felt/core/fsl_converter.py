@@ -1206,7 +1206,7 @@ class FslConverter:
 
         res = {
             'config': {
-                'labelAttribute': settings.fieldName
+                'labelAttribute': [settings.fieldName]
             },
             'label': converted_format
         }
