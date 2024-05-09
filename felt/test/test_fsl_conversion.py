@@ -594,7 +594,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.simple_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
         )
@@ -603,7 +603,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.simple_marker_to_fsl(marker, conversion_context,
                                               symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
@@ -617,7 +617,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.simple_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -628,7 +628,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.simple_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 48,
+              'size': 24,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -660,7 +660,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
         )
@@ -669,7 +669,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context,
                                                symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
@@ -683,7 +683,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -696,7 +696,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 48,
+              'size': 24,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -705,7 +705,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 69,
+              'size': 34.5,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -731,7 +731,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.svg_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1.0}]
         )
@@ -740,7 +740,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.svg_marker_to_fsl(marker, conversion_context,
                                            symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1.0}]
@@ -753,7 +753,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.svg_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -764,7 +764,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.svg_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 48,
+              'size': 24,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -790,7 +790,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.font_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
         )
@@ -799,7 +799,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.font_marker_to_fsl(marker, conversion_context,
                                             symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
@@ -812,7 +812,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.font_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 19,
+              'size': 9.5,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -823,7 +823,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.font_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'size': 48,
+              'size': 24,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -862,7 +862,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
-              'size': 8,
+              'size': 4,
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 11}]
         )
@@ -873,7 +873,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
-              'size': 8,
+              'size': 4,
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 3.0}]
         )
@@ -882,7 +882,7 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.filled_marker_to_fsl(marker, conversion_context,
                                               symbol_opacity=0.5),
             [{'color': 'rgb(0, 255, 0)',
-              'size': 8,
+              'size': 4,
               'strokeColor': 'rgb(35, 35, 35)',
               'opacity': 0.5,
               'strokeWidth': 3.0}]
@@ -893,7 +893,7 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
-              'size': 4,
+              'size': 2,
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 3.0}]
         )

@@ -559,7 +559,8 @@ class FslConverter:
                 interval_pixels = FslConverter.convert_to_pixels(
                     layer.interval(), layer.intervalUnit(), context)
                 try:
-                    marker_size = float(converted_layer['size'])
+                    # FSL size is radius, not diameter
+                    marker_size = float(converted_layer['size']) * 2
                 except TypeError:
                     continue
 
@@ -748,7 +749,7 @@ class FslConverter:
 
         res = {
             'color': color_str,
-            'size': size,
+            'size': size / 2,  # FSL size is radius, not diameter
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context) if has_stroke
             else FslConverter.NULL_COLOR,
@@ -797,7 +798,7 @@ class FslConverter:
 
         res = {
             'color': color_str,
-            'size': size,
+            'size': size / 2,  # FSL size is radius, not diameter
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context)
             if has_stroke else FslConverter.NULL_COLOR,
@@ -846,7 +847,7 @@ class FslConverter:
 
         res = {
             'color': color_str,
-            'size': size,
+            'size': size / 2,  # FSL size is radius, not diameter
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context)
             if has_stroke else FslConverter.NULL_COLOR,
@@ -894,7 +895,7 @@ class FslConverter:
 
         res = {
             'color': color_str,
-            'size': size,
+            'size': size / 2,  # FSL size is radius, not diameter
             'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
                                                      context)
             if has_stroke else FslConverter.NULL_COLOR,
@@ -937,7 +938,7 @@ class FslConverter:
                                                   layer.sizeUnit(), context)
 
             res = {
-                'size': size,
+                'size': size / 2,  # FSL size is radius, not diameter
                 'color': color_str or FslConverter.NULL_COLOR,
                 'strokeColor': stroke_color_str or FslConverter.NULL_COLOR,
             }
