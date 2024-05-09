@@ -1436,6 +1436,7 @@ class FslConversionTest(unittest.TestCase):
              'type': 'numeric'}
         )
 
+    @unittest.skipIf(Qgis.QGIS_VERSION_INT < 32400, 'QGIS too old')
     def test_text_format_conversion(self):
         """
         Test converting text formats
