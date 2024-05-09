@@ -305,6 +305,19 @@ class FslConversionTest(unittest.TestCase):
               'lineJoin': 'miter',
               'size': 3.0}]
         )
+        line.setUseCustomDashPattern(False)
+
+        # hairline
+        line.setWidth(0)
+        self.assertEqual(
+            FslConverter.simple_line_to_fsl(line, conversion_context),
+            [{
+                'color': 'rgb(0, 255, 0)',
+                'size': 1,
+                'lineCap': 'round',
+                'lineJoin': 'miter',
+            }]
+        )
 
     def test_simple_fill_to_fsl(self):
         """
@@ -583,7 +596,7 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'strokeColor': 'rgba(0, 0, 0, 0)',
-              'strokeWidth': 0.0}]
+              'strokeWidth': 1}]
         )
 
         self.assertEqual(
@@ -593,7 +606,7 @@ class FslConversionTest(unittest.TestCase):
               'size': 19,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
-              'strokeWidth': 0.0}]
+              'strokeWidth': 1}]
         )
 
         # with stroke
@@ -649,7 +662,7 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'strokeColor': 'rgba(0, 0, 0, 0)',
-              'strokeWidth': 0.0}]
+              'strokeWidth': 1}]
         )
 
         self.assertEqual(
@@ -659,7 +672,7 @@ class FslConversionTest(unittest.TestCase):
               'size': 19,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
-              'strokeWidth': 0.0}]
+              'strokeWidth': 1}]
         )
 
         # with stroke
@@ -779,7 +792,7 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 19,
               'strokeColor': 'rgba(0, 0, 0, 0)',
-              'strokeWidth': 0}]
+              'strokeWidth': 1}]
         )
 
         self.assertEqual(
@@ -789,7 +802,7 @@ class FslConversionTest(unittest.TestCase):
               'size': 19,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
-              'strokeWidth': 0}]
+              'strokeWidth': 1}]
         )
 
         # with stroke

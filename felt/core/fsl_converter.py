@@ -425,6 +425,25 @@ class FslConverter:
         return round(res) if round_size else res
 
     @staticmethod
+    def convert_stroke_to_pixels(
+            size,
+            size_unit: QgsUnitTypes.RenderUnit,
+            context: ConversionContext
+    ):
+        """
+        Converts a stroke size to pixels
+        """
+        if size == 0:
+            # handle hairline sizes
+            return 1
+
+        res = FslConverter.convert_to_pixels(
+            size, size_unit, context, True
+        )
+        # round up to at least 1 pixel
+        return max(res, 1)
+
+    @staticmethod
     def convert_cap_style(style: Qt.PenCapStyle) -> str:
         """
         Convert a Qt cap style to FSL
@@ -477,9 +496,10 @@ class FslConverter:
         color_str = FslConverter.color_to_fsl(
             layer.color(), context
         )
-        stroke_width = FslConverter.convert_to_pixels(layer.width(),
-                                                      layer.widthUnit(),
-                                                      context)
+        stroke_width = FslConverter.convert_stroke_to_pixels(
+            layer.width(),
+            layer.widthUnit(),
+            context)
 
         res = {
             'color': color_str,
@@ -685,7 +705,7 @@ class FslConverter:
                 layer.strokeColor().alphaF() > 0):
             res['strokeColor'] = FslConverter.color_to_fsl(layer.strokeColor(),
                                                            context)
-            res['strokeWidth'] = FslConverter.convert_to_pixels(
+            res['strokeWidth'] = FslConverter.convert_stroke_to_pixels(
                 layer.strokeWidth(), layer.strokeWidthUnit(), context)
             res['lineJoin'] = FslConverter.convert_join_style(
                 layer.penJoinStyle())
@@ -720,9 +740,11 @@ class FslConverter:
         size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(),
                                               context)
 
-        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(),
-                                                      layer.strokeWidthUnit(),
-                                                      context)
+        stroke_width = FslConverter.convert_stroke_to_pixels(
+            layer.strokeWidth(),
+            layer.strokeWidthUnit(),
+            context
+        )
 
         res = {
             'color': color_str,
@@ -767,9 +789,11 @@ class FslConverter:
                                                   layer.symbolWidthUnit(),
                                                   context))
 
-        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(),
-                                                      layer.strokeWidthUnit(),
-                                                      context)
+        stroke_width = FslConverter.convert_stroke_to_pixels(
+            layer.strokeWidth(),
+            layer.strokeWidthUnit(),
+            context
+        )
 
         res = {
             'color': color_str,
@@ -814,9 +838,11 @@ class FslConverter:
         size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(),
                                               context)
 
-        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(),
-                                                      layer.strokeWidthUnit(),
-                                                      context)
+        stroke_width = FslConverter.convert_stroke_to_pixels(
+            layer.strokeWidth(),
+            layer.strokeWidthUnit(),
+            context
+        )
 
         res = {
             'color': color_str,
@@ -860,9 +886,11 @@ class FslConverter:
         size = FslConverter.convert_to_pixels(layer.size(), layer.sizeUnit(),
                                               context)
 
-        stroke_width = FslConverter.convert_to_pixels(layer.strokeWidth(),
-                                                      layer.strokeWidthUnit(),
-                                                      context)
+        stroke_width = FslConverter.convert_stroke_to_pixels(
+            layer.strokeWidth(),
+            layer.strokeWidthUnit(),
+            context
+        )
 
         res = {
             'color': color_str,
