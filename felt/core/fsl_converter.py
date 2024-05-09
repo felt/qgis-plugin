@@ -42,9 +42,15 @@ from qgis.core import (
     QgsNullSymbolRenderer,
     QgsCategorizedSymbolRenderer,
     QgsGraduatedSymbolRenderer,
+    QgsRuleBasedRenderer,
     QgsPalLayerSettings,
     QgsTextFormat,
-    QgsStringUtils
+    QgsStringUtils,
+    QgsExpression,
+    QgsExpressionNode,
+    QgsExpressionNodeBinaryOperator,
+    QgsExpressionNodeInOperator,
+    QgsExpressionContext
 )
 
 from .map_utils import MapUtils
@@ -73,6 +79,105 @@ class ConversionContext:
 
 class FslConverter:
     NULL_COLOR = "rgba(0, 0, 0, 0)"
+
+    @staticmethod
+    def expression_to_filter(
+            expression: str,
+            context: ConversionContext,
+            layer: Optional[QgsVectorLayer] = None
+    ) -> Optional[List]:
+        """
+        Attempts to convert a QGIS expression to a FSL filter
+
+        Returns None if conversion fails
+        """
+        exp = QgsExpression(expression)
+        expression_context = QgsExpressionContext()
+        if layer:
+            expression_context.appendScope(
+                layer.createExpressionContextScope())
+
+        exp.prepare(expression_context)
+
+        if exp.hasParserError():
+            return None
+
+        if exp.rootNode():
+            success, res = FslConverter.walk_expression(exp.rootNode(), context)
+            if success:
+                return res
+
+        return None
+
+    @staticmethod
+    def walk_expression(node: QgsExpressionNode, context: ConversionContext):
+        """
+        Visitor for QGIS expression nodes
+        """
+        if node is None:
+            return False, None
+        elif node.nodeType() == QgsExpressionNode.ntBinaryOperator:
+            return FslConverter.handle_binary(node, context)
+        elif node.nodeType() == QgsExpressionNode.ntInOperator:
+            return FslConverter.handle_in(node, context)
+        elif node.nodeType() == QgsExpressionNode.ntLiteral:
+            return True, node.value()
+        elif node.nodeType() == QgsExpressionNode.ntColumnRef:
+            return True, node.name()
+        return False, None
+
+    @staticmethod
+    def handle_binary(node: QgsExpressionNodeBinaryOperator,
+                      context: ConversionContext):
+        """
+        Convert a binary node
+        """
+        left_ok, left = FslConverter.walk_expression(node.opLeft(), context)
+        if not left_ok:
+            return False, None
+        right_ok, right = FslConverter.walk_expression(node.opRight(), context)
+        if not right_ok:
+            return False, None
+
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boEQ:
+            return True, [left, "in", [right]]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boNE:
+            return True, [left, "ni", [right]]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boGT:
+            return True, [left, "gt", right]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boLT:
+            return True, [left, "lt", right]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boGE:
+            return True, [left, "ge", right]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boLE:
+            return True, [left, "le", right]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boIs:
+            return True, [left, "is", right]
+        if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boIsNot:
+            return True, [left, "isnt", right]
+        return False, None
+
+    @staticmethod
+    def handle_in(node: QgsExpressionNodeInOperator,
+                  context: ConversionContext):
+        """
+        Convert an In node
+        """
+        left_ok, left = FslConverter.walk_expression(node.node(), context)
+        if not left_ok:
+            return False, None
+
+        converted_list = []
+        for v in node.list().list():
+            val_ok, val = FslConverter.walk_expression(v, context)
+            if not val_ok:
+                return False, None
+            converted_list.append(val)
+
+        if node.isNotIn():
+            return True, [left, "ni", converted_list]
+
+        return True, [left, "in", converted_list]
 
     @staticmethod
     def vector_layer_to_fsl(
@@ -117,7 +222,8 @@ class FslConverter:
                 FslConverter.categorized_renderer_to_fsl,
             QgsGraduatedSymbolRenderer:
                 FslConverter.graduated_renderer_to_fsl,
-            # QgsRuleBasedRenderer
+            QgsRuleBasedRenderer:
+                FslConverter.rule_based_renderer_to_fsl,
             QgsNullSymbolRenderer: FslConverter.null_renderer_to_fsl,
 
             # Could potentially be supported:
@@ -163,6 +269,55 @@ class FslConverter:
             "legend": {},
             "type": "simple"
         }
+
+    @staticmethod
+    def rule_based_renderer_to_fsl(
+            renderer: QgsRuleBasedRenderer,
+            context: ConversionContext,
+            layer_opacity: float = 1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS rule based renderer to an FSL definition
+        """
+        if not renderer.rootRule().children():
+            # treat no rules as a null renderer
+            return {
+                "style": {
+                    "color": FslConverter.NULL_COLOR,
+                    "strokeColor": FslConverter.NULL_COLOR
+                },
+                "legend": {},
+                "type": "simple"
+            }
+
+        # single rule
+        if (len(renderer.rootRule().children()) == 1 and
+                not renderer.rootRule().children()[0].children()):
+
+            target_rule = renderer.rootRule().children()[0]
+            converted_symbol = FslConverter.symbol_to_fsl(
+                target_rule.symbol(),
+                context,
+                layer_opacity)
+            if not converted_symbol:
+                return None
+
+            res = {
+                "style": converted_symbol[0] if len(converted_symbol) == 1
+                else converted_symbol,
+                "legend": {},
+                "type": "simple"
+            }
+
+            if target_rule.filterExpression():
+                converted_filter = FslConverter.expression_to_filter(
+                    target_rule.filterExpression(),
+                    context
+                )
+                if converted_filter is not None:
+                    res['filters'] = converted_filter
+
+            return res
 
     @staticmethod
     def null_renderer_to_fsl(renderer: QgsNullSymbolRenderer,

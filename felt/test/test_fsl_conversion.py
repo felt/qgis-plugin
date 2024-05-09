@@ -44,7 +44,8 @@ from qgis.core import (
     QgsTextFormat,
     QgsStringUtils,
     QgsPalLayerSettings,
-    QgsVectorLayer
+    QgsVectorLayer,
+    QgsRuleBasedRenderer
 )
 
 from .utilities import get_qgis_app
@@ -1253,6 +1254,129 @@ class FslConversionTest(unittest.TestCase):
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'size': 38}],
+             'type': 'simple'}
+        )
+
+    def test_expression_to_filter(self):
+        """
+        Test QGIS expression to FSL filter conversions
+        """
+        context = ConversionContext()
+
+        # invalid expression
+        self.assertIsNone(
+            FslConverter.expression_to_filter('"Cabin Crew" = ', context)
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" = 1', context),
+            ["Cabin Crew", "in", [1]]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" <> 1', context),
+            ["Cabin Crew", "ni", [1]]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" > 1', context),
+            ["Cabin Crew", "gt", 1]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" < 1', context),
+            ["Cabin Crew", "lt", 1]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" >= 1', context),
+            ["Cabin Crew", "ge", 1]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" <= 1', context),
+            ["Cabin Crew", "le", 1]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" IS NULL', context),
+            ["Cabin Crew", "is", None]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" IS NOT NULL',
+                                              context),
+            ["Cabin Crew", "isnt", None]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter('"Cabin Crew" IN (1, 2, 3)',
+                                              context),
+            ['Cabin Crew', 'in', [1, 2, 3]]
+        )
+
+        self.assertEqual(
+            FslConverter.expression_to_filter(
+                '"Cabin Crew" NOT IN (\'a\', \'b\')', context),
+            ['Cabin Crew', 'ni', ['a', 'b']]
+        )
+
+    def test_rule_based_renderer(self):
+        """
+        Test converting rule based renderers
+        """
+        conversion_context = ConversionContext()
+
+        root_rule = QgsRuleBasedRenderer.Rule(None)
+        renderer = QgsRuleBasedRenderer(root_rule)
+        # no child rules!
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgba(0, 0, 0, 0)',
+                       'strokeColor': 'rgba(0, 0, 0, 0)'},
+             'type': 'simple'}
+        )
+
+        # no filter rule
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+        child_rule = QgsRuleBasedRenderer.Rule(line_symbol.clone())
+        root_rule.appendChild(child_rule)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'size': 1},
+             'type': 'simple'}
+        )
+
+        # rule with filter
+        child_rule.setFilterExpression('"Cabin Crew" IN (1, 2, 3)')
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'size': 1},
+             'type': 'simple',
+             'filters': ['Cabin Crew', 'in', [1, 2, 3]]
+             }
+        )
+
+        # filter which can't be converted
+        child_rule.setFilterExpression('$length > 3')
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'size': 1},
              'type': 'simple'}
         )
 
