@@ -243,7 +243,7 @@ class LayerExporter(QObject):
             )
 
         if fsl:
-            fsl['version'] = '2.1'
+            fsl['version'] = '2.1.1'
 
         return LayerStyle(
             fsl=fsl

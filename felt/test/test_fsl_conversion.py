@@ -2010,7 +2010,7 @@ class FslConversionTest(unittest.TestCase):
 
         self.assertEqual(FslConverter.raster_renderer_to_fsl(
             renderer, context),
-            {'config': {'band': 1, 'categories': [120.0, 125.0, 130.0]},
+            {'config': {'band': 1, 'categories': ['120.0', '125.0', '130.0']},
              'legend': {'displayName': {'120.0': 'lowest',
                                         '125.0': 'mid',
                                         '130.0': 'highest'}},
@@ -2026,7 +2026,7 @@ class FslConversionTest(unittest.TestCase):
 
         self.assertEqual(FslConverter.raster_renderer_to_fsl(
             renderer, context),
-            {'config': {'band': 2, 'categories': [120.0, 125.0, 130.0]},
+            {'config': {'band': 2, 'categories': ['120.0', '125.0', '130.0']},
              'legend': {'displayName': {'120.0': 'lowest',
                                         '125.0': 'mid',
                                         '130.0': 'highest'}},

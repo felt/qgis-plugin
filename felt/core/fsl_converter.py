@@ -1610,7 +1610,7 @@ class FslConverter:
         colors = []
         labels = {}
         for _class in renderer.classes():
-            categories.append(_class.value)
+            categories.append(str(_class.value))
             colors.append(_class.color.name())
             labels[str(_class.value)] = _class.label
         return {
