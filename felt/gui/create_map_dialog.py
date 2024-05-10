@@ -187,7 +187,9 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.upload_raster_as_styled_action.toggled.connect(
             upload_raster_as_styled_toggled)
-        self.setting_menu.addAction(self.upload_raster_as_styled_action)
+        # Hidden, now we default to uploading styled whenever we can't
+        # convert the layer to FSL
+        # self.setting_menu.addAction(self.upload_raster_as_styled_action)
 
         self.setting_menu.addSeparator()
         self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)
