@@ -2017,7 +2017,7 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
                        'isSandwiched': False,
                        'opacity': 1},
-             'type': 'numeric'}
+             'type': 'categorical'}
         )
 
         renderer = QgsPalettedRasterRenderer(None,
@@ -2033,7 +2033,7 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
                        'isSandwiched': False,
                        'opacity': 1},
-             'type': 'numeric'}
+             'type': 'categorical'}
         )
 
 

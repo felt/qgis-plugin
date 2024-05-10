@@ -1627,5 +1627,5 @@ class FslConverter:
                 "opacity": opacity,
                 "color": colors
             },
-            "type": "numeric"
+            "type": "categorical"
         }
