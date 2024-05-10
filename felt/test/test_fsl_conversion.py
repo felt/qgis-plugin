@@ -49,7 +49,8 @@ from qgis.core import (
     QgsSingleBandPseudoColorRenderer,
     QgsRasterShader,
     QgsColorRampShader,
-    QgsGradientColorRamp
+    QgsGradientColorRamp,
+    QgsPalettedRasterRenderer
 )
 
 from .utilities import get_qgis_app
@@ -1982,6 +1983,54 @@ class FslConversionTest(unittest.TestCase):
                  'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
              'style': {'color': ['rgb(0, 255, 0)', 'rgb(255, 255, 0)',
                                  'rgb(0, 255, 255)'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+    def test_convert_paletted_raster(self):
+        """
+        Convert raster paletted renderer
+        """
+        context = ConversionContext()
+        class_data = [
+                QgsPalettedRasterRenderer.Class(
+                    120, QColor(0, 255, 0), 'lowest'
+                ),
+                QgsPalettedRasterRenderer.Class(
+                    125, QColor(255, 255, 0), 'mid'
+                ),
+                QgsPalettedRasterRenderer.Class(
+                    130, QColor(0, 255, 255), 'highest'
+                )
+            ]
+        renderer = QgsPalettedRasterRenderer(None,
+                                             bandNumber=1,
+                                             classes=class_data)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 1, 'categories': [120.0, 125.0, 130.0]},
+             'legend': {'displayName': {'120.0': 'lowest',
+                                        '125.0': 'mid',
+                                        '130.0': 'highest'}},
+             'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+        renderer = QgsPalettedRasterRenderer(None,
+                                             bandNumber=2,
+                                             classes=class_data)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 2, 'categories': [120.0, 125.0, 130.0]},
+             'legend': {'displayName': {'120.0': 'lowest',
+                                        '125.0': 'mid',
+                                        '130.0': 'highest'}},
+             'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
                        'isSandwiched': False,
                        'opacity': 1},
              'type': 'numeric'}

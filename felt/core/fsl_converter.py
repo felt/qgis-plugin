@@ -54,7 +54,8 @@ from qgis.core import (
     QgsExpressionNodeInOperator,
     QgsExpressionContext,
     QgsRasterRenderer,
-    QgsSingleBandPseudoColorRenderer
+    QgsSingleBandPseudoColorRenderer,
+    QgsPalettedRasterRenderer
 )
 
 from .map_utils import MapUtils
@@ -1549,6 +1550,10 @@ class FslConverter:
             return FslConverter.singleband_pseudocolor_renderer_to_fsl(
                 renderer, context, opacity
             )
+        if isinstance(renderer, QgsPalettedRasterRenderer):
+            return FslConverter.paletted_renderer_to_fsl(
+                renderer, context, opacity
+            )
 
         return None
 
@@ -1578,6 +1583,40 @@ class FslConverter:
             "config": {
                 "band": renderer.band(),
                 "steps": steps
+            },
+            "legend": {
+                "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "numeric"
+        }
+
+    @staticmethod
+    def paletted_renderer_to_fsl(
+            renderer: QgsPalettedRasterRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ) -> Optional[Dict[str, object]]:
+        """
+        Converts a paletted raster renderer to FSL
+        """
+
+        categories = []
+        colors = []
+        labels = {}
+        for _class in renderer.classes():
+            categories.append(_class.value)
+            colors.append(_class.color.name())
+            labels[str(_class.value)] = _class.label
+        return {
+            "config": {
+                "band": renderer.band(),
+                "categories": categories
             },
             "legend": {
                 "displayName": labels
