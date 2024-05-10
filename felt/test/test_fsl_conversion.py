@@ -333,6 +333,8 @@ class FslConversionTest(unittest.TestCase):
 
         fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
 
+        fill.setStrokeStyle(Qt.NoPen)
+
         # no brush
         fill.setBrushStyle(Qt.NoBrush)
         self.assertFalse(
@@ -345,6 +347,21 @@ class FslConversionTest(unittest.TestCase):
         self.assertFalse(
             FslConverter.simple_fill_to_fsl(fill, conversion_context)
         )
+
+        # transparent color with stroke
+        fill.setStrokeStyle(Qt.DashLine)
+        fill.setStrokeWidth(3)
+        fill.setStrokeColor(QColor(255, 0, 0))
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context),
+            [{'color': 'rgba(0, 255, 0, 0.0)',
+              'dashArray': [2.5, 2],
+              'lineJoin': 'bevel',
+              'strokeColor': 'rgb(255, 0, 0)',
+              'strokeWidth': 11}]
+        )
+        fill.setStrokeStyle(Qt.SolidLine)
+        fill.setStrokeColor(QColor(35, 35, 35))
 
         fill.setColor(QColor(0, 255, 0))
         fill.setStrokeWidth(3)

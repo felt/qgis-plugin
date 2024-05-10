@@ -872,9 +872,13 @@ class FslConverter:
         """
         Converts a QGIS simple fill symbol layer to FSL
         """
-        if (layer.brushStyle() == Qt.NoBrush or
-                not layer.color().isValid() or
-                layer.color().alphaF() == 0):
+        has_invisible_fill = (layer.brushStyle() == Qt.NoBrush or
+                              not layer.color().isValid() or
+                              layer.color().alphaF() == 0)
+        has_invisible_stroke = (layer.strokeStyle() == Qt.NoPen or
+                                not layer.strokeColor().isValid() or
+                                layer.strokeColor().alphaF() == 0)
+        if has_invisible_fill and has_invisible_stroke:
             return []
 
         color_str = FslConverter.color_to_fsl(
@@ -888,8 +892,7 @@ class FslConverter:
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
 
-        if (layer.strokeStyle() != Qt.NoPen and
-                layer.strokeColor().alphaF() > 0):
+        if not has_invisible_stroke:
             res['strokeColor'] = FslConverter.color_to_fsl(layer.strokeColor(),
                                                            context)
             res['strokeWidth'] = FslConverter.convert_stroke_to_pixels(
