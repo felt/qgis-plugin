@@ -532,9 +532,9 @@ class LayerExporter(QObject):
         """
         dest_file = self.generate_file_name('.tif')
 
-        fsl_style = self.representative_layer_style(layer)
+        converted_style = self.representative_layer_style(layer)
         upload_raster_as_styled = (force_upload_raster_as_styled or
-                                   not fsl_style)
+                                   not converted_style.fsl)
         layer_export_result, error_message = self.run_raster_writer(
             layer,
             file_name=dest_file,
@@ -556,5 +556,5 @@ class LayerExporter(QObject):
             result=layer_export_result,
             error_message=error_message,
             qgis_style_xml=self._get_original_style_xml(layer),
-            style=fsl_style
+            style=converted_style
         )
