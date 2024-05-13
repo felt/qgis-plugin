@@ -160,6 +160,7 @@ class LayerExporterTest(unittest.TestCase):
         )
         # should only be the layer's style, not the source information
         self.assertNotIn('points.gpkg', style)
+
     # pylint: enable=protected-access
 
     def test_vector_conversion(self):
@@ -235,8 +236,10 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer,
-                                                force_upload_raster_as_styled=False)
+        result = exporter.export_layer_for_felt(
+            layer,
+            force_upload_raster_as_styled=False
+        )
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')
@@ -280,8 +283,10 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer,
-                                                force_upload_raster_as_styled=True)
+        result = exporter.export_layer_for_felt(
+            layer,
+            force_upload_raster_as_styled=True
+        )
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')

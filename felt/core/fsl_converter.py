@@ -1187,9 +1187,8 @@ class FslConverter:
         """
         Converts a QGIS gradient fill symbol layer to FSL
         """
-        color = (layer.color() if layer.color().isValid() and
-                                  layer.color().alphaF() > 0 else
-                 layer.color2())
+        color1_valid = layer.color().isValid() and layer.color().alphaF() > 0
+        color = layer.color() if color1_valid else layer.color2()
         if not color.isValid() or color.alphaF() == 0:
             return []
 

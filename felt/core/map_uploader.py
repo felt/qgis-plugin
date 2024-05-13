@@ -256,10 +256,6 @@ class MapUploaderTask(QgsTask):
 
         self.feedback = QgsFeedback()
 
-        upload_raster_as_styled = QgsSettings().value(
-            "felt/upload_raster_as_styled", True, bool, QgsSettings.Plugins
-        )
-
         multi_step_feedback = MultiStepFeedback(
             total_steps, self.feedback
         )
