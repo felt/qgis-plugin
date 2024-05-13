@@ -1616,7 +1616,8 @@ class FslConverter:
         return {
             "config": {
                 "band": renderer.band(),
-                "categories": categories
+                "categories": categories,
+                "categoricalAttribute": "temp"  # short term workaround
             },
             "legend": {
                 "displayName": labels
