@@ -33,12 +33,12 @@ from qgis.core import (
     QgsTask,
     QgsFeedback,
     QgsBlockingNetworkRequest,
-    QgsReferencedRectangle,
-    QgsSettings
+    QgsReferencedRectangle
 )
 from qgis.utils import iface
 
 from .api_client import API_CLIENT
+from .enums import LayerSupport
 from .exceptions import LayerPackagingException
 from .layer_exporter import LayerExporter
 from .logger import Logger
@@ -46,7 +46,6 @@ from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
-from .enums import LayerSupport
 
 
 class MapUploaderTask(QgsTask):
