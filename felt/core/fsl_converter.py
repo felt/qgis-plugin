@@ -1615,7 +1615,8 @@ class FslConverter:
         """
         steps = [renderer.contrastEnhancement().minimumValue(),
                  renderer.contrastEnhancement().maximumValue()]
-        if renderer.gradient() == QgsSingleBandGrayRenderer.Gradient.BlackToWhite:
+        if (renderer.gradient() ==
+                QgsSingleBandGrayRenderer.Gradient.BlackToWhite):
             colors = ["rgb(0, 0, 0)", "rgb(255, 255, 255)"]
         else:
             colors = ["rgb(255, 255, 255)", "rgb(0, 0, 0)"]
