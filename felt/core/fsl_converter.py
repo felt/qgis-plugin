@@ -1,3 +1,7 @@
+"""
+QGIS to FSL conversion
+"""
+
 from enum import (
     Enum,
     auto
