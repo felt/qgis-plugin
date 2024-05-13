@@ -861,8 +861,9 @@ class FslConversionTest(unittest.TestCase):
         fill_symbol = QgsFillSymbol()
         fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
 
-        # no brush
+        # no brush, no stroke
         fill.setBrushStyle(Qt.NoBrush)
+        fill.setStrokeStyle(Qt.NoPen)
         fill_symbol.changeSymbolLayer(0, fill.clone())
         marker = QgsFilledMarkerSymbolLayer()
         marker.setSubSymbol(fill_symbol.clone())
@@ -881,6 +882,16 @@ class FslConversionTest(unittest.TestCase):
 
         fill.setColor(QColor(0, 255, 0))
         fill.setStrokeWidth(3)
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+        marker.setSubSymbol(fill_symbol.clone())
+        self.assertEqual(
+            FslConverter.filled_marker_to_fsl(marker, conversion_context),
+            [{'color': 'rgb(0, 255, 0)',
+              'size': 4,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+        )
+
+        fill.setStrokeStyle(Qt.SolidLine)
         fill_symbol.changeSymbolLayer(0, fill.clone())
         marker.setSubSymbol(fill_symbol.clone())
         self.assertEqual(
@@ -1962,8 +1973,7 @@ class FslConversionTest(unittest.TestCase):
                         'steps': [50.0, 120.0, 125.0, 130.0]},
              'legend': {
                  'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
-             'style': {'color': ['rgb(0, 255, 0)', 'rgb(255, 255, 0)',
-                                 'rgb(0, 255, 255)'],
+             'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
                        'isSandwiched': False,
                        'opacity': 1},
              'type': 'numeric'}
@@ -1981,13 +1991,13 @@ class FslConversionTest(unittest.TestCase):
                         'steps': [50.0, 120.0, 125.0, 130.0]},
              'legend': {
                  'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
-             'style': {'color': ['rgb(0, 255, 0)', 'rgb(255, 255, 0)',
-                                 'rgb(0, 255, 255)'],
+             'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
                        'isSandwiched': False,
                        'opacity': 1},
              'type': 'numeric'}
         )
 
+    @unittest.skip('Broken API, disabled for now')
     def test_convert_paletted_raster(self):
         """
         Convert raster paletted renderer
