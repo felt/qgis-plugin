@@ -59,7 +59,8 @@ from qgis.core import (
     QgsExpressionContext,
     QgsRasterRenderer,
     QgsSingleBandPseudoColorRenderer,
-    QgsPalettedRasterRenderer
+    QgsPalettedRasterRenderer,
+    QgsSingleBandGrayRenderer
 )
 
 from .map_utils import MapUtils
@@ -1553,6 +1554,10 @@ class FslConverter:
             return FslConverter.singleband_pseudocolor_renderer_to_fsl(
                 renderer, context, opacity
             )
+        if isinstance(renderer, QgsSingleBandGrayRenderer):
+            return FslConverter.singleband_gray_renderer_to_fsl(
+                renderer, context, opacity
+            )
         if isinstance(renderer, QgsPalettedRasterRenderer):
             return FslConverter.paletted_renderer_to_fsl(
                 renderer, context, opacity
@@ -1589,6 +1594,40 @@ class FslConverter:
             },
             "legend": {
                 "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "numeric"
+        }
+
+    @staticmethod
+    def singleband_gray_renderer_to_fsl(
+            renderer: QgsSingleBandGrayRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ) -> Optional[Dict[str, object]]:
+        """
+        Converts a singleband gray renderer to FSL
+        """
+        steps = [renderer.contrastEnhancement().minimumValue(),
+                 renderer.contrastEnhancement().maximumValue()]
+        if renderer.gradient() == QgsSingleBandGrayRenderer.Gradient.BlackToWhite:
+            colors = ["rgb(0, 0, 0)", "rgb(255, 255, 255)"]
+        else:
+            colors = ["rgb(255, 255, 255)", "rgb(0, 0, 0)"]
+
+        return {
+            "config": {
+                "band": renderer.grayBand(),
+                "steps": steps
+            },
+            "legend": {
+                "displayName": {"0": str(steps[0]),
+                                "1": str(steps[1])}
             },
 
             "style": {

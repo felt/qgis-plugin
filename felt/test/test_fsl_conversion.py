@@ -50,7 +50,9 @@ from qgis.core import (
     QgsRasterShader,
     QgsColorRampShader,
     QgsGradientColorRamp,
-    QgsPalettedRasterRenderer
+    QgsPalettedRasterRenderer,
+    QgsSingleBandGrayRenderer,
+    QgsContrastEnhancement
 )
 
 from .utilities import get_qgis_app
@@ -1992,6 +1994,41 @@ class FslConversionTest(unittest.TestCase):
              'legend': {
                  'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
              'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+    def test_convert_singleband_gray_renderer(self):
+        """
+        Convert singleband gray renderer
+        """
+        context = ConversionContext()
+        renderer = QgsSingleBandGrayRenderer(None, 1)
+        enhancement = QgsContrastEnhancement()
+        enhancement.setMinimumValue(5)
+        enhancement.setMaximumValue(5)
+        renderer.setContrastEnhancement(QgsContrastEnhancement(enhancement))
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 1, 'steps': [5.0, 5.0]},
+             'legend': {'displayName': {'0': '5.0', '1': '5.0'}},
+             'style': {'color': ['rgb(0, 0, 0)', 'rgb(255, 255, 255)'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+        renderer = QgsSingleBandGrayRenderer(None, 2)
+        renderer.setGradient(QgsSingleBandGrayRenderer.Gradient.WhiteToBlack)
+        renderer.setContrastEnhancement(QgsContrastEnhancement(enhancement))
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 2, 'steps': [5.0, 5.0]},
+             'legend': {'displayName': {'0': '5.0', '1': '5.0'}},
+             'style': {'color': ['rgb(255, 255, 255)', 'rgb(0, 0, 0)'],
                        'isSandwiched': False,
                        'opacity': 1},
              'type': 'numeric'}
