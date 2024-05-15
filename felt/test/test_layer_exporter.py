@@ -1,18 +1,6 @@
-# coding=utf-8
-"""Felt API client Test.
-
-.. note:: This program is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation; either version 2 of the License, or
-     (at your option) any later version.
-
 """
-
-__author__ = '(C) 2022 by Nyall Dawson'
-__date__ = '23/11/2022'
-__copyright__ = 'Copyright 2022, North Road'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
+Felt API client Test.
+"""
 
 import unittest
 import zipfile
@@ -24,7 +12,9 @@ from qgis.core import (
     QgsRasterLayer,
     QgsCoordinateTransformContext,
     QgsCoordinateReferenceSystem,
-    QgsWkbTypes
+    QgsWkbTypes,
+    QgsPalettedRasterRenderer,
+    QgsRasterContourRenderer
 )
 
 from .utilities import get_qgis_app
@@ -160,6 +150,7 @@ class LayerExporterTest(unittest.TestCase):
         )
         # should only be the layer's style, not the source information
         self.assertNotIn('points.gpkg', style)
+
     # pylint: enable=protected-access
 
     def test_vector_conversion(self):
@@ -231,12 +222,16 @@ class LayerExporterTest(unittest.TestCase):
         file = str(TEST_DATA_PATH / 'dem.tif')
         layer = QgsRasterLayer(file, 'test')
         self.assertTrue(layer.isValid())
+        # set a renderer we can convert
+        renderer = QgsPalettedRasterRenderer(layer.dataProvider(), 1, [])
+        layer.setRenderer(renderer)
 
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer,
-                                                upload_raster_as_styled=False)
+        result = exporter.export_layer_for_felt(
+            layer
+        )
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')
@@ -280,8 +275,67 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer,
-                                                upload_raster_as_styled=True)
+        result = exporter.export_layer_for_felt(
+            layer,
+            force_upload_raster_as_styled=True
+        )
+        self.assertEqual(result.result, LayerExportResult.Success)
+        self.assertTrue(result.filename)
+        self.assertEqual(result.filename[-4:], '.zip')
+        with zipfile.ZipFile(result.filename) as z:
+            tif_files = [f for f in z.namelist() if f.endswith('tif')]
+        self.assertEqual(len(tif_files), 1)
+
+        self.assertEqual(
+            result.qgis_style_xml[:58],
+            "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
+        )
+
+        out_layer = QgsRasterLayer(
+            '/vsizip/{}/{}'.format(result.filename, tif_files[0]),
+            'test')
+        self.assertTrue(out_layer.isValid())
+        self.assertEqual(out_layer.width(), 373)
+        self.assertEqual(out_layer.height(), 350)
+        self.assertEqual(out_layer.bandCount(), 4)
+        self.assertEqual(out_layer.dataProvider().dataType(1),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.dataProvider().dataType(2),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.dataProvider().dataType(3),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.dataProvider().dataType(4),
+                         Qgis.DataType.Byte)
+        self.assertEqual(out_layer.crs(),
+                         QgsCoordinateReferenceSystem('EPSG:4326'))
+        self.assertAlmostEqual(out_layer.extent().xMinimum(),
+                               18.6662979442, 3)
+        self.assertAlmostEqual(out_layer.extent().xMaximum(),
+                               18.7035979442, 3)
+        self.assertAlmostEqual(out_layer.extent().yMinimum(),
+                               45.7767014376, 3)
+        self.assertAlmostEqual(out_layer.extent().yMaximum(),
+                               45.8117014376, 3)
+
+    def test_raster_conversion_no_fsl_conversion(self):
+        """
+        Test raster layer conversion
+        """
+        file = str(TEST_DATA_PATH / 'dem.tif')
+        layer = QgsRasterLayer(file, 'test')
+        self.assertTrue(layer.isValid())
+
+        # set a renderer we can't convert to FSL
+        renderer = QgsRasterContourRenderer(layer.dataProvider())
+        layer.setRenderer(renderer)
+
+        exporter = LayerExporter(
+            QgsCoordinateTransformContext()
+        )
+        result = exporter.export_layer_for_felt(
+            layer,
+            force_upload_raster_as_styled=False
+        )
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')

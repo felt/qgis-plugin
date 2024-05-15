@@ -1,20 +1,9 @@
-# coding=utf-8
-"""Felt API client Test.
-
-.. note:: This program is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation; either version 2 of the License, or
-     (at your option) any later version.
-
+"""
+Felt API client Test.
 """
 
-__author__ = '(C) 2022 by Nyall Dawson'
-__date__ = '23/11/2022'
-__copyright__ = 'Copyright 2022, North Road'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
-
 import unittest
+import json
 from pathlib import Path
 
 from qgis.PyQt.QtCore import (
@@ -214,7 +203,7 @@ class ApiClientTest(unittest.TestCase):
                          QNetworkReply.NoError)
 
         json_params = reply.readAll().data().decode()
-        params = S3UploadParameters.from_json(json_params)
+        params = S3UploadParameters.from_json(json.loads(json_params))
         self.assertEqual(params.type, 'presigned_upload')
         self.assertTrue(params.aws_access_key_id, 'presigned_upload')
         # self.assertTrue(params.acl)

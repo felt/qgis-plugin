@@ -1,17 +1,6 @@
-# -*- coding: utf-8 -*-
-"""Felt Create Map dialog
-
-.. note:: This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
 """
-
-__author__ = '(C) 2022 by Nyall Dawson'
-__date__ = '22/11/2022'
-__copyright__ = 'Copyright 2022, North Road'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
+Felt Create Map dialog
+"""
 
 from typing import (
     Optional,
@@ -187,7 +176,9 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.upload_raster_as_styled_action.toggled.connect(
             upload_raster_as_styled_toggled)
-        self.setting_menu.addAction(self.upload_raster_as_styled_action)
+        # Hidden, now we default to uploading styled whenever we can't
+        # convert the layer to FSL
+        # self.setting_menu.addAction(self.upload_raster_as_styled_action)
 
         self.setting_menu.addSeparator()
         self.logout_action = QAction(self.tr('Log Out'), self.setting_menu)

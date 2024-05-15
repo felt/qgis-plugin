@@ -1,19 +1,7 @@
-# -*- coding: utf-8 -*-
-"""Felt API s3 upload parameters
-
-.. note:: This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+"""
+Felt API s3 upload parameters
 """
 
-__author__ = '(C) 2023 by Nyall Dawson'
-__date__ = '1/06/2023'
-__copyright__ = 'Copyright 2022, North Road'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
-
-import json
 from dataclasses import dataclass
 from typing import (
     Optional,
@@ -56,11 +44,10 @@ class S3UploadParameters:
         }
 
     @staticmethod
-    def from_json(jsons: str) -> 'S3UploadParameters':
+    def from_json(res: str) -> 'S3UploadParameters':
         """
         Creates upload parameters from a JSON string
         """
-        res = json.loads(jsons)
         return S3UploadParameters(
             type=res.get('data', {}).get('type'),
             aws_access_key_id=res.get('data', {}).get('attributes', {}).get(

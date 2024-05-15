@@ -1,18 +1,8 @@
-# -*- coding: utf-8 -*-
-"""Felt API Map
-
-.. note:: This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+"""
+Felt API Map Uploader
 """
 
-__author__ = '(C) 2023 by Nyall Dawson'
-__date__ = '1/06/2023'
-__copyright__ = 'Copyright 2022, North Road'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
-
+import json
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -26,7 +16,8 @@ from qgis.PyQt.QtCore import (
     QDate,
     pyqtSignal,
     QThread,
-    QSize
+    QSize,
+    QEventLoop
 )
 from qgis.PyQt.QtNetwork import (
     QNetworkReply,
@@ -43,11 +34,12 @@ from qgis.core import (
     QgsFeedback,
     QgsBlockingNetworkRequest,
     QgsReferencedRectangle,
-    QgsSettings
+    QgsRasterLayer
 )
 from qgis.utils import iface
 
 from .api_client import API_CLIENT
+from .enums import LayerSupport
 from .exceptions import LayerPackagingException
 from .layer_exporter import LayerExporter
 from .logger import Logger
@@ -55,7 +47,6 @@ from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .s3_upload_parameters import S3UploadParameters
-from .enums import LayerSupport
 
 
 class MapUploaderTask(QgsTask):
@@ -85,7 +76,7 @@ class MapUploaderTask(QgsTask):
                 project.transformContext()
             )
             self.layers = [
-                layer.clone() for layer in layers
+                MapUploaderTask.clone_layer(layer) for layer in layers
             ]
             self.unsupported_layer_details = {}
         else:
@@ -105,7 +96,8 @@ class MapUploaderTask(QgsTask):
             ]
 
             self.layers = [
-                layer.clone() for layer in visible_layers if
+                MapUploaderTask.clone_layer(layer) for layer in visible_layers
+                if
                 LayerExporter.can_export_layer(layer)[
                     0] == LayerSupport.Supported
             ]
@@ -146,6 +138,23 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+
+    @staticmethod
+    def clone_layer(layer: QgsMapLayer) -> QgsMapLayer:
+        """
+        Clones a layer
+        """
+        res = layer.clone()
+        if isinstance(layer, QgsRasterLayer):
+            res.setResamplingStage(layer.resamplingStage())
+            res.dataProvider().setZoomedInResamplingMethod(
+                layer.dataProvider().zoomedInResamplingMethod()
+            )
+            res.dataProvider().setZoomedOutResamplingMethod(
+                layer.dataProvider().zoomedOutResamplingMethod()
+            )
+
+        return res
 
     def set_workspace_id(self, workspace_id: Optional[str]):
         """
@@ -254,10 +263,6 @@ class MapUploaderTask(QgsTask):
 
         self.feedback = QgsFeedback()
 
-        upload_raster_as_styled = QgsSettings().value(
-            "felt/upload_raster_as_styled", True, bool, QgsSettings.Plugins
-        )
-
         multi_step_feedback = MultiStepFeedback(
             total_steps, self.feedback
         )
@@ -350,8 +355,7 @@ class MapUploaderTask(QgsTask):
                 try:
                     result = exporter.export_layer_for_felt(
                         layer,
-                        multi_step_feedback,
-                        upload_raster_as_styled=upload_raster_as_styled
+                        multi_step_feedback
                     )
                 except LayerPackagingException as e:
                     layer.moveToThread(None)
@@ -372,6 +376,8 @@ class MapUploaderTask(QgsTask):
         if self.isCanceled():
             return False
 
+        rate_limit_counter = 0
+
         for layer, details in to_upload.items():
             if self.isCanceled():
                 return False
@@ -381,16 +387,29 @@ class MapUploaderTask(QgsTask):
             )
 
             while True:
-                reply = API_CLIENT.prepare_layer_upload(
+                reply = API_CLIENT.prepare_layer_upload_v2(
                     map_id=self.associated_map.id,
                     name=layer.name(),
-                    file_names=[Path(details.filename).name],
-                    style=details.style,
-                    blocking=True,
                     feedback=self.feedback
                 )
+
                 if reply.attribute(
                         QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                    rate_limit_counter += 1
+                    if rate_limit_counter > 3:
+                        self.error_string = \
+                            'Rate limit exceeded, cannot share map'
+                        Logger.instance().log_error_json(
+                            {
+                                'type': Logger.MAP_EXPORT,
+                                'error':
+                                    'Error preparing layer upload: {}'.format(
+                                        self.error_string)
+                            }
+                        )
+
+                        return False
+
                     self.status_changed.emit(
                         self.tr('Rate throttled -- waiting')
                     )
@@ -413,9 +432,14 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
+            upload_details = json.loads(reply.content().data().decode())
             upload_params = S3UploadParameters.from_json(
-                reply.content().data().decode()
-            )
+                upload_details)
+
+            # unused in api v2?
+            # file_names = [Path(details.filename).name],
+            # style = details.style,
+
             if not upload_params.url:
                 self.error_string = self.tr('Could not prepare layer upload')
                 message = "Error retrieving upload parameters: {}".format(
@@ -470,39 +494,27 @@ class MapUploaderTask(QgsTask):
             if self.isCanceled():
                 return False
 
-            self.status_changed.emit(
-                self.tr('Finalizing {}').format(layer.name())
-            )
-
-            while True:
-                reply = API_CLIENT.finalize_layer_upload(
-                    self.associated_map.id,
-                    upload_params.layer_id,
-                    Path(details.filename).name,
-                    blocking=True,
-                    feedback=self.feedback
-                )
-                if reply.attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute) == 429:
-                    self.status_changed.emit(
-                        self.tr('Rate throttled -- waiting')
-                    )
-                    QThread.sleep(5)
-                    continue
-
-                if reply.error() != QNetworkReply.NoError:
-                    self.error_string = reply.errorString()
+            layer_id = upload_details.get('data', {}).get('attributes',
+                                                          {}).get(
+                'first_layer_id')
+            if details.style and details.style.fsl is not None:
+                if not layer_id:
                     Logger.instance().log_error_json(
                         {
-                            'type': Logger.MAP_EXPORT,
-                            'error':
-                                'Error finalizing layer upload: {}'.format(
-                                    self.error_string)
+                            'type': Logger.S3_UPLOAD,
+                            'error': 'Didn\'t get layer id '
+                                     'to use for patching style'
                         }
                     )
-                    return False
-
-                break
+                else:
+                    reply = API_CLIENT.patch_style(
+                        map_id=self.associated_map.id,
+                        layer_id=layer_id,
+                        fsl=details.style.fsl
+                    )
+                    loop = QEventLoop()
+                    reply.finished.connect(loop.exit)
+                    loop.exec()
 
             multi_step_feedback.step_finished()
 

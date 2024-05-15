@@ -1,5 +1,6 @@
-# coding=utf-8
-"""Common functionality used by regression tests."""
+"""
+Common functionality used by regression tests.
+"""
 
 import sys
 import logging

@@ -1,17 +1,6 @@
-# -*- coding: utf-8 -*-
-"""Layer exporter for Felt
-
-.. note:: This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
 """
-
-__author__ = '(C) 2023 by Nyall Dawson'
-__date__ = '1/06/2023'
-__copyright__ = 'Copyright 2022, North Road'
-# This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '$Format:%H$'
+Layer exporter for Felt
+"""
 
 import json
 import math
@@ -48,10 +37,6 @@ from qgis.core import (
     QgsRasterLayer,
     QgsRasterFileWriter,
     QgsRasterBlockFeedback,
-    QgsSingleSymbolRenderer,
-    QgsCategorizedSymbolRenderer,
-    QgsGraduatedSymbolRenderer,
-    QgsRuleBasedRenderer,
     QgsSymbol,
     QgsSimpleFillSymbolLayer,
     QgsSimpleLineSymbolLayer,
@@ -72,6 +57,10 @@ from .exceptions import LayerPackagingException
 from .layer_style import LayerStyle
 from .logger import Logger
 from .map import Map
+from .fsl_converter import (
+    FslConverter,
+    ConversionContext
+)
 
 
 @dataclass
@@ -200,38 +189,58 @@ class LayerExporter(QObject):
         return json.loads(reply.content().data().decode())
 
     @staticmethod
-    def representative_layer_style(layer: QgsVectorLayer) -> LayerStyle:
+    def merge_dicts(tgt: Dict, enhancer: Dict) -> Dict:
+        """
+        Recursively merges two dictionaries
+        """
+        for key, val in enhancer.items():
+            if key not in tgt:
+                tgt[key] = val
+                continue
+
+            if isinstance(val, dict):
+                LayerExporter.merge_dicts(tgt[key], val)
+            else:
+                tgt[key] = val
+        return tgt
+
+    @staticmethod
+    def representative_layer_style(
+            layer: QgsMapLayer) -> LayerStyle:
         """
         Returns a decent representative style for a layer
         """
         if not layer.isSpatial() or not layer.renderer():
             return LayerStyle()
 
-        if isinstance(layer.renderer(), QgsSingleSymbolRenderer):
-            return LayerExporter.symbol_to_layer_style(
-                layer.renderer().symbol()
+        context = ConversionContext()
+        fsl = None
+        if isinstance(layer, QgsVectorLayer):
+            fsl = FslConverter.vector_layer_to_fsl(
+                layer, context
             )
-        if isinstance(layer.renderer(), QgsCategorizedSymbolRenderer) and \
-                layer.renderer().categories():
-            first_category = layer.renderer().categories()[0]
-            return LayerExporter.symbol_to_layer_style(
-                first_category.symbol()
-            )
-        if isinstance(layer.renderer(), QgsGraduatedSymbolRenderer) and \
-                layer.renderer().ranges():
-            first_range = layer.renderer().ranges()[0]
-            return LayerExporter.symbol_to_layer_style(
-                first_range.symbol()
-            )
-        if isinstance(layer.renderer(), QgsRuleBasedRenderer) and \
-                layer.renderer().rootRule().children():
-            for child in layer.renderer().rootRule().children():
-                if child.symbol():
-                    return LayerExporter.symbol_to_layer_style(
-                        child.symbol()
-                    )
+            if layer.labelsEnabled():
+                label_def = FslConverter.label_settings_to_fsl(
+                    layer.labeling().settings(),
+                    context
+                )
+                if label_def:
+                    if fsl:
+                        LayerExporter.merge_dicts(fsl, label_def)
+                    else:
+                        fsl = label_def
 
-        return LayerStyle()
+        elif isinstance(layer, QgsRasterLayer):
+            fsl = FslConverter.raster_layer_to_fsl(
+                layer, context
+            )
+
+        if fsl:
+            fsl['version'] = '2.1.1'
+
+        return LayerStyle(
+            fsl=fsl
+        )
 
     @staticmethod
     def symbol_to_layer_style(symbol: QgsSymbol) -> LayerStyle:
@@ -271,7 +280,7 @@ class LayerExporter(QObject):
             self,
             layer: QgsMapLayer,
             feedback: Optional[QgsFeedback] = None,
-            upload_raster_as_styled: bool = True
+            force_upload_raster_as_styled: bool = False
     ) -> ZippedExportResult:
         """
         Exports a layer into a format acceptable for Felt
@@ -281,8 +290,7 @@ class LayerExporter(QObject):
             res = self.export_vector_layer(layer, feedback)
         elif isinstance(layer, QgsRasterLayer):
             res = self.export_raster_layer(
-                layer, feedback,
-                upload_raster_as_styled)
+                layer, feedback, force_upload_raster_as_styled)
         else:
             assert False
 
@@ -511,12 +519,15 @@ class LayerExporter(QObject):
             self,
             layer: QgsRasterLayer,
             feedback: Optional[QgsFeedback] = None,
-            upload_raster_as_styled: bool = True) -> LayerExportDetails:
+            force_upload_raster_as_styled: bool = False) -> LayerExportDetails:
         """
         Exports a raster layer into a format acceptable for Felt
         """
         dest_file = self.generate_file_name('.tif')
 
+        converted_style = self.representative_layer_style(layer)
+        upload_raster_as_styled = (force_upload_raster_as_styled or
+                                   not converted_style.fsl)
         layer_export_result, error_message = self.run_raster_writer(
             layer,
             file_name=dest_file,
@@ -528,7 +539,7 @@ class LayerExporter(QObject):
                 {
                     'type': Logger.PACKAGING_RASTER,
                     'error': 'Error packaging layer: {}'.format(error_message)
-                 }
+                }
             )
             raise LayerPackagingException(error_message)
 
@@ -537,5 +548,6 @@ class LayerExporter(QObject):
             filenames=[dest_file],
             result=layer_export_result,
             error_message=error_message,
-            qgis_style_xml=self._get_original_style_xml(layer)
+            qgis_style_xml=self._get_original_style_xml(layer),
+            style=converted_style
         )
