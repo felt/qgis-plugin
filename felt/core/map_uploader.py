@@ -33,7 +33,8 @@ from qgis.core import (
     QgsTask,
     QgsFeedback,
     QgsBlockingNetworkRequest,
-    QgsReferencedRectangle
+    QgsReferencedRectangle,
+    QgsRasterLayer
 )
 from qgis.utils import iface
 
@@ -75,7 +76,7 @@ class MapUploaderTask(QgsTask):
                 project.transformContext()
             )
             self.layers = [
-                layer.clone() for layer in layers
+                MapUploaderTask.clone_layer(layer) for layer in layers
             ]
             self.unsupported_layer_details = {}
         else:
@@ -95,7 +96,8 @@ class MapUploaderTask(QgsTask):
             ]
 
             self.layers = [
-                layer.clone() for layer in visible_layers if
+                MapUploaderTask.clone_layer(layer) for layer in visible_layers
+                if
                 LayerExporter.can_export_layer(layer)[
                     0] == LayerSupport.Supported
             ]
@@ -136,6 +138,23 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+
+    @staticmethod
+    def clone_layer(layer: QgsMapLayer) -> QgsMapLayer:
+        """
+        Clones a layer
+        """
+        res = layer.clone()
+        if isinstance(layer, QgsRasterLayer):
+            res.setResamplingStage(layer.resamplingStage())
+            res.dataProvider().setZoomedInResamplingMethod(
+                layer.dataProvider().zoomedInResamplingMethod()
+            )
+            res.dataProvider().setZoomedOutResamplingMethod(
+                layer.dataProvider().zoomedOutResamplingMethod()
+            )
+
+        return res
 
     def set_workspace_id(self, workspace_id: Optional[str]):
         """

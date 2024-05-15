@@ -2,6 +2,7 @@
 QGIS to FSL conversion
 """
 
+import math
 from enum import (
     Enum,
     auto
@@ -11,13 +12,11 @@ from typing import (
     List,
     Optional
 )
-import math
 
 from qgis.PyQt.QtCore import (
     Qt,
 )
 from qgis.PyQt.QtGui import QColor
-
 from qgis.core import (
     NULL,
     QgsVectorLayer,
@@ -60,7 +59,9 @@ from qgis.core import (
     QgsRasterRenderer,
     QgsSingleBandPseudoColorRenderer,
     QgsPalettedRasterRenderer,
-    QgsSingleBandGrayRenderer
+    QgsSingleBandGrayRenderer,
+    QgsRasterPipe,
+    QgsRasterDataProvider
 )
 
 from .map_utils import MapUtils
@@ -1530,6 +1531,15 @@ class FslConverter:
         )
         if not fsl:
             return None
+
+        if (layer.resamplingStage() == QgsRasterPipe.ResamplingStage.Provider
+                and (layer.dataProvider().zoomedInResamplingMethod() !=
+                     QgsRasterDataProvider.ResamplingMethod.Nearest
+                     or layer.dataProvider().zoomedOutResamplingMethod() !=
+                     QgsRasterDataProvider.ResamplingMethod.Nearest)):
+            fsl['config']['rasterResampling'] = "linear"
+        else:
+            fsl['config']['rasterResampling'] = "nearest"
 
         if layer.hasScaleBasedVisibility():
             if layer.minimumScale():
