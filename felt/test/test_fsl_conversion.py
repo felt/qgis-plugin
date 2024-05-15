@@ -52,13 +52,16 @@ from qgis.core import (
     QgsGradientColorRamp,
     QgsPalettedRasterRenderer,
     QgsSingleBandGrayRenderer,
-    QgsContrastEnhancement
+    QgsContrastEnhancement,
+    QgsInvertedPolygonRenderer,
+    QgsVectorLayerSimpleLabeling
 )
 
 from .utilities import get_qgis_app
 from ..core import (
     FslConverter,
     ConversionContext,
+    LayerExporter
 )
 
 QGIS_APP = get_qgis_app()
@@ -1935,6 +1938,52 @@ class FslConversionTest(unittest.TestCase):
                        'maxZoom': 19,
                        'size': 1},
              'type': 'simple'}
+        )
+
+    @unittest.skipIf(Qgis.QGIS_VERSION_INT < 32400, 'QGIS too old')
+    def test_layer_to_fsl_with_labels_no_renderer(self):
+        """
+        Test conversion to Fsl when labels can be converted but not
+        renderer
+        """
+        context = ConversionContext()
+
+        f = QgsTextFormat()
+        font = QFont('Arial')
+        f.setFont(font)
+        f.setSize(13)
+        f.setSizeUnit(QgsUnitTypes.RenderPixels)
+        f.setColor(QColor(255, 0, 0))
+        f.setOpacity(0.3)
+
+        label_settings = QgsPalLayerSettings()
+        label_settings.setFormat(f)
+        label_settings.fieldName = 'my_field'
+        label_settings.isExpression = False
+
+        layer = QgsVectorLayer('Polygon', '', 'memory')
+        renderer = QgsInvertedPolygonRenderer()
+        layer.setRenderer(renderer)
+
+        layer.setLabelsEnabled(True)
+        layer.setLabeling(QgsVectorLayerSimpleLabeling(label_settings))
+
+        style = LayerExporter.representative_layer_style(layer)
+
+        self.assertEqual(
+            style.fsl,
+            {'config': {'labelAttribute': ['my_field']},
+             'label': {'color': 'rgba(255, 0, 0, 0.3)',
+                       'fontSize': 13,
+                       'fontStyle': 'normal',
+                       'fontWeight': 400,
+                       'haloColor': 'rgba(0, 0, 0, 0)',
+                       'haloWidth': 4,
+                       'letterSpacing': 0.0,
+                       'lineHeight': 1.0,
+                       'maxZoom': 24,
+                       'minZoom': 1},
+             'version': '2.1.1'}
         )
 
     def test_convert_singleband_pseudocolor(self):

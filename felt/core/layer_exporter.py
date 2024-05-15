@@ -225,7 +225,11 @@ class LayerExporter(QObject):
                     context
                 )
                 if label_def:
-                    LayerExporter.merge_dicts(fsl, label_def)
+                    if fsl:
+                        LayerExporter.merge_dicts(fsl, label_def)
+                    else:
+                        fsl = label_def
+
         elif isinstance(layer, QgsRasterLayer):
             fsl = FslConverter.raster_layer_to_fsl(
                 layer, context
