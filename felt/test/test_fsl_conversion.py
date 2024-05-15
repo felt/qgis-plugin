@@ -1539,6 +1539,41 @@ class FslConversionTest(unittest.TestCase):
              'type': 'categorical'}
         )
 
+    def test_categorized_no_stroke(self):
+        """
+        Test categorized renderer with no stroke
+        """
+        conversion_context = ConversionContext()
+
+        fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
+        fill.setStrokeStyle(Qt.NoPen)
+        fill_symbol = QgsFillSymbol()
+        fill_symbol.changeSymbolLayer(0, fill.clone())
+
+        fill_symbol2 = QgsFillSymbol()
+        fill.setColor(QColor(255, 0, 255))
+        fill_symbol2.changeSymbolLayer(0, fill.clone())
+
+        categories = [
+            QgsRendererCategory(1, fill_symbol.clone(), 'first cat'),
+            QgsRendererCategory(2, fill_symbol2.clone(), 'second cat')
+        ]
+
+        renderer = QgsCategorizedSymbolRenderer('my_field',
+                                                categories)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer,
+                                                conversion_context),
+            {'config': {'categories': ['1', '2'],
+                        'categoricalAttribute': 'my_field',
+                        'showOther': False},
+             'legend': {'displayName': {'1': 'first cat',
+                                        '2': 'second cat'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)'],
+                        'strokeColor': 'rgba(0, 0, 0, 0)'}],
+             'type': 'categorical'}
+        )
+
     def test_graduated_renderer(self):
         """
         Test converting graduated renderers

@@ -909,6 +909,8 @@ class FslConverter:
             if layer.strokeStyle() != Qt.SolidLine:
                 res['dashArray'] = FslConverter.convert_pen_style(
                     layer.strokeStyle())
+        else:
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
         # not supported:
         # - fill offset
