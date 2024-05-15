@@ -357,6 +357,8 @@ class MapUploaderTask(QgsTask):
         if self.isCanceled():
             return False
 
+        rate_limit_counter = 0
+
         for layer, details in to_upload.items():
             if self.isCanceled():
                 return False
@@ -374,6 +376,19 @@ class MapUploaderTask(QgsTask):
 
                 if reply.attribute(
                         QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                    rate_limit_counter += 1
+                    if rate_limit_counter > 3:
+                        self.error_string = 'Rate limit exceeded, cannot share map'
+                        Logger.instance().log_error_json(
+                            {
+                                'type': Logger.MAP_EXPORT,
+                                'error': 'Error preparing layer upload: {}'.format(
+                                    self.error_string)
+                            }
+                        )
+
+                        return False
+
                     self.status_changed.emit(
                         self.tr('Rate throttled -- waiting')
                     )
