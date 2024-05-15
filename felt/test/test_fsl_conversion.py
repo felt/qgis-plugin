@@ -1981,8 +1981,6 @@ class FslConversionTest(unittest.TestCase):
         Test conversion to Fsl when labels can be converted but not
         renderer
         """
-        context = ConversionContext()
-
         f = QgsTextFormat()
         font = QFont('Arial')
         f.setFont(font)
