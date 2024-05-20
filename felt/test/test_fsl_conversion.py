@@ -10,7 +10,6 @@ from qgis.PyQt.QtGui import (
     QColor,
     QFont
 )
-
 from qgis.core import (
     NULL,
     Qgis,
@@ -144,6 +143,8 @@ class FslConversionTest(unittest.TestCase):
               'lineCap': 'square',
               'lineJoin': 'bevel',
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'size': 1}]
         )
 
@@ -177,6 +178,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 11,
                 'lineCap': 'square',
                 'lineJoin': 'bevel',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -188,6 +191,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 3,
                 'lineCap': 'square',
                 'lineJoin': 'bevel',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -199,6 +204,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 3,
                 'lineCap': 'butt',
                 'lineJoin': 'bevel',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -210,6 +217,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 3,
                 'lineCap': 'round',
                 'lineJoin': 'bevel',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -221,6 +230,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 3,
                 'lineCap': 'round',
                 'lineJoin': 'round',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -232,6 +243,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 3,
                 'lineCap': 'round',
                 'lineJoin': 'miter',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -245,6 +258,8 @@ class FslConversionTest(unittest.TestCase):
                 'lineCap': 'round',
                 'lineJoin': 'miter',
                 'opacity': 0.5,
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -257,6 +272,8 @@ class FslConversionTest(unittest.TestCase):
                 'lineCap': 'round',
                 'lineJoin': 'miter',
                 'dashArray': [2.5, 2],
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -269,6 +286,8 @@ class FslConversionTest(unittest.TestCase):
                 'lineCap': 'round',
                 'lineJoin': 'miter',
                 'dashArray': [0.5, 1.3],
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -281,6 +300,8 @@ class FslConversionTest(unittest.TestCase):
                 'lineCap': 'round',
                 'lineJoin': 'miter',
                 'dashArray': [0.5, 1.3, 2.5, 1.3],
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -293,6 +314,8 @@ class FslConversionTest(unittest.TestCase):
                 'lineCap': 'round',
                 'lineJoin': 'miter',
                 'dashArray': [0.5, 1.3, 0.5, 1.3, 2.5, 1.3],
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -306,6 +329,8 @@ class FslConversionTest(unittest.TestCase):
               'dashArray': [0.5, 1.0, 1.5, 2.0],
               'lineCap': 'round',
               'lineJoin': 'miter',
+              'isClickable': False,
+              'isHoverable': False,
               'size': 3.0}]
         )
         line.setCustomDashPatternUnit(QgsUnitTypes.RenderMillimeters)
@@ -315,6 +340,8 @@ class FslConversionTest(unittest.TestCase):
               'dashArray': [1.8895, 3.779, 5.6685, 7.558],
               'lineCap': 'round',
               'lineJoin': 'miter',
+              'isClickable': False,
+              'isHoverable': False,
               'size': 3.0}]
         )
         line.setUseCustomDashPattern(False)
@@ -328,6 +355,8 @@ class FslConversionTest(unittest.TestCase):
                 'size': 1,
                 'lineCap': 'round',
                 'lineJoin': 'miter',
+                'isClickable': False,
+                'isHoverable': False,
             }]
         )
 
@@ -366,6 +395,8 @@ class FslConversionTest(unittest.TestCase):
               'dashArray': [2.5, 2],
               'lineJoin': 'bevel',
               'strokeColor': 'rgb(255, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 11}]
         )
         fill.setStrokeStyle(Qt.SolidLine)
@@ -378,6 +409,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(0, 255, 0)',
               'lineJoin': 'bevel',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 11}]
         )
 
@@ -387,6 +420,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(0, 255, 0)',
               'lineJoin': 'bevel',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
 
@@ -396,6 +431,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(0, 255, 0)',
               'lineJoin': 'round',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
 
@@ -405,6 +442,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(0, 255, 0)',
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
 
@@ -416,6 +455,8 @@ class FslConversionTest(unittest.TestCase):
               'lineJoin': 'miter',
               'opacity': 0.5,
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
 
@@ -426,6 +467,8 @@ class FslConversionTest(unittest.TestCase):
               'dashArray': [2.5, 2],
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
         self.assertEqual(
@@ -435,6 +478,8 @@ class FslConversionTest(unittest.TestCase):
               'dashArray': [2.5, 2],
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5,
               'strokeWidth': 3.0}]
         )
@@ -449,6 +494,8 @@ class FslConversionTest(unittest.TestCase):
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
         fill.setBrushStyle(Qt.SolidPattern)
@@ -460,6 +507,8 @@ class FslConversionTest(unittest.TestCase):
               'dashArray': [2.5, 2],
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5,
               'strokeWidth': 3.0}]
         )
@@ -485,7 +534,9 @@ class FslConversionTest(unittest.TestCase):
         fill.setColor(QColor(0, 255, 0))
         self.assertEqual(
             FslConverter.shapeburst_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(0, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(0, 255, 0)', 'isClickable': False,
+              'isHoverable': False,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         fill.setColor(QColor(0, 255, 0, 0))
@@ -497,14 +548,17 @@ class FslConversionTest(unittest.TestCase):
         fill.setColor2(QColor(255, 255, 0))
         self.assertEqual(
             FslConverter.shapeburst_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(255, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(255, 255, 0)', 'isClickable': False,
+              'isHoverable': False,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         self.assertEqual(
             FslConverter.shapeburst_fill_to_fsl(fill, conversion_context,
                                                 symbol_opacity=0.5),
             [{'color': 'rgb(255, 255, 0)',
-              'opacity': 0.5,
+              'opacity': 0.5, 'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -529,7 +583,10 @@ class FslConversionTest(unittest.TestCase):
         fill.setColor(QColor(0, 255, 0))
         self.assertEqual(
             FslConverter.gradient_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(0, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(0, 255, 0)',
+              'isClickable': False,
+              'isHoverable': False,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         fill.setColor(QColor(0, 255, 0, 0))
@@ -541,7 +598,10 @@ class FslConversionTest(unittest.TestCase):
         fill.setColor2(QColor(255, 255, 0))
         self.assertEqual(
             FslConverter.gradient_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(255, 255, 0)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(255, 255, 0)',
+              'isClickable': False,
+              'isHoverable': False,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         self.assertEqual(
@@ -549,6 +609,8 @@ class FslConversionTest(unittest.TestCase):
                                               symbol_opacity=0.5),
             [{'color': 'rgb(255, 255, 0)',
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -584,7 +646,10 @@ class FslConversionTest(unittest.TestCase):
         fill.setSubSymbol(line.clone())
         self.assertEqual(
             FslConverter.line_pattern_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(255, 0, 255)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(255, 0, 255)',
+              'isClickable': False,
+              'isHoverable': False,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
         self.assertEqual(
@@ -592,6 +657,8 @@ class FslConversionTest(unittest.TestCase):
                                                   symbol_opacity=0.5),
             [{'color': 'rgb(255, 0, 255)',
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -612,7 +679,11 @@ class FslConversionTest(unittest.TestCase):
         fill.setSvgFillColor(QColor(255, 0, 255))
         self.assertEqual(
             FslConverter.svg_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgb(255, 0, 255)', 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+            [{'color': 'rgb(255, 0, 255)',
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
+              }]
         )
 
         self.assertEqual(
@@ -620,6 +691,8 @@ class FslConversionTest(unittest.TestCase):
                                          symbol_opacity=0.5),
             [{'color': 'rgb(255, 0, 255)',
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -652,6 +725,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 1}]
         )
 
@@ -662,6 +737,8 @@ class FslConversionTest(unittest.TestCase):
               'size': 9.5,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 1}]
         )
 
@@ -675,6 +752,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'strokeColor': 'rgb(255, 100, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3}]
         )
 
@@ -686,6 +765,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 24,
               'strokeColor': 'rgb(255, 100, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3}]
         )
 
@@ -718,6 +799,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 1}]
         )
 
@@ -728,6 +811,8 @@ class FslConversionTest(unittest.TestCase):
               'size': 9.5,
               'opacity': 0.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 1}]
         )
 
@@ -741,6 +826,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'strokeColor': 'rgb(255, 100, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3}]
         )
 
@@ -754,6 +841,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 24,
               'strokeColor': 'rgb(255, 100, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3}]
         )
 
@@ -763,6 +852,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 34.5,
               'strokeColor': 'rgb(255, 100, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3}]
         )
 
@@ -789,6 +880,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 1.0}]
         )
 
@@ -798,6 +891,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1.0}]
         )
@@ -810,6 +905,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.svg_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -821,6 +918,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.svg_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 24,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -847,6 +946,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.font_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
         )
@@ -857,6 +958,8 @@ class FslConversionTest(unittest.TestCase):
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)',
               'strokeWidth': 1}]
         )
@@ -869,6 +972,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.font_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 9.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -880,6 +985,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.font_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 24,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(255, 100, 0)',
               'strokeWidth': 3}]
         )
@@ -920,6 +1027,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
               'size': 4,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -930,6 +1039,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
               'size': 4,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 11}]
         )
@@ -941,6 +1052,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
               'size': 4,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 3.0}]
         )
@@ -952,6 +1065,8 @@ class FslConversionTest(unittest.TestCase):
               'size': 4,
               'strokeColor': 'rgb(35, 35, 35)',
               'opacity': 0.5,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeWidth': 3.0}]
         )
 
@@ -961,6 +1076,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.filled_marker_to_fsl(marker, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
               'size': 2,
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgb(35, 35, 35)',
               'strokeWidth': 3.0}]
         )
@@ -1001,6 +1118,8 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.point_pattern_fill_to_fsl(fill, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -1008,6 +1127,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.point_pattern_fill_to_fsl(fill, conversion_context,
                                                    symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -1047,14 +1168,20 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.centroid_fill_to_fsl(fill, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
-              'strokeColor': 'rgba(0, 0, 0, 0)'}]
+              'strokeColor': 'rgba(0, 0, 0, 0)',
+              'isClickable': False,
+              'isHoverable': False,
+              }]
         )
 
         self.assertEqual(
             FslConverter.centroid_fill_to_fsl(fill, conversion_context,
                                               symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
-              'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
+              'isClickable': False,
+              'isHoverable': False,
+              'opacity': 0.5,
+              'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
     def test_random_marker_fill_to_fsl(self):
@@ -1093,6 +1220,8 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.random_marker_fill_to_fsl(fill, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -1100,6 +1229,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.random_marker_fill_to_fsl(fill, conversion_context,
                                                    symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5, 'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
@@ -1140,6 +1271,8 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.marker_line_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'size': 2}]
         )
 
@@ -1148,6 +1281,8 @@ class FslConversionTest(unittest.TestCase):
                                             symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 2,
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5}]
         )
 
@@ -1159,6 +1294,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.marker_line_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 8,
+              'isClickable': False,
+              'isHoverable': False,
               'dashArray': [8.0, 5.0]
               }]
         )
@@ -1200,6 +1337,8 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.hashed_line_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'size': 1}]
         )
 
@@ -1208,6 +1347,8 @@ class FslConversionTest(unittest.TestCase):
                                             symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 1,
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5}]
         )
 
@@ -1222,6 +1363,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.hashed_line_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
               'size': 11,
+              'isClickable': False,
+              'isHoverable': False,
               'dashArray': [11.0, 2.0]
               }]
         )
@@ -1259,6 +1402,8 @@ class FslConversionTest(unittest.TestCase):
         self.assertEqual(
             FslConverter.arrow_to_fsl(line, conversion_context),
             [{'color': 'rgb(120, 130, 140)',
+              'isClickable': False,
+              'isHoverable': False,
               'size': 18}]
         )
 
@@ -1267,6 +1412,8 @@ class FslConversionTest(unittest.TestCase):
                                       symbol_opacity=0.5),
             [{'color': 'rgb(120, 130, 140)',
               'size': 18,
+              'isClickable': False,
+              'isHoverable': False,
               'opacity': 0.5}]
         )
 
@@ -1287,6 +1434,8 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': 'rgb(255, 0, 0)',
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -1299,6 +1448,8 @@ class FslConversionTest(unittest.TestCase):
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
                        'opacity': 0.5,
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -1314,10 +1465,14 @@ class FslConversionTest(unittest.TestCase):
              'style': [{'color': 'rgb(255, 0, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 1},
                        {'color': 'rgb(255, 255, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 38}],
              'type': 'simple'}
         )
@@ -1399,7 +1554,9 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
             {'legend': {},
              'style': {'color': 'rgba(0, 0, 0, 0)',
-                       'strokeColor': 'rgba(0, 0, 0, 0)'},
+                       'strokeColor': 'rgba(0, 0, 0, 0)',
+                       'isClickable': False,
+                       'isHoverable': False, },
              'type': 'simple'}
         )
 
@@ -1415,6 +1572,8 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': 'rgb(255, 0, 0)',
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -1427,6 +1586,8 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': 'rgb(255, 0, 0)',
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple',
              'filters': ['Cabin Crew', 'in', [1, 2, 3]]
@@ -1441,6 +1602,8 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': 'rgb(255, 0, 0)',
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -1456,6 +1619,8 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
             {'legend': {},
              'style': {'color': 'rgba(0, 0, 0, 0)',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'strokeColor': 'rgba(0, 0, 0, 0)'},
              'type': 'simple'}
         )
@@ -1504,10 +1669,14 @@ class FslConversionTest(unittest.TestCase):
                                   'rgb(0, 255, 255)'],
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': [1, 23, 26]},
                        {'color': 'rgb(255, 255, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 19}],
              'type': 'categorical'}
         )
@@ -1526,11 +1695,15 @@ class FslConversionTest(unittest.TestCase):
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'opacity': 0.5,
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': [1, 23, 26]},
                        {'color': 'rgb(255, 255, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'opacity': 0.5,
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 19}],
              'type': 'categorical'}
         )
@@ -1558,10 +1731,14 @@ class FslConversionTest(unittest.TestCase):
                                   'rgb(100, 100, 100)'],
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': [1, 23, 26, 11]},
                        {'color': 'rgb(255, 255, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 19}],
              'type': 'categorical'}
         )
@@ -1596,6 +1773,8 @@ class FslConversionTest(unittest.TestCase):
                         'dashArray': [0.5, 1.3],
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': [1, 23]}],
              'type': 'categorical'}
         )
@@ -1631,7 +1810,10 @@ class FslConversionTest(unittest.TestCase):
              'legend': {'displayName': {'1': 'first cat',
                                         '2': 'second cat'}},
              'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)'],
-                        'strokeColor': 'rgba(0, 0, 0, 0)'}],
+                        'strokeColor': 'rgba(0, 0, 0, 0)',
+                        'isClickable': False,
+                        'isHoverable': False,
+                        }],
              'type': 'categorical'}
         )
 
@@ -1678,10 +1860,14 @@ class FslConversionTest(unittest.TestCase):
                                   'rgb(0, 255, 255)'],
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': [1, 23, 26]},
                        {'color': 'rgb(255, 255, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 19}],
              'type': 'numeric'}
         )
@@ -1699,11 +1885,15 @@ class FslConversionTest(unittest.TestCase):
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'opacity': 0.5,
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': [1, 23, 26]},
                        {'color': 'rgb(255, 255, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'opacity': 0.5,
+                        'isClickable': False,
+                        'isHoverable': False,
                         'size': 19}],
              'type': 'numeric'}
         )
@@ -1975,6 +2165,8 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': 'rgb(255, 0, 0)',
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -1987,6 +2179,8 @@ class FslConversionTest(unittest.TestCase):
              'style': {'color': 'rgb(255, 0, 0)',
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -2000,6 +2194,8 @@ class FslConversionTest(unittest.TestCase):
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
                        'opacity': 0.5,
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -2015,6 +2211,8 @@ class FslConversionTest(unittest.TestCase):
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
                        'minZoom': 15,
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -2027,6 +2225,8 @@ class FslConversionTest(unittest.TestCase):
                        'lineJoin': 'bevel',
                        'minZoom': 15,
                        'maxZoom': 19,
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -2038,6 +2238,8 @@ class FslConversionTest(unittest.TestCase):
                        'lineCap': 'square',
                        'lineJoin': 'bevel',
                        'maxZoom': 19,
+                       'isClickable': False,
+                       'isHoverable': False,
                        'size': 1},
              'type': 'simple'}
         )
@@ -2192,16 +2394,16 @@ class FslConversionTest(unittest.TestCase):
         """
         context = ConversionContext()
         class_data = [
-                QgsPalettedRasterRenderer.Class(
-                    120, QColor(0, 255, 0), 'lowest'
-                ),
-                QgsPalettedRasterRenderer.Class(
-                    125, QColor(255, 255, 0), 'mid'
-                ),
-                QgsPalettedRasterRenderer.Class(
-                    130, QColor(0, 255, 255), 'highest'
-                )
-            ]
+            QgsPalettedRasterRenderer.Class(
+                120, QColor(0, 255, 0), 'lowest'
+            ),
+            QgsPalettedRasterRenderer.Class(
+                125, QColor(255, 255, 0), 'mid'
+            ),
+            QgsPalettedRasterRenderer.Class(
+                130, QColor(0, 255, 255), 'highest'
+            )
+        ]
         renderer = QgsPalettedRasterRenderer(None,
                                              bandNumber=1,
                                              classes=class_data)

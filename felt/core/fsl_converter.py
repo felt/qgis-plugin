@@ -92,6 +92,17 @@ class FslConverter:
     NULL_COLOR = "rgba(0, 0, 0, 0)"
 
     @staticmethod
+    def create_symbol_dict() -> Dict[str, object]:
+        """
+        Creates a default symbol dict, to use as a starting point
+        for symbol definitions
+        """
+        return {
+            'isClickable': False,
+            'isHoverable': False
+        }
+
+    @staticmethod
     def expression_to_filter(
             expression: str,
             context: ConversionContext,
@@ -296,7 +307,9 @@ class FslConverter:
             return {
                 "style": {
                     "color": FslConverter.NULL_COLOR,
-                    "strokeColor": FslConverter.NULL_COLOR
+                    "strokeColor": FslConverter.NULL_COLOR,
+                    "isClickable": False,
+                    "isHoverable": False
                 },
                 "legend": {},
                 "type": "simple"
@@ -342,7 +355,9 @@ class FslConverter:
         return {
             "style": {
                 "color": FslConverter.NULL_COLOR,
-                "strokeColor": FslConverter.NULL_COLOR
+                "strokeColor": FslConverter.NULL_COLOR,
+                "isClickable": False,
+                "isHoverable": False
             },
             "legend": {},
             "type": "simple"
@@ -701,12 +716,11 @@ class FslConverter:
             layer.widthUnit(),
             context)
 
-        res = {
-            'color': color_str,
-            'size': stroke_width,
-            'lineCap': FslConverter.convert_cap_style(layer.penCapStyle()),
-            'lineJoin': FslConverter.convert_join_style(layer.penJoinStyle())
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = stroke_width
+        res['lineCap'] = FslConverter.convert_cap_style(layer.penCapStyle())
+        res['lineJoin'] = FslConverter.convert_join_style(layer.penJoinStyle())
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -751,9 +765,8 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
 
             if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
                 interval_pixels = FslConverter.convert_to_pixels(
@@ -804,9 +817,8 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
 
             if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
                 interval_pixels = FslConverter.convert_to_pixels(
@@ -865,11 +877,9 @@ class FslConverter:
                               layer.arrowStartWidth(),
                               layer.arrowStartWidthUnit(),
                               context))
-
-            res = {
-                'color': color_str,
-                'size': size
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['size'] = size
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -899,9 +909,8 @@ class FslConverter:
             layer.color(), context
         ) if not has_invisible_fill else FslConverter.NULL_COLOR
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -952,14 +961,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context) if has_stroke
-            else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context) if has_stroke
+                              else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1001,14 +1009,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context)
-            if has_stroke else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context)
+                              if has_stroke else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1050,14 +1057,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context)
-            if has_stroke else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context)
+                              if has_stroke else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1098,14 +1104,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context)
-            if has_stroke else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context)
+                              if has_stroke else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1142,11 +1147,10 @@ class FslConverter:
             size = FslConverter.convert_to_pixels(layer.size(),
                                                   layer.sizeUnit(), context)
 
-            res = {
-                'size': size / 2,  # FSL size is radius, not diameter
-                'color': color_str or FslConverter.NULL_COLOR,
-                'strokeColor': stroke_color_str or FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['size'] = size / 2  # FSL size is radius, not diameter
+            res['color'] = color_str or FslConverter.NULL_COLOR
+            res['strokeColor'] = stroke_color_str or FslConverter.NULL_COLOR
             if stroke_width is not None:
                 res['strokeWidth'] = stroke_width
 
@@ -1183,9 +1187,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1214,9 +1217,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1254,9 +1256,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1290,10 +1291,9 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-                'strokeColor': FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -1327,10 +1327,9 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-                'strokeColor': FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -1365,10 +1364,9 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-                'strokeColor': FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -1397,9 +1395,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
