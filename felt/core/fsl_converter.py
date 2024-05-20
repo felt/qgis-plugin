@@ -1426,6 +1426,10 @@ class FslConverter:
         converted_format = FslConverter.text_format_to_fsl(
             settings.format(), context
         )
+        # disable clicks
+        converted_format['isClickable'] = False
+        converted_format['isHoverable'] = False
+
         if settings.autoWrapLength > 0:
             converted_format['maxLineChars'] = settings.autoWrapLength
         if settings.scaleVisibility:

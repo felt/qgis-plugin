@@ -1911,7 +1911,9 @@ class FslConversionTest(unittest.TestCase):
                        'letterSpacing': 0.0,
                        'lineHeight': 1.0,
                        'maxZoom': 24,
-                       'minZoom': 1}}
+                       'minZoom': 1,
+                       'isClickable': False,
+                       'isHoverable': False}}
         )
 
         # with line wrap
@@ -1929,7 +1931,9 @@ class FslConversionTest(unittest.TestCase):
                        'lineHeight': 1.0,
                        'maxLineChars': 15,
                        'maxZoom': 24,
-                       'minZoom': 1}}
+                       'minZoom': 1,
+                       'isClickable': False,
+                       'isHoverable': False}}
         )
         label_settings.autoWrapLength = 0
 
@@ -1949,7 +1953,9 @@ class FslConversionTest(unittest.TestCase):
                        'letterSpacing': 0.0,
                        'lineHeight': 1.0,
                        'maxZoom': 14,
-                       'minZoom': 6}}
+                       'minZoom': 6,
+                       'isClickable': False,
+                       'isHoverable': False}}
         )
 
     def test_layer_to_fsl(self):
@@ -2076,7 +2082,9 @@ class FslConversionTest(unittest.TestCase):
                        'letterSpacing': 0.0,
                        'lineHeight': 1.0,
                        'maxZoom': 24,
-                       'minZoom': 1},
+                       'minZoom': 1,
+                       'isClickable': False,
+                       'isHoverable': False},
              'version': '2.1.1'}
         )
 
