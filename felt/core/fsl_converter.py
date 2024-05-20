@@ -890,7 +890,7 @@ class FslConverter:
 
         color_str = FslConverter.color_to_fsl(
             layer.color(), context
-        )
+        ) if not has_invisible_fill else FslConverter.NULL_COLOR
 
         res = {
             'color': color_str,

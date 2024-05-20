@@ -354,13 +354,15 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.simple_fill_to_fsl(fill, conversion_context)
         )
 
+        fill.setColor(QColor(0, 255, 0))
+
         # transparent color with stroke
         fill.setStrokeStyle(Qt.DashLine)
         fill.setStrokeWidth(3)
         fill.setStrokeColor(QColor(255, 0, 0))
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context),
-            [{'color': 'rgba(0, 255, 0, 0.0)',
+            [{'color': 'rgb(0, 255, 0)',
               'dashArray': [2.5, 2],
               'lineJoin': 'bevel',
               'strokeColor': 'rgb(255, 0, 0)',
@@ -430,6 +432,31 @@ class FslConversionTest(unittest.TestCase):
             FslConverter.simple_fill_to_fsl(fill, conversion_context,
                                             symbol_opacity=0.5),
             [{'color': 'rgb(0, 255, 0)',
+              'dashArray': [2.5, 2],
+              'lineJoin': 'miter',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'opacity': 0.5,
+              'strokeWidth': 3.0}]
+        )
+
+        # outline, no fill
+        fill.setBrushStyle(Qt.NoBrush)
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context,
+                                            symbol_opacity=0.5),
+            [{'color': 'rgba(0, 0, 0, 0)',
+              'dashArray': [2.5, 2],
+              'lineJoin': 'miter',
+              'strokeColor': 'rgb(35, 35, 35)',
+              'opacity': 0.5,
+              'strokeWidth': 3.0}]
+        )
+        fill.setBrushStyle(Qt.SolidPattern)
+        fill.setFillColor(QColor(255, 255, 0, 0))
+        self.assertEqual(
+            FslConverter.simple_fill_to_fsl(fill, conversion_context,
+                                            symbol_opacity=0.5),
+            [{'color': 'rgba(0, 0, 0, 0)',
               'dashArray': [2.5, 2],
               'lineJoin': 'miter',
               'strokeColor': 'rgb(35, 35, 35)',
