@@ -2387,7 +2387,6 @@ class FslConversionTest(unittest.TestCase):
              'type': 'numeric'}
         )
 
-    @unittest.skip('Broken API, disabled for now')
     def test_convert_paletted_raster(self):
         """
         Convert raster paletted renderer
