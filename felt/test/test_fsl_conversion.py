@@ -1566,6 +1566,40 @@ class FslConversionTest(unittest.TestCase):
              'type': 'categorical'}
         )
 
+        # unsupported -- dash array is limited to two elements for
+        # non-single symbol renderers
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line.setPenStyle(Qt.PenStyle.DashDotDotLine)
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+
+        line_symbol2 = QgsLineSymbol()
+        line.setColor(QColor(255, 0, 255))
+        line.setWidth(6)
+        line_symbol2.changeSymbolLayer(0, line.clone())
+
+        categories = [
+            QgsRendererCategory(1, line_symbol.clone(), 'first cat'),
+            QgsRendererCategory(2, line_symbol2.clone(), 'second cat')
+        ]
+
+        renderer = QgsCategorizedSymbolRenderer('my_field',
+                                                categories)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'config': {'categoricalAttribute': 'my_field',
+                        'categories': ['1', '2'],
+                        'showOther': False},
+             'legend': {'displayName': {'1': 'first cat', '2': 'second cat'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)'],
+                        'dashArray': [0.5, 1.3],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': [1, 23]}],
+             'type': 'categorical'}
+        )
+
     def test_categorized_no_stroke(self):
         """
         Test categorized renderer with no stroke

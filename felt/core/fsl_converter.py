@@ -382,7 +382,14 @@ class FslConverter:
                     else:
                         value.append(value[0])
 
-        return FslConverter.simplify_style(result)
+        res = FslConverter.simplify_style(result)
+
+        for symbol in res:
+            if 'dashArray' in symbol and len(symbol['dashArray']) > 2:
+                # dash array limited to two values for varying styles
+                symbol['dashArray'] = symbol['dashArray'][:2]
+
+        return res
 
     @staticmethod
     def simplify_style(style: List[Dict[str, object]]) \
