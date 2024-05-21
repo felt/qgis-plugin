@@ -1540,16 +1540,18 @@ class FslConverter:
         if not fsl:
             return None
 
-        is_early_resampling = (layer.resamplingStage() ==
-                               QgsRasterPipe.ResamplingStage.Provider)
-        if (is_early_resampling and
-                (layer.dataProvider().zoomedInResamplingMethod() !=
-                 QgsRasterDataProvider.ResamplingMethod.Nearest or
-                 layer.dataProvider().zoomedOutResamplingMethod() !=
-                 QgsRasterDataProvider.ResamplingMethod.Nearest)):
-            fsl['config']['rasterResampling'] = "linear"
-        else:
-            fsl['config']['rasterResampling'] = "nearest"
+        # resampling only applies to numeric rasters
+        if fsl.get('type') == 'numeric':
+            is_early_resampling = (layer.resamplingStage() ==
+                                   QgsRasterPipe.ResamplingStage.Provider)
+            if (is_early_resampling and
+                    (layer.dataProvider().zoomedInResamplingMethod() !=
+                     QgsRasterDataProvider.ResamplingMethod.Nearest or
+                     layer.dataProvider().zoomedOutResamplingMethod() !=
+                     QgsRasterDataProvider.ResamplingMethod.Nearest)):
+                fsl['config']['rasterResampling'] = "linear"
+            else:
+                fsl['config']['rasterResampling'] = "nearest"
 
         if layer.hasScaleBasedVisibility():
             if layer.minimumScale():
