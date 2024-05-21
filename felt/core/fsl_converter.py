@@ -61,7 +61,8 @@ from qgis.core import (
     QgsPalettedRasterRenderer,
     QgsSingleBandGrayRenderer,
     QgsRasterPipe,
-    QgsRasterDataProvider
+    QgsRasterDataProvider,
+    QgsColorRampShader
 )
 
 from .map_utils import MapUtils
@@ -90,6 +91,7 @@ class ConversionContext:
 
 class FslConverter:
     NULL_COLOR = "rgba(0, 0, 0, 0)"
+    COLOR_RAMP_INTERPOLATION_STEPS = 30
 
     @staticmethod
     def create_symbol_dict() -> Dict[str, object]:
@@ -1601,6 +1603,30 @@ class FslConverter:
 
         shader = renderer.shader()
         shader_function = shader.rasterShaderFunction()
+        if shader_function.colorRampType() == QgsColorRampShader.Discrete:
+            return FslConverter.discrete_pseudocolor_renderer_to_fsl(
+                renderer, context, opacity
+            )
+        elif shader_function.colorRampType() == QgsColorRampShader.Interpolated:
+            return FslConverter.continuous_pseudocolor_renderer_to_fsl(
+                renderer, context, opacity
+            )
+
+        return FslConverter.exact_pseudocolor_renderer_to_fsl(
+            renderer, context, opacity
+        )
+
+    @staticmethod
+    def discrete_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ):
+        """
+        Converts a discrete singleband pseudocolor renderer to FSL
+        """
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
         steps = [shader_function.minimumValue()]
         colors = []
         labels = {}
@@ -1611,6 +1637,92 @@ class FslConverter:
                 steps.append(item.value)
             colors.append(item.color.name())
             labels[str(i)] = item.label
+        return {
+            "config": {
+                "band": renderer.band(),
+                "steps": steps
+            },
+            "legend": {
+                "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "numeric"
+        }
+
+    @staticmethod
+    def exact_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ):
+        """
+        Converts an exact singleband pseudocolor renderer to FSL
+        """
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
+
+        categories = []
+        colors = []
+        labels = {}
+        for i, item in enumerate(shader_function.colorRampItemList()):
+            if math.isinf(item.value):
+                continue
+
+            categories.append(str(item.value))
+            colors.append(item.color.name())
+            labels[str(i)] = item.label
+
+        return {
+            "config": {
+                "band": renderer.band(),
+                "categories": categories
+            },
+            "legend": {
+                "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "categorical"
+        }
+
+    @staticmethod
+    def continuous_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ):
+        """
+        Converts a continuous singleband pseudocolor renderer to FSL
+        """
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
+
+        min_value = shader_function.minimumValue()
+        max_value = shader_function.maximumValue()
+
+        # build 30 linear color steps between min and max value
+        steps = [shader_function.minimumValue()]
+        colors = []
+        labels = {}
+        for i in range(FslConverter.COLOR_RAMP_INTERPOLATION_STEPS):
+            val = (i * (max_value - min_value)
+                   / FslConverter.COLOR_RAMP_INTERPOLATION_STEPS + min_value)
+            ok, red, green, blue, alpha = shader_function.shade(val)
+            if ok:
+                steps.append(val)
+                colors.append(FslConverter.color_to_fsl(
+                    QColor(red, green, blue, alpha), context, opacity))
+                labels[str(i)] = str(round(val, 3))
+
         return {
             "config": {
                 "band": renderer.band(),

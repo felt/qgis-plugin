@@ -2290,9 +2290,245 @@ class FslConversionTest(unittest.TestCase):
              'version': '2.1.1'}
         )
 
-    def test_convert_singleband_pseudocolor(self):
+    def test_convert_continuous_singleband_pseudocolor(self):
         """
-        Convert singleband pseudocolor renderer
+        Convert continuous singleband pseudocolor renderer
+        """
+        context = ConversionContext()
+        gradient = QgsGradientColorRamp(
+            QColor(255, 0, 0),
+            QColor(0, 255, 0)
+        )
+        color_ramp_shader = QgsColorRampShader(110, 140)
+        color_ramp_shader.setSourceColorRamp(
+            gradient.clone()
+        )
+        color_ramp_shader.setColorRampItemList(
+            [
+                QgsColorRampShader.ColorRampItem(
+                    120, QColor(0, 255, 0), 'lowest'
+                ),
+                QgsColorRampShader.ColorRampItem(
+                    125, QColor(255, 255, 0), 'mid'
+                ),
+                QgsColorRampShader.ColorRampItem(
+                    130, QColor(0, 255, 255), 'highest'
+                )
+            ]
+        )
+        renderer = QgsSingleBandPseudoColorRenderer(None,
+                                                    band=1)
+        shader = QgsRasterShader()
+        shader.setRasterShaderFunction(QgsColorRampShader(color_ramp_shader))
+        renderer.setShader(shader)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 1,
+                        'steps': [110.0,
+                                  110.0,
+                                  111.0,
+                                  112.0,
+                                  113.0,
+                                  114.0,
+                                  115.0,
+                                  116.0,
+                                  117.0,
+                                  118.0,
+                                  119.0,
+                                  120.0,
+                                  121.0,
+                                  122.0,
+                                  123.0,
+                                  124.0,
+                                  125.0,
+                                  126.0,
+                                  127.0,
+                                  128.0,
+                                  129.0,
+                                  130.0,
+                                  131.0,
+                                  132.0,
+                                  133.0,
+                                  134.0,
+                                  135.0,
+                                  136.0,
+                                  137.0,
+                                  138.0,
+                                  139.0]},
+             'legend': {'displayName': {'0': '110.0',
+                                        '1': '111.0',
+                                        '10': '120.0',
+                                        '11': '121.0',
+                                        '12': '122.0',
+                                        '13': '123.0',
+                                        '14': '124.0',
+                                        '15': '125.0',
+                                        '16': '126.0',
+                                        '17': '127.0',
+                                        '18': '128.0',
+                                        '19': '129.0',
+                                        '2': '112.0',
+                                        '20': '130.0',
+                                        '21': '131.0',
+                                        '22': '132.0',
+                                        '23': '133.0',
+                                        '24': '134.0',
+                                        '25': '135.0',
+                                        '26': '136.0',
+                                        '27': '137.0',
+                                        '28': '138.0',
+                                        '29': '139.0',
+                                        '3': '113.0',
+                                        '4': '114.0',
+                                        '5': '115.0',
+                                        '6': '116.0',
+                                        '7': '117.0',
+                                        '8': '118.0',
+                                        '9': '119.0'}},
+             'style': {'color': ['rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(51, 255, 0)',
+                                 'rgb(102, 255, 0)',
+                                 'rgb(153, 255, 0)',
+                                 'rgb(204, 255, 0)',
+                                 'rgb(255, 255, 0)',
+                                 'rgb(204, 255, 51)',
+                                 'rgb(153, 255, 102)',
+                                 'rgb(102, 255, 153)',
+                                 'rgb(51, 255, 204)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+        renderer = QgsSingleBandPseudoColorRenderer(None,
+                                                    band=2)
+        shader = QgsRasterShader()
+        shader.setRasterShaderFunction(QgsColorRampShader(color_ramp_shader))
+        renderer.setShader(shader)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 2,
+                        'steps': [110.0,
+                                  110.0,
+                                  111.0,
+                                  112.0,
+                                  113.0,
+                                  114.0,
+                                  115.0,
+                                  116.0,
+                                  117.0,
+                                  118.0,
+                                  119.0,
+                                  120.0,
+                                  121.0,
+                                  122.0,
+                                  123.0,
+                                  124.0,
+                                  125.0,
+                                  126.0,
+                                  127.0,
+                                  128.0,
+                                  129.0,
+                                  130.0,
+                                  131.0,
+                                  132.0,
+                                  133.0,
+                                  134.0,
+                                  135.0,
+                                  136.0,
+                                  137.0,
+                                  138.0,
+                                  139.0]},
+             'legend': {'displayName': {'0': '110.0',
+                                        '1': '111.0',
+                                        '10': '120.0',
+                                        '11': '121.0',
+                                        '12': '122.0',
+                                        '13': '123.0',
+                                        '14': '124.0',
+                                        '15': '125.0',
+                                        '16': '126.0',
+                                        '17': '127.0',
+                                        '18': '128.0',
+                                        '19': '129.0',
+                                        '2': '112.0',
+                                        '20': '130.0',
+                                        '21': '131.0',
+                                        '22': '132.0',
+                                        '23': '133.0',
+                                        '24': '134.0',
+                                        '25': '135.0',
+                                        '26': '136.0',
+                                        '27': '137.0',
+                                        '28': '138.0',
+                                        '29': '139.0',
+                                        '3': '113.0',
+                                        '4': '114.0',
+                                        '5': '115.0',
+                                        '6': '116.0',
+                                        '7': '117.0',
+                                        '8': '118.0',
+                                        '9': '119.0'}},
+             'style': {'color': ['rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(0, 255, 0)',
+                                 'rgb(51, 255, 0)',
+                                 'rgb(102, 255, 0)',
+                                 'rgb(153, 255, 0)',
+                                 'rgb(204, 255, 0)',
+                                 'rgb(255, 255, 0)',
+                                 'rgb(204, 255, 51)',
+                                 'rgb(153, 255, 102)',
+                                 'rgb(102, 255, 153)',
+                                 'rgb(51, 255, 204)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)',
+                                 'rgb(0, 255, 255)'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'numeric'}
+        )
+
+    def test_convert_discrete_singleband_pseudocolor(self):
+        """
+        Convert discrete singleband pseudocolor renderer
         """
         context = ConversionContext()
         gradient = QgsGradientColorRamp(
@@ -2300,6 +2536,7 @@ class FslConversionTest(unittest.TestCase):
             QColor(0, 255, 0)
         )
         color_ramp_shader = QgsColorRampShader(50, 200)
+        color_ramp_shader.setColorRampType(QgsColorRampShader.Discrete)
         color_ramp_shader.setSourceColorRamp(
             gradient.clone()
         )
@@ -2350,6 +2587,67 @@ class FslConversionTest(unittest.TestCase):
                        'isSandwiched': False,
                        'opacity': 1},
              'type': 'numeric'}
+        )
+
+    def test_convert_exact_singleband_pseudocolor(self):
+        """
+        Convert exact singleband pseudocolor renderer
+        """
+        context = ConversionContext()
+        gradient = QgsGradientColorRamp(
+            QColor(255, 0, 0),
+            QColor(0, 255, 0)
+        )
+        color_ramp_shader = QgsColorRampShader(50, 200)
+        color_ramp_shader.setColorRampType(QgsColorRampShader.Exact)
+        color_ramp_shader.setSourceColorRamp(
+            gradient.clone()
+        )
+        color_ramp_shader.setColorRampItemList(
+            [
+                QgsColorRampShader.ColorRampItem(
+                    120, QColor(0, 255, 0), 'lowest'
+                ),
+                QgsColorRampShader.ColorRampItem(
+                    125, QColor(255, 255, 0), 'mid'
+                ),
+                QgsColorRampShader.ColorRampItem(
+                    130, QColor(0, 255, 255), 'highest'
+                )
+            ]
+        )
+        renderer = QgsSingleBandPseudoColorRenderer(None,
+                                                    band=1)
+        shader = QgsRasterShader()
+        shader.setRasterShaderFunction(QgsColorRampShader(color_ramp_shader))
+        renderer.setShader(shader)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 1, 'categories': ['120.0', '125.0', '130.0']},
+             'legend': {
+                 'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
+             'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'categorical'}
+        )
+
+        renderer = QgsSingleBandPseudoColorRenderer(None,
+                                                    band=2)
+        shader = QgsRasterShader()
+        shader.setRasterShaderFunction(QgsColorRampShader(color_ramp_shader))
+        renderer.setShader(shader)
+
+        self.assertEqual(FslConverter.raster_renderer_to_fsl(
+            renderer, context),
+            {'config': {'band': 2, 'categories': ['120.0', '125.0', '130.0']},
+             'legend': {
+                 'displayName': {'0': 'lowest', '1': 'mid', '2': 'highest'}},
+             'style': {'color': ['#00ff00', '#ffff00', '#00ffff'],
+                       'isSandwiched': False,
+                       'opacity': 1},
+             'type': 'categorical'}
         )
 
     def test_convert_singleband_gray_renderer(self):
