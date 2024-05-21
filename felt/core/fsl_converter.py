@@ -233,8 +233,8 @@ class FslConverter:
                 if isinstance(fsl['style'], list):
                     for style in fsl['style']:
                         style['maxZoom'] = (
-                        MapUtils.map_scale_to_leaflet_tile_zoom(
-                            layer.maximumScale()))
+                            MapUtils.map_scale_to_leaflet_tile_zoom(
+                                layer.maximumScale()))
                 else:
                     fsl['style']['maxZoom'] = (
                         MapUtils.map_scale_to_leaflet_tile_zoom(
