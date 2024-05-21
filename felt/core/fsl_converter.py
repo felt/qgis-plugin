@@ -61,7 +61,8 @@ from qgis.core import (
     QgsPalettedRasterRenderer,
     QgsSingleBandGrayRenderer,
     QgsRasterPipe,
-    QgsRasterDataProvider
+    QgsRasterDataProvider,
+    QgsColorRampShader
 )
 
 from .map_utils import MapUtils
@@ -90,6 +91,18 @@ class ConversionContext:
 
 class FslConverter:
     NULL_COLOR = "rgba(0, 0, 0, 0)"
+    COLOR_RAMP_INTERPOLATION_STEPS = 30
+
+    @staticmethod
+    def create_symbol_dict() -> Dict[str, object]:
+        """
+        Creates a default symbol dict, to use as a starting point
+        for symbol definitions
+        """
+        return {
+            'isClickable': False,
+            'isHoverable': False
+        }
 
     @staticmethod
     def expression_to_filter(
@@ -296,7 +309,9 @@ class FslConverter:
             return {
                 "style": {
                     "color": FslConverter.NULL_COLOR,
-                    "strokeColor": FslConverter.NULL_COLOR
+                    "strokeColor": FslConverter.NULL_COLOR,
+                    "isClickable": False,
+                    "isHoverable": False
                 },
                 "legend": {},
                 "type": "simple"
@@ -331,6 +346,87 @@ class FslConverter:
 
             return res
 
+        # multiple rules. can we treat this as a categorized renderer?
+        filter_attribute = None
+        converted_symbols = []
+        category_values = []
+        other_symbol = None
+        legend_text = {}
+
+        for rule in renderer.rootRule().children():
+            if rule.children():
+                # rule has nested children, can't convert
+                return None
+
+            if not rule.symbol():
+                # no symbol rule, can't convert
+                return None
+
+            if rule.dependsOnScale():
+                # rule has scale based visibility, can't convert
+                return None
+
+            filter_expression = rule.filterExpression()
+            if not filter_expression:
+                # multiple symbol per feature, can't convert
+                return None
+
+            if not rule.isElse():
+                res, field, value = QgsExpression.isFieldEqualityExpression(
+                    filter_expression
+                )
+                if not res:
+                    # not a simple field=value expression, can't convert
+                    return None
+
+                if filter_attribute and filter_attribute != field:
+                    # rules depend on different attributes, can't convert
+                    return None
+
+                filter_attribute = field
+
+            converted_symbol = FslConverter.symbol_to_fsl(rule.symbol(),
+                                                          context,
+                                                          layer_opacity)
+            if not converted_symbol:
+                # can't convert symbol
+                return None
+
+            if rule.isElse():
+                if other_symbol:
+                    # multiple ELSE rules, can't conver
+                    return None
+                other_symbol = converted_symbol
+                legend_text['Other'] = rule.label()
+            else:
+                converted_symbols.append(converted_symbol)
+                legend_text[str(value)] = rule.label()
+                category_values.append(str(value))
+
+        all_symbols = converted_symbols
+        if other_symbol:
+            all_symbols.append(other_symbol)
+
+        if not all_symbols:
+            return None
+
+        style = FslConverter.create_varying_style_from_list(
+            all_symbols
+        )
+
+        return {
+            "config": {
+                "categoricalAttribute": filter_attribute,
+                "categories": category_values,
+                "showOther": bool(other_symbol)
+            },
+            "legend": {
+                "displayName": legend_text
+            },
+            "style": style,
+            "type": "categorical"
+        }
+
     @staticmethod
     def null_renderer_to_fsl(renderer: QgsNullSymbolRenderer,
                              context: ConversionContext,
@@ -342,7 +438,9 @@ class FslConverter:
         return {
             "style": {
                 "color": FslConverter.NULL_COLOR,
-                "strokeColor": FslConverter.NULL_COLOR
+                "strokeColor": FslConverter.NULL_COLOR,
+                "isClickable": False,
+                "isHoverable": False
             },
             "legend": {},
             "type": "simple"
@@ -382,7 +480,14 @@ class FslConverter:
                     else:
                         value.append(value[0])
 
-        return FslConverter.simplify_style(result)
+        res = FslConverter.simplify_style(result)
+
+        for symbol in res:
+            if 'dashArray' in symbol and len(symbol['dashArray']) > 2:
+                # dash array limited to two values for varying styles
+                symbol['dashArray'] = symbol['dashArray'][:2]
+
+        return res
 
     @staticmethod
     def simplify_style(style: List[Dict[str, object]]) \
@@ -694,12 +799,11 @@ class FslConverter:
             layer.widthUnit(),
             context)
 
-        res = {
-            'color': color_str,
-            'size': stroke_width,
-            'lineCap': FslConverter.convert_cap_style(layer.penCapStyle()),
-            'lineJoin': FslConverter.convert_join_style(layer.penJoinStyle())
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = stroke_width
+        res['lineCap'] = FslConverter.convert_cap_style(layer.penCapStyle())
+        res['lineJoin'] = FslConverter.convert_join_style(layer.penJoinStyle())
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -744,9 +848,8 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
 
             if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
                 interval_pixels = FslConverter.convert_to_pixels(
@@ -797,9 +900,8 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
 
             if layer.placement() == QgsMarkerLineSymbolLayer.Interval:
                 interval_pixels = FslConverter.convert_to_pixels(
@@ -858,11 +960,9 @@ class FslConverter:
                               layer.arrowStartWidth(),
                               layer.arrowStartWidthUnit(),
                               context))
-
-            res = {
-                'color': color_str,
-                'size': size
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['size'] = size
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -890,11 +990,10 @@ class FslConverter:
 
         color_str = FslConverter.color_to_fsl(
             layer.color(), context
-        )
+        ) if not has_invisible_fill else FslConverter.NULL_COLOR
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -945,14 +1044,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context) if has_stroke
-            else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context) if has_stroke
+                              else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -994,14 +1092,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context)
-            if has_stroke else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context)
+                              if has_stroke else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1043,14 +1140,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context)
-            if has_stroke else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context)
+                              if has_stroke else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1091,14 +1187,13 @@ class FslConverter:
             context
         )
 
-        res = {
-            'color': color_str,
-            'size': size / 2,  # FSL size is radius, not diameter
-            'strokeColor': FslConverter.color_to_fsl(layer.strokeColor(),
-                                                     context)
-            if has_stroke else FslConverter.NULL_COLOR,
-            'strokeWidth': stroke_width
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
+        res['size'] = size / 2  # FSL size is radius, not diameter
+        res['strokeColor'] = (FslConverter.color_to_fsl(layer.strokeColor(),
+                                                        context)
+                              if has_stroke else FslConverter.NULL_COLOR)
+        res['strokeWidth'] = stroke_width
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1135,11 +1230,10 @@ class FslConverter:
             size = FslConverter.convert_to_pixels(layer.size(),
                                                   layer.sizeUnit(), context)
 
-            res = {
-                'size': size / 2,  # FSL size is radius, not diameter
-                'color': color_str or FslConverter.NULL_COLOR,
-                'strokeColor': stroke_color_str or FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['size'] = size / 2  # FSL size is radius, not diameter
+            res['color'] = color_str or FslConverter.NULL_COLOR
+            res['strokeColor'] = stroke_color_str or FslConverter.NULL_COLOR
             if stroke_width is not None:
                 res['strokeWidth'] = stroke_width
 
@@ -1176,9 +1270,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1207,9 +1300,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1247,9 +1339,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1283,10 +1374,9 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-                'strokeColor': FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -1320,10 +1410,9 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-                'strokeColor': FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -1358,10 +1447,9 @@ class FslConverter:
             if not color_str:
                 continue
 
-            res = {
-                'color': color_str,
-                'strokeColor': FslConverter.NULL_COLOR,
-            }
+            res = FslConverter.create_symbol_dict()
+            res['color'] = color_str
+            res['strokeColor'] = FslConverter.NULL_COLOR
 
             if symbol_opacity < 1:
                 res['opacity'] = symbol_opacity
@@ -1390,9 +1478,8 @@ class FslConverter:
             color, context
         )
 
-        res = {
-            'color': color_str,
-        }
+        res = FslConverter.create_symbol_dict()
+        res['color'] = color_str
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
@@ -1419,6 +1506,10 @@ class FslConverter:
         converted_format = FslConverter.text_format_to_fsl(
             settings.format(), context
         )
+        # disable clicks
+        converted_format['isClickable'] = False
+        converted_format['isHoverable'] = False
+
         if settings.autoWrapLength > 0:
             converted_format['maxLineChars'] = settings.autoWrapLength
         if settings.scaleVisibility:
@@ -1532,16 +1623,18 @@ class FslConverter:
         if not fsl:
             return None
 
-        is_early_resampling = (layer.resamplingStage() ==
-                               QgsRasterPipe.ResamplingStage.Provider)
-        if (is_early_resampling and
-                (layer.dataProvider().zoomedInResamplingMethod() !=
-                 QgsRasterDataProvider.ResamplingMethod.Nearest or
-                 layer.dataProvider().zoomedOutResamplingMethod() !=
-                 QgsRasterDataProvider.ResamplingMethod.Nearest)):
-            fsl['config']['rasterResampling'] = "linear"
-        else:
-            fsl['config']['rasterResampling'] = "nearest"
+        # resampling only applies to numeric rasters
+        if fsl.get('type') == 'numeric':
+            is_early_resampling = (layer.resamplingStage() ==
+                                   QgsRasterPipe.ResamplingStage.Provider)
+            if (is_early_resampling and
+                    (layer.dataProvider().zoomedInResamplingMethod() !=
+                     QgsRasterDataProvider.ResamplingMethod.Nearest or
+                     layer.dataProvider().zoomedOutResamplingMethod() !=
+                     QgsRasterDataProvider.ResamplingMethod.Nearest)):
+                fsl['config']['rasterResampling'] = "linear"
+            else:
+                fsl['config']['rasterResampling'] = "nearest"
 
         if layer.hasScaleBasedVisibility():
             if layer.minimumScale():
@@ -1591,6 +1684,31 @@ class FslConverter:
 
         shader = renderer.shader()
         shader_function = shader.rasterShaderFunction()
+        if shader_function.colorRampType() == QgsColorRampShader.Discrete:
+            return FslConverter.discrete_pseudocolor_renderer_to_fsl(
+                renderer, context, opacity
+            )
+        elif (shader_function.colorRampType() ==
+              QgsColorRampShader.Interpolated):
+            return FslConverter.continuous_pseudocolor_renderer_to_fsl(
+                renderer, context, opacity
+            )
+
+        return FslConverter.exact_pseudocolor_renderer_to_fsl(
+            renderer, context, opacity
+        )
+
+    @staticmethod
+    def discrete_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ):
+        """
+        Converts a discrete singleband pseudocolor renderer to FSL
+        """
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
         steps = [shader_function.minimumValue()]
         colors = []
         labels = {}
@@ -1601,6 +1719,92 @@ class FslConverter:
                 steps.append(item.value)
             colors.append(item.color.name())
             labels[str(i)] = item.label
+        return {
+            "config": {
+                "band": renderer.band(),
+                "steps": steps
+            },
+            "legend": {
+                "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "numeric"
+        }
+
+    @staticmethod
+    def exact_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ):
+        """
+        Converts an exact singleband pseudocolor renderer to FSL
+        """
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
+
+        categories = []
+        colors = []
+        labels = {}
+        for i, item in enumerate(shader_function.colorRampItemList()):
+            if math.isinf(item.value):
+                continue
+
+            categories.append(str(item.value))
+            colors.append(item.color.name())
+            labels[str(i)] = item.label
+
+        return {
+            "config": {
+                "band": renderer.band(),
+                "categories": categories
+            },
+            "legend": {
+                "displayName": labels
+            },
+
+            "style": {
+                "isSandwiched": False,
+                "opacity": opacity,
+                "color": colors
+            },
+            "type": "categorical"
+        }
+
+    @staticmethod
+    def continuous_pseudocolor_renderer_to_fsl(
+            renderer: QgsSingleBandPseudoColorRenderer,
+            context: ConversionContext,
+            opacity: float = 1
+    ):
+        """
+        Converts a continuous singleband pseudocolor renderer to FSL
+        """
+        shader = renderer.shader()
+        shader_function = shader.rasterShaderFunction()
+
+        min_value = shader_function.minimumValue()
+        max_value = shader_function.maximumValue()
+
+        # build 30 linear color steps between min and max value
+        steps = [shader_function.minimumValue()]
+        colors = []
+        labels = {}
+        for i in range(FslConverter.COLOR_RAMP_INTERPOLATION_STEPS):
+            val = (i * (max_value - min_value) /
+                   FslConverter.COLOR_RAMP_INTERPOLATION_STEPS + min_value)
+            ok, red, green, blue, alpha = shader_function.shade(val)
+            if ok:
+                steps.append(val)
+                colors.append(FslConverter.color_to_fsl(
+                    QColor(red, green, blue, alpha), context, opacity))
+                labels[str(i)] = str(round(val, 3))
+
         return {
             "config": {
                 "band": renderer.band(),
@@ -1673,8 +1877,7 @@ class FslConverter:
         return {
             "config": {
                 "band": renderer.band(),
-                "categories": categories,
-                "categoricalAttribute": "temp"  # short term workaround
+                "categories": categories
             },
             "legend": {
                 "displayName": labels
