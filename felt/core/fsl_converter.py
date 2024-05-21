@@ -1715,8 +1715,8 @@ class FslConverter:
         colors = []
         labels = {}
         for i in range(FslConverter.COLOR_RAMP_INTERPOLATION_STEPS):
-            val = (i * (max_value - min_value)
-                   / FslConverter.COLOR_RAMP_INTERPOLATION_STEPS + min_value)
+            val = (i * (max_value - min_value) /
+                   FslConverter.COLOR_RAMP_INTERPOLATION_STEPS + min_value)
             ok, red, green, blue, alpha = shader_function.shade(val)
             if ok:
                 steps.append(val)
