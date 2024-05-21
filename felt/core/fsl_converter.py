@@ -1607,7 +1607,8 @@ class FslConverter:
             return FslConverter.discrete_pseudocolor_renderer_to_fsl(
                 renderer, context, opacity
             )
-        elif shader_function.colorRampType() == QgsColorRampShader.Interpolated:
+        elif (shader_function.colorRampType() ==
+              QgsColorRampShader.Interpolated):
             return FslConverter.continuous_pseudocolor_renderer_to_fsl(
                 renderer, context, opacity
             )
