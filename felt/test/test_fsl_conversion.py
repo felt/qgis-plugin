@@ -1608,6 +1608,58 @@ class FslConversionTest(unittest.TestCase):
              'type': 'simple'}
         )
 
+    def test_categorical_rule_based_renderer(self):
+        """
+        Test converting rule based renderers which can be treated as
+        categorical renderers
+        """
+        conversion_context = ConversionContext()
+
+        root_rule = QgsRuleBasedRenderer.Rule(None)
+        renderer = QgsRuleBasedRenderer(root_rule)
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+        child_rule = QgsRuleBasedRenderer.Rule(line_symbol.clone())
+        child_rule.setLabel('rule 1')
+        child_rule.setFilterExpression('"my_field"=\'a\'')
+        root_rule.appendChild(child_rule)
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 255, 0))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+        child_rule = QgsRuleBasedRenderer.Rule(line_symbol.clone())
+        child_rule.setLabel('rule 2')
+        child_rule.setFilterExpression('"my_field"=\'b\'')
+        root_rule.appendChild(child_rule)
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 255, 255))
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+        child_rule = QgsRuleBasedRenderer.Rule(line_symbol.clone())
+        child_rule.setLabel('rule 3')
+        child_rule.setIsElse(True)
+        root_rule.appendChild(child_rule)
+
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'config': {'categoricalAttribute': 'my_field',
+                        'categories': ['a', 'b'],
+                        'showOther': True},
+             'legend': {'displayName': {'Other': 'rule 3', 'a': 'rule 1',
+                                        'b': 'rule 2'}},
+             'style': [{'color': ['rgb(255, 0, 0)',
+                                  'rgb(255, 255, 0)',
+                                  'rgb(255, 255, 255)'],
+                        'isClickable': False,
+                        'isHoverable': False,
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 1}],
+             'type': 'categorical'}
+        )
+
     def test_null_symbol_renderer(self):
         """
         Test converting null symbol renderers

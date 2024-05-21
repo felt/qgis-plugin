@@ -346,6 +346,87 @@ class FslConverter:
 
             return res
 
+        # multiple rules. can we treat this as a categorized renderer?
+        filter_attribute = None
+        converted_symbols = []
+        category_values = []
+        other_symbol = None
+        legend_text = {}
+
+        for rule in renderer.rootRule().children():
+            if rule.children():
+                # rule has nested children, can't convert
+                return None
+
+            if not rule.symbol():
+                # no symbol rule, can't convert
+                return None
+
+            if rule.dependsOnScale():
+                # rule has scale based visibility, can't convert
+                return None
+
+            filter_expression = rule.filterExpression()
+            if not filter_expression:
+                # multiple symbol per feature, can't convert
+                return None
+
+            if not rule.isElse():
+                res, field, value = QgsExpression.isFieldEqualityExpression(
+                    filter_expression
+                )
+                if not res:
+                    # not a simple field=value expression, can't convert
+                    return None
+
+                if filter_attribute and filter_attribute != field:
+                    # rules depend on different attributes, can't convert
+                    return None
+
+                filter_attribute = field
+
+            converted_symbol = FslConverter.symbol_to_fsl(rule.symbol(),
+                                                          context,
+                                                          layer_opacity)
+            if not converted_symbol:
+                # can't convert symbol
+                return None
+
+            if rule.isElse():
+                if other_symbol:
+                    # multiple ELSE rules, can't conver
+                    return None
+                other_symbol = converted_symbol
+                legend_text['Other'] = rule.label()
+            else:
+                converted_symbols.append(converted_symbol)
+                legend_text[str(value)] = rule.label()
+                category_values.append(str(value))
+
+        all_symbols = converted_symbols
+        if other_symbol:
+            all_symbols.append(other_symbol)
+
+        if not all_symbols:
+            return None
+
+        style = FslConverter.create_varying_style_from_list(
+            all_symbols
+        )
+
+        return {
+            "config": {
+                "categoricalAttribute": filter_attribute,
+                "categories": category_values,
+                "showOther": bool(other_symbol)
+            },
+            "legend": {
+                "displayName": legend_text
+            },
+            "style": style,
+            "type": "categorical"
+        }
+
     @staticmethod
     def null_renderer_to_fsl(renderer: QgsNullSymbolRenderer,
                              context: ConversionContext,
