@@ -50,28 +50,20 @@ class S3UploadParameters:
         """
         return S3UploadParameters(
             type=res.get('data', {}).get('type'),
-            aws_access_key_id=res.get('data', {}).get('attributes', {}).get(
-                'presigned_attributes', {}).get('AWSAccessKeyId'),
-            acl=res.get('data', {}).get('attributes', {}).get(
-                'presigned_attributes', {}).get('acl'),
-            key=res.get('data', {}).get('attributes', {}).get(
-                'presigned_attributes', {}).get('key'),
-            policy=res.get('data', {}).get('attributes', {}).get(
-                'presigned_attributes', {}).get('policy'),
-            signature=res.get('data', {}).get('attributes', {}).get(
-                'presigned_attributes', {}).get('signature'),
-            success_action_status=res.get('data', {}).get('attributes',
-                                                          {}).get(
-                'presigned_attributes', {}).get('success_action_status'),
-            x_amz_meta_features_flags=res.get('data', {}).get('attributes',
-                                                              {}).get(
-                'presigned_attributes', {}).get('x-amz-meta-feature-flags'),
-            x_amz_meta_file_count=res.get('data', {}).get('attributes',
-                                                          {}).get(
-                'presigned_attributes', {}).get('x-amz-meta-file-count'),
-            x_amz_security_token=res.get('data', {}).get('attributes',
-                                                         {}).get(
-                'presigned_attributes', {}).get('x-amz-security-token'),
-            url=res.get('data', {}).get('attributes', {}).get('url'),
-            layer_id=res.get('data', {}).get('attributes', {}).get('layer_id'),
+            aws_access_key_id=res.get('presigned_attributes', {}).get(
+                'AWSAccessKeyId'),
+            acl=res.get('presigned_attributes', {}).get('acl'),
+            key=res.get('presigned_attributes', {}).get('key'),
+            policy=res.get('presigned_attributes', {}).get('policy'),
+            signature=res.get('presigned_attributes', {}).get('signature'),
+            success_action_status=res.get('presigned_attributes', {}).get(
+                'success_action_status'),
+            x_amz_meta_features_flags=res.get('presigned_attributes', {}).get(
+                'x-amz-meta-feature-flags'),
+            x_amz_meta_file_count=res.get('presigned_attributes', {}).get(
+                'x-amz-meta-file-count'),
+            x_amz_security_token=res.get('presigned_attributes', {}).get(
+                'x-amz-security-token'),
+            url=res.get('url'),
+            layer_id=res.get('layer_id'),
         )
