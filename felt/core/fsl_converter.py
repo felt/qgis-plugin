@@ -425,7 +425,8 @@ class FslConverter:
             if rule.children():
                 # rule has nested children, can't convert
                 context.push_warning(
-                    'Rule based renderer with nested rules cannot be converted',
+                    'Rule based renderer with nested rules '
+                    'cannot be converted',
                     LogLevel.Error,
                     detail={
                         'object': 'renderer',
@@ -437,7 +438,8 @@ class FslConverter:
             if not rule.symbol():
                 # no symbol rule, can't convert
                 context.push_warning(
-                    'Rule based renderer with a rule without a symbol cannot be converted',
+                    'Rule based renderer with a rule without a '
+                    'symbol cannot be converted',
                     LogLevel.Error,
                     detail={
                         'object': 'renderer',
@@ -449,7 +451,8 @@ class FslConverter:
             if rule.dependsOnScale():
                 # rule has scale based visibility, can't convert
                 context.push_warning(
-                    'Rule based renderer with scale based rule visibility cannot be converted',
+                    'Rule based renderer with scale based rule '
+                    'visibility cannot be converted',
                     LogLevel.Error,
                     detail={
                         'object': 'renderer',
@@ -462,7 +465,8 @@ class FslConverter:
             if not filter_expression:
                 # multiple symbol per feature, can't convert
                 context.push_warning(
-                    'Rule based renderer with rules without filters cannot be converted',
+                    'Rule based renderer with rules without '
+                    'filters cannot be converted',
                     LogLevel.Error,
                     detail={
                         'object': 'renderer',
@@ -478,7 +482,8 @@ class FslConverter:
                 if not res:
                     # not a simple field=value expression, can't convert
                     context.push_warning(
-                        'Rule based renderer with complex filters cannot be converted',
+                        'Rule based renderer with complex '
+                        'filters cannot be converted',
                         LogLevel.Error,
                         detail={
                             'object': 'renderer',
@@ -491,7 +496,8 @@ class FslConverter:
                 if filter_attribute and filter_attribute != field:
                     # rules depend on different attributes, can't convert
                     context.push_warning(
-                        'Rule based renderer with complex filters cannot be converted',
+                        'Rule based renderer with complex '
+                        'filters cannot be converted',
                         LogLevel.Error,
                         detail={
                             'object': 'renderer',
@@ -513,7 +519,8 @@ class FslConverter:
                 if other_symbol:
                     # multiple ELSE rules, can't convert
                     context.push_warning(
-                        'Rule based renderer with multiple ELSE rules cannot be converted',
+                        'Rule based renderer with multiple '
+                        'ELSE rules cannot be converted',
                         LogLevel.Error,
                         detail={
                             'object': 'renderer',
