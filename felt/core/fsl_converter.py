@@ -82,11 +82,19 @@ class ConversionContext:
         # TODO -- populate with correct dpi etc
         self.render_context: QgsRenderContext = QgsRenderContext()
         self.render_context.setScaleFactor(3.779)
+        self.warnings: List[Dict[str, object]] = []
 
-    def push_warning(self, warning: str, level: LogLevel = LogLevel.Warning):
+    def push_warning(self, warning: str, level: LogLevel = LogLevel.Warning,
+                     detail: Optional[Dict[str, object]] = None):
         """
         Pushes a warning to the context
         """
+        if not detail:
+            detail = {}
+
+        detail['message'] = warning
+        detail['level'] = level.name
+        self.warnings.append(detail)
 
 
 class FslConverter:
@@ -124,6 +132,14 @@ class FslConverter:
         exp.prepare(expression_context)
 
         if exp.hasParserError():
+            context.push_warning(
+                'Invalid expressions cannot be converted',
+                detail={
+                    'object': 'expression',
+                    'expression': expression,
+                    'cause': 'parser_error'
+                }
+            )
             return None
 
         if exp.rootNode():
@@ -132,6 +148,14 @@ class FslConverter:
             if success:
                 return res
 
+        context.push_warning(
+            'Empty expressions cannot be converted',
+            detail={
+                'object': 'expression',
+                'expression': expression,
+                'cause': 'no_root_node'
+            }
+        )
         return None
 
     @staticmethod
@@ -149,6 +173,16 @@ class FslConverter:
             return True, node.value()
         elif node.nodeType() == QgsExpressionNode.ntColumnRef:
             return True, node.name()
+
+        context.push_warning(
+            'Expression is not supported',
+            detail={
+                'object': 'expression',
+                'expression': node.dump(),
+                'cause': 'unhandled_node_type'
+            }
+        )
+
         return False, None
 
     @staticmethod
@@ -180,6 +214,15 @@ class FslConverter:
             return True, [left, "is", right]
         if node.op() == QgsExpressionNodeBinaryOperator.BinaryOperator.boIsNot:
             return True, [left, "isnt", right]
+
+        context.push_warning(
+            'Expression is not supported',
+            detail={
+                'object': 'expression',
+                'expression': node.dump(),
+                'cause': 'unhandled_binary_node'
+            }
+        )
         return False, None
 
     @staticmethod
@@ -280,7 +323,12 @@ class FslConverter:
 
         context.push_warning('{} renderers cannot be converted yet'.format(
             renderer.__class__.__name__),
-            LogLevel.Error)
+            LogLevel.Error,
+            detail={
+                'object': 'renderer',
+                'renderer': renderer.__class__.__name__,
+                'cause': 'unhandled_renderer'
+            })
         return None
 
     @staticmethod
@@ -292,6 +340,14 @@ class FslConverter:
         Converts a QGIS single symbol renderer to an FSL definition
         """
         if not renderer.symbol():
+            context.push_warning(
+                'Renderer without a symbol cannot be converted',
+                LogLevel.Error,
+                detail={
+                    'object': 'renderer',
+                    'renderer': 'single',
+                    'cause': 'no_symbol'
+                })
             return None
 
         converted_symbol = FslConverter.symbol_to_fsl(renderer.symbol(),
@@ -368,19 +424,51 @@ class FslConverter:
         for rule in renderer.rootRule().children():
             if rule.children():
                 # rule has nested children, can't convert
+                context.push_warning(
+                    'Rule based renderer with nested rules cannot be converted',
+                    LogLevel.Error,
+                    detail={
+                        'object': 'renderer',
+                        'renderer': 'rule_based',
+                        'cause': 'nested_rules'
+                    })
                 return None
 
             if not rule.symbol():
                 # no symbol rule, can't convert
+                context.push_warning(
+                    'Rule based renderer with a rule without a symbol cannot be converted',
+                    LogLevel.Error,
+                    detail={
+                        'object': 'renderer',
+                        'renderer': 'rule_based',
+                        'cause': 'null_symbol_rule'
+                    })
                 return None
 
             if rule.dependsOnScale():
                 # rule has scale based visibility, can't convert
+                context.push_warning(
+                    'Rule based renderer with scale based rule visibility cannot be converted',
+                    LogLevel.Error,
+                    detail={
+                        'object': 'renderer',
+                        'renderer': 'rule_based',
+                        'cause': 'scale_based_rule'
+                    })
                 return None
 
             filter_expression = rule.filterExpression()
             if not filter_expression:
                 # multiple symbol per feature, can't convert
+                context.push_warning(
+                    'Rule based renderer with rules without filters cannot be converted',
+                    LogLevel.Error,
+                    detail={
+                        'object': 'renderer',
+                        'renderer': 'rule_based',
+                        'cause': 'no_filter_rule'
+                    })
                 return None
 
             if not rule.isElse():
@@ -389,10 +477,27 @@ class FslConverter:
                 )
                 if not res:
                     # not a simple field=value expression, can't convert
+                    context.push_warning(
+                        'Rule based renderer with complex filters cannot be converted',
+                        LogLevel.Error,
+                        detail={
+                            'object': 'renderer',
+                            'renderer': 'rule_based',
+                            'cause': 'complex_filter_rule',
+                            'filter': filter_expression
+                        })
                     return None
 
                 if filter_attribute and filter_attribute != field:
                     # rules depend on different attributes, can't convert
+                    context.push_warning(
+                        'Rule based renderer with complex filters cannot be converted',
+                        LogLevel.Error,
+                        detail={
+                            'object': 'renderer',
+                            'renderer': 'rule_based',
+                            'cause': 'mixed_attribute_filter_rules'
+                        })
                     return None
 
                 filter_attribute = field
@@ -406,7 +511,15 @@ class FslConverter:
 
             if rule.isElse():
                 if other_symbol:
-                    # multiple ELSE rules, can't conver
+                    # multiple ELSE rules, can't convert
+                    context.push_warning(
+                        'Rule based renderer with multiple ELSE rules cannot be converted',
+                        LogLevel.Error,
+                        detail={
+                            'object': 'renderer',
+                            'renderer': 'rule_based',
+                            'cause': 'multiple_else_rules'
+                        })
                     return None
                 other_symbol = converted_symbol
                 legend_text['Other'] = rule.label()
@@ -531,6 +644,14 @@ class FslConverter:
         Converts a QGIS categorized symbol renderer to an FSL definition
         """
         if not renderer.categories():
+            context.push_warning(
+                'Categorized renderer with no categories cannot be converted',
+                LogLevel.Error,
+                detail={
+                    'object': 'renderer',
+                    'renderer': 'categorized',
+                    'cause': 'no_categories'
+                })
             return None
 
         converted_symbols = []
@@ -584,6 +705,14 @@ class FslConverter:
         Converts a QGIS categorized symbol renderer to an FSL definition
         """
         if not renderer.ranges():
+            context.push_warning(
+                'Graduated renderer with no ranges cannot be converted',
+                LogLevel.Error,
+                detail={
+                    'object': 'renderer',
+                    'renderer': 'graduated',
+                    'cause': 'no_ranges'
+                })
             return None
 
         converted_symbols = []
@@ -696,7 +825,12 @@ class FslConverter:
 
         context.push_warning('{} symbol layers cannot be converted yet'.format(
             layer.__class__.__name__),
-            LogLevel.Error)
+            LogLevel.Error,
+            detail={
+                'object': 'symbol_layer',
+                'layer_type': layer.__class__.__name__,
+                'cause': 'not_supported'
+            })
         return []
 
     @staticmethod
@@ -833,6 +967,16 @@ class FslConverter:
         # - pattern offset
         # - trim lines
 
+        if layer.offset():
+            context.push_warning(
+                'Offsets for line symbols cannot be converted'.format(
+                    layer.__class__.__name__),
+                LogLevel.Warning,
+                detail={
+                    'object': 'symbol_layer',
+                    'cause': 'line_offset'
+                })
+
         return [res]
 
     @staticmethod
@@ -852,7 +996,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Marker lines are not supported, converting to a solid line')
+            'Marker lines are not supported, converting to a solid line',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'marker_line'
+            })
 
         results = []
         for converted_layer in converted_marker:
@@ -904,7 +1053,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Hatched lines are not supported, converting to a solid line')
+            'Hatched lines are not supported, converting to a solid line',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'hatched_line'
+            })
 
         results = []
         for converted_layer in converted_hatch:
@@ -955,7 +1109,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Arrows are not supported, converting to a solid line')
+            'Arrows lines are not supported, converting to a solid line',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'arrow'
+            })
 
         results = []
         for converted_layer in converted_fill:
@@ -1028,6 +1187,15 @@ class FslConverter:
         # - fill offset
         # - fill style
 
+        if layer.brushStyle() not in (Qt.SolidPattern, Qt.NoBrush):
+            context.push_warning(
+                'Fill patterns are not supported, converting to a solid fill',
+                LogLevel.Warning,
+                detail={
+                    'object': 'symbol_layer',
+                    'cause': 'non_solid_fill_pattern'
+                })
+
         return [res]
 
     @staticmethod
@@ -1066,6 +1234,15 @@ class FslConverter:
 
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
+
+        if layer.shape() != QgsSimpleMarkerSymbolLayer.Circle:
+            context.push_warning(
+                'Marker shapes are not supported, converting to a circle marker',
+                LogLevel.Warning,
+                detail={
+                    'object': 'symbol_layer',
+                    'cause': 'non_circle_marker'
+                })
 
         # not supported:
         # - marker shape
@@ -1115,6 +1292,15 @@ class FslConverter:
         if symbol_opacity < 1:
             res['opacity'] = symbol_opacity
 
+        if layer.shape() != QgsEllipseSymbolLayer.Circle:
+            context.push_warning(
+                'Marker shapes are not supported, converting to a circle marker',
+                LogLevel.Warning,
+                detail={
+                    'object': 'symbol_layer',
+                    'cause': 'non_circle_marker'
+                })
+
         # not supported:
         # - marker shape
         # - offset
@@ -1138,7 +1324,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'SVG markers are not supported, converting to a solid marker')
+            'SVG markers are not supported, converting to a solid marker',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'svg_marker'
+            })
 
         color_str = FslConverter.color_to_fsl(
             layer.fillColor(), context
@@ -1185,7 +1376,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Font markers are not supported, converting to a solid marker')
+            'Font markers are not supported, converting to a solid marker',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'font_marker'
+            })
 
         color_str = FslConverter.color_to_fsl(
             layer.color(), context
@@ -1232,7 +1428,13 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Filled markers are not supported, converting to a solid marker')
+            'Filled markers are not supported, converting to a solid marker',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'filled_marker'
+            })
+
         results = []
         for converted_layer in converted_subsymbol:
             color_str = converted_layer.get('color')
@@ -1276,7 +1478,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Shapeburst fills are not supported, converting to a solid fill')
+            'Shapeburst markers are not supported, converting to a solid marker',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'shapeburst'
+            })
 
         color_str = FslConverter.color_to_fsl(
             color, context
@@ -1306,7 +1513,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Gradient fills are not supported, converting to a solid fill')
+            'Gradient fills are not supported, converting to a solid fill',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'gradient_fill'
+            })
 
         color_str = FslConverter.color_to_fsl(
             color, context
@@ -1345,7 +1557,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Line pattern fills are not supported, converting to a solid fill')
+            'Line pattern fills are not supported, converting to a solid fill',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'line_pattern_fill'
+            })
 
         color_str = FslConverter.color_to_fsl(
             color, context
@@ -1378,8 +1595,13 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Point pattern fills are not supported, converting to a solid fill'
-        )
+            'Point pattern fills are not supported, converting to a solid fill',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'point_pattern_fill'
+            })
+
         results = []
         for converted_layer in converted_marker:
             color_str = converted_layer.get('color')
@@ -1414,7 +1636,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Centroid fills are not supported, converting to a solid fill')
+            'Centroid fills are not supported, converting to a solid fill',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'centroid_fill'
+            })
 
         results = []
         for converted_layer in converted_marker:
@@ -1450,8 +1677,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Random marker fills are not supported, converting to a solid fill'
-        )
+            'Random marker fills are not supported, converting to a solid fill',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'random_marker_fill'
+            })
 
         results = []
         for converted_layer in converted_marker:
@@ -1484,7 +1715,12 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'SVG fills are not supported, converting to a solid fill')
+            'SVG fills are not supported, converting to a solid fill',
+            LogLevel.Warning,
+            detail={
+                'object': 'symbol_layer',
+                'cause': 'svg_fill'
+            })
 
         color_str = FslConverter.color_to_fsl(
             color, context
@@ -1512,7 +1748,12 @@ class FslConverter:
 
         if settings.isExpression:
             context.push_warning('Expression based labels are not supported',
-                                 LogLevel.Warning)
+                                 LogLevel.Warning,
+                                 detail={
+                                     'object': 'labels',
+                                     'cause': 'expression_based_label'
+                                 })
+
             return None
 
         converted_format = FslConverter.text_format_to_fsl(
@@ -1682,6 +1923,15 @@ class FslConverter:
                 renderer, context, opacity
             )
 
+        context.push_warning('Unsupported raster renderer: {}'.format(
+            renderer.__class__.__name__
+        ),
+            LogLevel.Error,
+            detail={
+                'object': 'raster',
+                'renderer': renderer.__class__.__name__,
+                'cause': 'unsupported_renderer'
+            })
         return None
 
     @staticmethod
