@@ -53,6 +53,8 @@ class FeltApiClient:
     RECENT_MAPS_ENDPOINT = '/maps/recent'
     UPLOAD_V2_ENDPOINT = '/maps/{}/upload'
     PATCH_STYLE_ENDPOINT = '/maps/{}/layers/{}/style'
+    UPDATE_LAYER_ENDPOINT = '/maps/{}/layers'
+    LAYER_GROUPS_ENDPOINT = '/maps/{}/layer_groups'
 
     def __init__(self):
         # default headers to add to all requests
@@ -429,6 +431,64 @@ class FeltApiClient:
             request,
             b"PATCH",
             json.dumps(style_post_data).encode()
+        )
+
+    def update_layer_details(self,
+                             map_id: str,
+                             layer_id: str,
+                             layer_group_id: Optional[str] = None,
+                             name: Optional[str] = None,
+                             ordering_key: Optional[int] = None,
+                             subtitle: Optional[str] = None) \
+            -> QgsNetworkReplyContent:
+        """
+        Updates a layer's details
+        """
+        request = self._build_request(
+            self.UPDATE_LAYER_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'},
+            version=2
+        )
+
+        layer_details = {
+                'id': layer_id
+            }
+        if layer_group_id:
+            layer_details['layer_group_id'] = layer_group_id
+        if name:
+            layer_details['name'] = name
+        if ordering_key:
+            layer_details['ordering_key'] = ordering_key
+        if subtitle:
+            layer_details['subtitle'] = subtitle
+
+        post_data = [layer_details]
+
+        return QgsNetworkAccessManager.instance().blockingPost(
+            request,
+            json.dumps(post_data).encode()
+        )
+
+    def create_layer_groups(self,
+                            map_id: str,
+                            layer_group_names: List[str]) \
+            -> QgsNetworkReplyContent:
+        """
+        Creates layer groups for a map
+        """
+        request = self._build_request(
+            self.LAYER_GROUPS_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'},
+            version=2
+        )
+
+        group_post_data = [
+            {'name': g} for g in layer_group_names
+        ]
+
+        return QgsNetworkAccessManager.instance().blockingPost(
+            request,
+            json.dumps(group_post_data).encode()
         )
 
     def report_usage(self,

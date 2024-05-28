@@ -5,6 +5,7 @@ Felt API Map Uploader
 import json
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import (
     Optional,
@@ -34,7 +35,8 @@ from qgis.core import (
     QgsFeedback,
     QgsBlockingNetworkRequest,
     QgsReferencedRectangle,
-    QgsRasterLayer
+    QgsRasterLayer,
+    QgsLayerTree
 )
 from qgis.utils import iface
 
@@ -48,6 +50,15 @@ from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
 from .fsl_converter import ConversionContext
 from .s3_upload_parameters import S3UploadParameters
+
+
+@dataclass
+class LayerDetails:
+    """
+    Encapsulates details of a layer to upload
+    """
+    layer: QgsMapLayer
+    destination_group_name: Optional[str] = None
 
 
 class MapUploaderTask(QgsTask):
@@ -77,7 +88,8 @@ class MapUploaderTask(QgsTask):
                 project.transformContext()
             )
             self.layers = [
-                MapUploaderTask.clone_layer(layer) for layer in layers
+                MapUploaderTask.layer_and_group(project, layer) for layer
+                in layers
             ]
             self.unsupported_layer_details = {}
         else:
@@ -97,7 +109,8 @@ class MapUploaderTask(QgsTask):
             ]
 
             self.layers = [
-                MapUploaderTask.clone_layer(layer) for layer in visible_layers
+                MapUploaderTask.layer_and_group(project, layer) for layer
+                in visible_layers
                 if
                 LayerExporter.can_export_layer(layer)[
                     0] == LayerSupport.Supported
@@ -105,8 +118,8 @@ class MapUploaderTask(QgsTask):
 
             self._build_unsupported_layer_details(project, visible_layers)
 
-        for layer in self.layers:
-            layer.moveToThread(None)
+        for layer_details in self.layers:
+            layer_details.layer.moveToThread(None)
 
         self.transform_context = project.transformContext()
 
@@ -139,6 +152,33 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+
+    @staticmethod
+    def layer_and_group(project: QgsProject, layer: QgsMapLayer) \
+            -> LayerDetails:
+        """
+        Clones a layer, and returns the layer details
+        """
+        res = MapUploaderTask.clone_layer(layer)
+
+        layer_tree_root = project.layerTreeRoot()
+
+        layer_tree_layer = layer_tree_root.findLayer(layer)
+        parent = layer_tree_layer.parent()
+        while parent:
+            if parent.parent() == layer_tree_root:
+                break
+
+            parent = parent.parent()
+
+        group_name = None
+        if parent != layer_tree_root and QgsLayerTree.isGroup(parent):
+            group_name = parent.name()
+
+        return LayerDetails(
+            layer=res,
+            destination_group_name=group_name
+        )
 
     @staticmethod
     def clone_layer(layer: QgsMapLayer) -> QgsMapLayer:
@@ -269,8 +309,8 @@ class MapUploaderTask(QgsTask):
         )
         self.feedback.progressChanged.connect(self.setProgress)
 
-        for layer in self.layers:
-            layer.moveToThread(QThread.currentThread())
+        for layer_details in self.layers:
+            layer_details.layer.moveToThread(QThread.currentThread())
 
         if self.isCanceled():
             return False
@@ -329,7 +369,11 @@ class MapUploaderTask(QgsTask):
 
         to_upload = {}
 
-        for layer in self.layers:
+        all_group_names = []
+        for layer_details in self.layers:
+            layer = layer_details.layer
+            group_name = layer_details.destination_group_name
+
             if self.isCanceled():
                 return False
 
@@ -372,8 +416,12 @@ class MapUploaderTask(QgsTask):
 
                     return False
 
+                result.group_name = group_name
                 layer.moveToThread(None)
                 to_upload[layer] = result
+
+            if group_name and group_name not in all_group_names:
+                all_group_names.append(group_name)
 
             multi_step_feedback.step_finished()
 
@@ -386,6 +434,18 @@ class MapUploaderTask(QgsTask):
             return False
 
         rate_limit_counter = 0
+
+        if all_group_names:
+            reply = API_CLIENT.create_layer_groups(
+                map_id=self.associated_map.id,
+                layer_group_names=all_group_names
+            )
+            group_details = json.loads(reply.content().data().decode())
+            group_ids = {
+                group['name']: group['id'] for group in group_details
+            }
+        else:
+            group_ids = {}
 
         for layer, details in to_upload.items():
             if self.isCanceled():
@@ -522,6 +582,24 @@ class MapUploaderTask(QgsTask):
                     loop = QEventLoop()
                     reply.finished.connect(loop.exit)
                     loop.exec()
+
+            if details.group_name:
+                group_id = group_ids[details.group_name]
+                reply = API_CLIENT.update_layer_details(
+                    map_id=self.associated_map.id,
+                    layer_id=layer_id,
+                    layer_group_id=group_id
+                )
+                if reply.error() != QNetworkReply.NoError:
+                    self.error_string = reply.errorString()
+                    Logger.instance().log_error_json(
+                        {
+                            'type': Logger.MAP_EXPORT,
+                            'error': 'Error updating layer group: {}'.format(
+                                self.error_string)
+                        }
+                    )
+                    return False
 
             multi_step_feedback.step_finished()
 
