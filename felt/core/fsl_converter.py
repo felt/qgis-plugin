@@ -2011,7 +2011,7 @@ class FslConverter:
                 'renderer': renderer.__class__.__name__,
                 'cause': 'unsupported_renderer',
                 'summary': 'unsupported raster renderer {}'.format(
-                    renderer.__class__.__name
+                    renderer.__class__.__name__
                 )
             })
         return None
