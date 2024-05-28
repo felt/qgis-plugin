@@ -1026,8 +1026,7 @@ class FslConverter:
 
         if layer.offset():
             context.push_warning(
-                'Offsets for line symbols cannot be converted'.format(
-                    layer.__class__.__name__),
+                'Offsets for line symbols cannot be converted',
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
