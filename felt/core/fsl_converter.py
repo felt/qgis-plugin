@@ -249,7 +249,8 @@ class FslConverter:
                 'object': 'expression',
                 'expression': node.dump(),
                 'cause': 'unhandled_binary_node',
-                'summary': 'unhandled expression binary node operator {}'.format(
+                'summary': 'unhandled expression binary '
+                           'node operator {}'.format(
                     node.op())
             }
         )
@@ -1298,7 +1299,8 @@ class FslConverter:
 
         if layer.shape() != QgsSimpleMarkerSymbolLayer.Circle:
             context.push_warning(
-                'Marker shapes are not supported, converting to a circle marker',
+                'Marker shapes are not supported, converting '
+                'to a circle marker',
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
@@ -1356,7 +1358,8 @@ class FslConverter:
 
         if layer.shape() != QgsEllipseSymbolLayer.Circle:
             context.push_warning(
-                'Marker shapes are not supported, converting to a circle marker',
+                'Marker shapes are not supported, converting '
+                'to a circle marker',
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
@@ -1544,7 +1547,8 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Shapeburst markers are not supported, converting to a solid marker',
+            'Shapeburst markers are not supported, converting '
+            'to a solid marker',
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
@@ -1664,7 +1668,8 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Point pattern fills are not supported, converting to a solid fill',
+            'Point pattern fills are not supported, converting '
+            'to a solid fill',
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
@@ -1748,7 +1753,8 @@ class FslConverter:
             return []
 
         context.push_warning(
-            'Random marker fills are not supported, converting to a solid fill',
+            'Random marker fills are not supported, converting '
+            'to a solid fill',
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
