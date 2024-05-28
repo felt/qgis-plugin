@@ -2322,7 +2322,9 @@ class FslConversionTest(unittest.TestCase):
         layer.setLabelsEnabled(True)
         layer.setLabeling(QgsVectorLayerSimpleLabeling(label_settings))
 
-        style = LayerExporter.representative_layer_style(layer)
+        conversion_context = ConversionContext()
+        style = LayerExporter.representative_layer_style(layer,
+                                                         conversion_context)
 
         self.assertEqual(
             style.fsl,

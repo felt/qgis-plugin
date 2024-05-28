@@ -38,6 +38,7 @@ class Logger(QObject):
 
     PACKAGING_RASTER = 'packaging_raster'
     PACKAGING_VECTOR = 'packaging_vector'
+    FSL_CONVERSION = 'unsupported_style'
     MAP_EXPORT = 'map_export'
     S3_UPLOAD = 's3_upload'
     UNSUPPORTED_LAYER = "unsupported_layer"

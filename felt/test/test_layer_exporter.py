@@ -21,7 +21,8 @@ from .utilities import get_qgis_app
 from ..core import (
     LayerExporter,
     LayerExportResult,
-    LayerSupport
+    LayerSupport,
+    ConversionContext
 )
 
 QGIS_APP = get_qgis_app()
@@ -164,7 +165,8 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer)
+        conversion_context = ConversionContext()
+        result = exporter.export_layer_for_felt(layer, conversion_context)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertEqual(result.filename[-4:], '.zip')
         with zipfile.ZipFile(result.filename) as z:
@@ -200,7 +202,8 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
-        result = exporter.export_layer_for_felt(layer)
+        conversion_context = ConversionContext()
+        result = exporter.export_layer_for_felt(layer, conversion_context)
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
         self.assertEqual(result.filename[-4:], '.zip')
@@ -226,11 +229,13 @@ class LayerExporterTest(unittest.TestCase):
         renderer = QgsPalettedRasterRenderer(layer.dataProvider(), 1, [])
         layer.setRenderer(renderer)
 
+        conversion_context = ConversionContext()
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
         result = exporter.export_layer_for_felt(
-            layer
+            layer,
+            conversion_context
         )
         self.assertEqual(result.result, LayerExportResult.Success)
         self.assertTrue(result.filename)
@@ -275,8 +280,10 @@ class LayerExporterTest(unittest.TestCase):
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
+        conversion_context = ConversionContext()
         result = exporter.export_layer_for_felt(
             layer,
+            conversion_context,
             force_upload_raster_as_styled=True
         )
         self.assertEqual(result.result, LayerExportResult.Success)
@@ -329,11 +336,13 @@ class LayerExporterTest(unittest.TestCase):
         renderer = QgsRasterContourRenderer(layer.dataProvider())
         layer.setRenderer(renderer)
 
+        conversion_context = ConversionContext()
         exporter = LayerExporter(
             QgsCoordinateTransformContext()
         )
         result = exporter.export_layer_for_felt(
             layer,
+            conversion_context,
             force_upload_raster_as_styled=False
         )
         self.assertEqual(result.result, LayerExportResult.Success)

@@ -46,6 +46,7 @@ from .logger import Logger
 from .map import Map
 from .map_utils import MapUtils
 from .multi_step_feedback import MultiStepFeedback
+from .fsl_converter import ConversionContext
 from .s3_upload_parameters import S3UploadParameters
 
 
@@ -285,6 +286,8 @@ class MapUploaderTask(QgsTask):
                 message
             )
 
+        conversion_context = ConversionContext()
+
         if not self.associated_map:
             self.status_changed.emit(self.tr('Creating map'))
             reply = API_CLIENT.create_map(
@@ -355,6 +358,7 @@ class MapUploaderTask(QgsTask):
                 try:
                     result = exporter.export_layer_for_felt(
                         layer,
+                        conversion_context,
                         multi_step_feedback
                     )
                 except LayerPackagingException as e:
@@ -372,6 +376,11 @@ class MapUploaderTask(QgsTask):
                 to_upload[layer] = result
 
             multi_step_feedback.step_finished()
+
+        if conversion_context.warnings:
+            Logger.instance().log_message_json(
+                conversion_context.format_warnings_for_reporting()
+            )
 
         if self.isCanceled():
             return False
