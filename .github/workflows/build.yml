@@ -52,5 +52,5 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: felt_plugin.${{ env.VERSION }}.${{ env.SHA_SHORT }}
+        name: felt_plugin.${{ env.VERSION }}
         path: tmp
