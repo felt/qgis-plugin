@@ -3,6 +3,7 @@ QGIS to FSL conversion
 """
 
 import math
+from collections import defaultdict
 from enum import (
     Enum,
     auto
@@ -65,6 +66,7 @@ from qgis.core import (
     QgsColorRampShader
 )
 
+from .logger import Logger
 from .map_utils import MapUtils
 
 
@@ -95,6 +97,28 @@ class ConversionContext:
         detail['message'] = warning
         detail['level'] = level.name
         self.warnings.append(detail)
+
+    def format_warnings_for_reporting(self) -> Dict[str, object]:
+        """
+        Collates and formats warnings for reporting via the API
+        """
+        collated_warnings = defaultdict(int)
+        for warning in self.warnings:
+            summary = warning.get('summary')
+            if not summary:
+                continue
+
+            collated_warnings[summary] += 1
+
+        res = {
+            'type': Logger.FSL_CONVERSION,
+            'warnings': self.warnings,
+        }
+
+        for k, v in collated_warnings.items():
+            res[k] = v
+
+        return res
 
 
 class FslConverter:
@@ -137,7 +161,8 @@ class FslConverter:
                 detail={
                     'object': 'expression',
                     'expression': expression,
-                    'cause': 'parser_error'
+                    'cause': 'parser_error',
+                    'summary': 'invalid expression'
                 }
             )
             return None
@@ -153,7 +178,8 @@ class FslConverter:
             detail={
                 'object': 'expression',
                 'expression': expression,
-                'cause': 'no_root_node'
+                'cause': 'no_root_node',
+                'summary': 'expression with no root node'
             }
         )
         return None
@@ -179,7 +205,9 @@ class FslConverter:
             detail={
                 'object': 'expression',
                 'expression': node.dump(),
-                'cause': 'unhandled_node_type'
+                'cause': 'unhandled_node_type',
+                'summary': 'unhandled expression node type {}'.format(
+                    node.nodeType())
             }
         )
 
@@ -220,7 +248,9 @@ class FslConverter:
             detail={
                 'object': 'expression',
                 'expression': node.dump(),
-                'cause': 'unhandled_binary_node'
+                'cause': 'unhandled_binary_node',
+                'summary': 'unhandled expression binary node operator {}'.format(
+                    node.op())
             }
         )
         return False, None
@@ -327,7 +357,9 @@ class FslConverter:
             detail={
                 'object': 'renderer',
                 'renderer': renderer.__class__.__name__,
-                'cause': 'unhandled_renderer'
+                'cause': 'unhandled_renderer',
+                'summary': 'unhandled renderer {}'.format(
+                    renderer.__class__.__name__)
             })
         return None
 
@@ -346,7 +378,8 @@ class FslConverter:
                 detail={
                     'object': 'renderer',
                     'renderer': 'single',
-                    'cause': 'no_symbol'
+                    'cause': 'no_symbol',
+                    'summary': 'single symbol renderer with no symbol'
                 })
             return None
 
@@ -431,7 +464,8 @@ class FslConverter:
                     detail={
                         'object': 'renderer',
                         'renderer': 'rule_based',
-                        'cause': 'nested_rules'
+                        'cause': 'nested_rules',
+                        'summary': 'rule based renderer with nested rules'
                     })
                 return None
 
@@ -444,7 +478,9 @@ class FslConverter:
                     detail={
                         'object': 'renderer',
                         'renderer': 'rule_based',
-                        'cause': 'null_symbol_rule'
+                        'cause': 'null_symbol_rule',
+                        'summary': 'rule based renderer with rule with '
+                                   'no symbol'
                     })
                 return None
 
@@ -457,7 +493,9 @@ class FslConverter:
                     detail={
                         'object': 'renderer',
                         'renderer': 'rule_based',
-                        'cause': 'scale_based_rule'
+                        'cause': 'scale_based_rule',
+                        'summary': 'rule based renderer with scaled '
+                                   'based rules'
                     })
                 return None
 
@@ -471,7 +509,8 @@ class FslConverter:
                     detail={
                         'object': 'renderer',
                         'renderer': 'rule_based',
-                        'cause': 'no_filter_rule'
+                        'cause': 'no_filter_rule',
+                        'summary': 'rule based renderer with no filter rule'
                     })
                 return None
 
@@ -489,7 +528,9 @@ class FslConverter:
                             'object': 'renderer',
                             'renderer': 'rule_based',
                             'cause': 'complex_filter_rule',
-                            'filter': filter_expression
+                            'filter': filter_expression,
+                            'summary': 'rule based renderer with '
+                                       'complex filter'
                         })
                     return None
 
@@ -502,7 +543,9 @@ class FslConverter:
                         detail={
                             'object': 'renderer',
                             'renderer': 'rule_based',
-                            'cause': 'mixed_attribute_filter_rules'
+                            'cause': 'mixed_attribute_filter_rules',
+                            'summary': 'rule based renderer with '
+                                       'mixed attribute rules'
                         })
                     return None
 
@@ -525,7 +568,9 @@ class FslConverter:
                         detail={
                             'object': 'renderer',
                             'renderer': 'rule_based',
-                            'cause': 'multiple_else_rules'
+                            'cause': 'multiple_else_rules',
+                            'summary': 'rule based renderer with '
+                                       'multiple else rules'
                         })
                     return None
                 other_symbol = converted_symbol
@@ -657,7 +702,8 @@ class FslConverter:
                 detail={
                     'object': 'renderer',
                     'renderer': 'categorized',
-                    'cause': 'no_categories'
+                    'cause': 'no_categories',
+                    'summary': 'categorized renderer with no categories'
                 })
             return None
 
@@ -718,7 +764,8 @@ class FslConverter:
                 detail={
                     'object': 'renderer',
                     'renderer': 'graduated',
-                    'cause': 'no_ranges'
+                    'cause': 'no_ranges',
+                    'summary': 'graduated renderer with no ranges'
                 })
             return None
 
@@ -836,7 +883,9 @@ class FslConverter:
             detail={
                 'object': 'symbol_layer',
                 'layer_type': layer.__class__.__name__,
-                'cause': 'not_supported'
+                'cause': 'not_supported',
+                'summary': 'unhandled symbol layer type {}'.format(
+                    layer.__class__.__name__)
             })
         return []
 
@@ -981,7 +1030,8 @@ class FslConverter:
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
-                    'cause': 'line_offset'
+                    'cause': 'line_offset',
+                    'summary': 'simple line with offset'
                 })
 
         return [res]
@@ -1007,7 +1057,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'marker_line'
+                'cause': 'marker_line',
+                'summary': 'marker line'
             })
 
         results = []
@@ -1064,7 +1115,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'hatched_line'
+                'cause': 'hatched_line',
+                'summary': 'hatched line'
             })
 
         results = []
@@ -1120,7 +1172,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'arrow'
+                'cause': 'arrow',
+                'summary': 'arrow line'
             })
 
         results = []
@@ -1200,7 +1253,8 @@ class FslConverter:
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
-                    'cause': 'non_solid_fill_pattern'
+                    'cause': 'non_solid_fill_pattern',
+                    'summary': 'simple fill with pattern'
                 })
 
         return [res]
@@ -1248,7 +1302,8 @@ class FslConverter:
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
-                    'cause': 'non_circle_marker'
+                    'cause': 'non_circle_marker',
+                    'summary': 'non circle marker'
                 })
 
         # not supported:
@@ -1305,7 +1360,8 @@ class FslConverter:
                 LogLevel.Warning,
                 detail={
                     'object': 'symbol_layer',
-                    'cause': 'non_circle_marker'
+                    'cause': 'non_circle_marker',
+                    'summary': 'non circle ellipse marker'
                 })
 
         # not supported:
@@ -1335,7 +1391,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'svg_marker'
+                'cause': 'svg_marker',
+                'summary': 'svg marker'
             })
 
         color_str = FslConverter.color_to_fsl(
@@ -1387,7 +1444,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'font_marker'
+                'cause': 'font_marker',
+                'summary': 'font marker'
             })
 
         color_str = FslConverter.color_to_fsl(
@@ -1439,7 +1497,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'filled_marker'
+                'cause': 'filled_marker',
+                'summary': 'filled marker'
             })
 
         results = []
@@ -1489,7 +1548,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'shapeburst'
+                'cause': 'shapeburst',
+                'summary': 'shapeburst'
             })
 
         color_str = FslConverter.color_to_fsl(
@@ -1524,7 +1584,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'gradient_fill'
+                'cause': 'gradient_fill',
+                'summary': 'gradient fill'
             })
 
         color_str = FslConverter.color_to_fsl(
@@ -1568,7 +1629,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'line_pattern_fill'
+                'cause': 'line_pattern_fill',
+                'summary': 'line pattern fill'
             })
 
         color_str = FslConverter.color_to_fsl(
@@ -1606,7 +1668,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'point_pattern_fill'
+                'cause': 'point_pattern_fill',
+                'summary': 'point pattern fill'
             })
 
         results = []
@@ -1647,7 +1710,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'centroid_fill'
+                'cause': 'centroid_fill',
+                'summary': 'centroid fill'
             })
 
         results = []
@@ -1688,7 +1752,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'random_marker_fill'
+                'cause': 'random_marker_fill',
+                'summary': 'random marker fill'
             })
 
         results = []
@@ -1726,7 +1791,8 @@ class FslConverter:
             LogLevel.Warning,
             detail={
                 'object': 'symbol_layer',
-                'cause': 'svg_fill'
+                'cause': 'svg_fill',
+                'summary': 'svg fill'
             })
 
         color_str = FslConverter.color_to_fsl(
@@ -1758,7 +1824,8 @@ class FslConverter:
                                  LogLevel.Warning,
                                  detail={
                                      'object': 'labels',
-                                     'cause': 'expression_based_label'
+                                     'cause': 'expression_based_label',
+                                     'summary': 'expression based label'
                                  })
 
             return None
@@ -1937,7 +2004,10 @@ class FslConverter:
             detail={
                 'object': 'raster',
                 'renderer': renderer.__class__.__name__,
-                'cause': 'unsupported_renderer'
+                'cause': 'unsupported_renderer',
+                'summary': 'unsupported raster renderer {}'.format(
+                    renderer.__class__.__name
+                )
             })
         return None
 

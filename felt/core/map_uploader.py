@@ -379,10 +379,7 @@ class MapUploaderTask(QgsTask):
 
         if conversion_context.warnings:
             Logger.instance().log_message_json(
-                {
-                    'type': Logger.FSL_CONVERSION,
-                    'warnings': conversion_context.warnings
-                }
+                conversion_context.format_warnings_for_reporting()
             )
 
         if self.isCanceled():
