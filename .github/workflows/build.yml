@@ -41,6 +41,12 @@ jobs:
         mkdir tmp
         unzip felt.${{ env.VERSION }}.zip -d tmp
 
+    - name: Save PR number to zips
+      run: |
+        cd tmp
+        echo ${{ github.event.number }} | tee pr_number
+        echo ${{ github.event.pull_request.head.sha }} | tee git_commit
+
     - uses: actions/upload-artifact@v2
       with:
         name: felt_plugin.${{ env.VERSION }}.${{ env.SHA_SHORT }}
