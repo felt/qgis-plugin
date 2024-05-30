@@ -660,11 +660,6 @@ class FslConverter:
 
         res = FslConverter.simplify_style(result)
 
-        for symbol in res:
-            if 'dashArray' in symbol and len(symbol['dashArray']) > 2:
-                # dash array limited to two values for varying styles
-                symbol['dashArray'] = symbol['dashArray'][:2]
-
         return res
 
     @staticmethod
