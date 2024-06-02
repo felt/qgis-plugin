@@ -68,7 +68,8 @@ class MapUploaderTest(unittest.TestCase):
         project.addMapLayer(layer3, addToLegend=False)
         project.addMapLayer(layer4, addToLegend=False)
 
-        transport_group: QgsLayerTreeGroup = project.layerTreeRoot().addGroup('Transport')
+        transport_group: QgsLayerTreeGroup = (
+            project.layerTreeRoot().addGroup('Transport'))
         transport_group.addLayer(layer1)
         lines_group = transport_group.addGroup('Lines')
         lines_group.addLayer(layer2)
