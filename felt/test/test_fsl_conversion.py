@@ -53,7 +53,8 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsContrastEnhancement,
     QgsInvertedPolygonRenderer,
-    QgsVectorLayerSimpleLabeling
+    QgsVectorLayerSimpleLabeling,
+    QgsHeatmapRenderer
 )
 
 from .utilities import get_qgis_app
@@ -1948,6 +1949,92 @@ class FslConversionTest(unittest.TestCase):
                         'isHoverable': False,
                         'size': 19}],
              'type': 'numeric'}
+        )
+
+    def test_heatmap_renderer(self):
+        """
+        Test converting heatmap renderers
+        """
+        conversion_context = ConversionContext()
+
+        renderer = QgsHeatmapRenderer()
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'legend': {'displayName': {'0': 'Low', '1': 'High'}},
+             'style': {'color': ['#ffffff',
+                                 '#f7f7f7',
+                                 '#eeeeee',
+                                 '#e6e6e6',
+                                 '#dddddd',
+                                 '#d5d5d5',
+                                 '#cccccc',
+                                 '#c3c3c3',
+                                 '#bbbbbb',
+                                 '#b3b3b3',
+                                 '#aaaaaa',
+                                 '#a2a2a2',
+                                 '#999999',
+                                 '#919191',
+                                 '#888888',
+                                 '#808080',
+                                 '#777777',
+                                 '#6f6f6f',
+                                 '#666666',
+                                 '#5e5e5e',
+                                 '#555555',
+                                 '#4d4d4d',
+                                 '#444444',
+                                 '#3b3b3b',
+                                 '#333333',
+                                 '#2a2a2a',
+                                 '#222222',
+                                 '#191919',
+                                 '#111111',
+                                 '#080808'],
+                       'intensity': 1,
+                       'opacity': 1,
+                       'size': 38},
+             'type': 'heatmap'}
+        )
+
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
+                                                layer_opacity=0.5),
+            {'legend': {'displayName': {'0': 'Low', '1': 'High'}},
+             'style': {'color': ['#ffffff',
+                                 '#f7f7f7',
+                                 '#eeeeee',
+                                 '#e6e6e6',
+                                 '#dddddd',
+                                 '#d5d5d5',
+                                 '#cccccc',
+                                 '#c3c3c3',
+                                 '#bbbbbb',
+                                 '#b3b3b3',
+                                 '#aaaaaa',
+                                 '#a2a2a2',
+                                 '#999999',
+                                 '#919191',
+                                 '#888888',
+                                 '#808080',
+                                 '#777777',
+                                 '#6f6f6f',
+                                 '#666666',
+                                 '#5e5e5e',
+                                 '#555555',
+                                 '#4d4d4d',
+                                 '#444444',
+                                 '#3b3b3b',
+                                 '#333333',
+                                 '#2a2a2a',
+                                 '#222222',
+                                 '#191919',
+                                 '#111111',
+                                 '#080808'],
+                       'intensity': 1,
+                       'opacity': 0.5,
+                       'size': 38},
+             'type': 'heatmap'}
         )
 
     @unittest.skipIf(Qgis.QGIS_VERSION_INT < 32400, 'QGIS too old')
