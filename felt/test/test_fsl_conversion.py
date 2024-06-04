@@ -1822,7 +1822,7 @@ class FslConversionTest(unittest.TestCase):
                         'showOther': False},
              'legend': {'displayName': {'1': 'first cat', '2': 'second cat'}},
              'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)'],
-                        'dashArray': [0.5, 1.3],
+                        'dashArray': [0.5, 1.3, 0.5, 1.3, 2.5, 1.3],
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'isClickable': False,
