@@ -63,7 +63,8 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsRasterPipe,
     QgsRasterDataProvider,
-    QgsColorRampShader
+    QgsColorRampShader,
+    QgsHeatmapRenderer
 )
 
 from .logger import Logger
@@ -336,9 +337,7 @@ class FslConverter:
             QgsRuleBasedRenderer:
                 FslConverter.rule_based_renderer_to_fsl,
             QgsNullSymbolRenderer: FslConverter.null_renderer_to_fsl,
-
-            # Could potentially be supported:
-            # QgsHeatmapRenderer
+            QgsHeatmapRenderer: FslConverter.heatmap_renderer_to_fsl,
 
             # No meaningful conversions for these types:
             # Qgs25DRenderer
@@ -603,6 +602,45 @@ class FslConverter:
             },
             "style": style,
             "type": "categorical"
+        }
+
+    @staticmethod
+    def heatmap_renderer_to_fsl(renderer: QgsHeatmapRenderer,
+                                context: ConversionContext,
+                                layer_opacity: float = 1) \
+            -> Optional[Dict[str, object]]:
+        """
+        Converts a QGIS heatmap renderer to an FSL definition
+        """
+        colors = []
+        ramp = renderer.colorRamp()
+        for i in range(FslConverter.COLOR_RAMP_INTERPOLATION_STEPS):
+            val = i / FslConverter.COLOR_RAMP_INTERPOLATION_STEPS
+            color = ramp.color(val)
+            colors.append(color.name())
+
+        if renderer.weightExpression():
+            context.push_warning(
+                'Heatmap point weighting cannot be converted',
+                LogLevel.Warning,
+                detail={
+                    'object': 'renderer',
+                    'renderer': 'heatmap',
+                    'cause': 'heatmap_point_weight',
+                    'summary': 'heatmap with point weighting'
+                })
+
+        return {
+            "style": {
+                "color": colors,
+                "opacity": layer_opacity,
+                "size": FslConverter.convert_to_pixels(
+                    renderer.radius(), renderer.radiusUnit(),
+                    context),
+                "intensity": 1
+            },
+            "legend": {"displayName": {"0": "Low", "1": "High"}},
+            "type": "heatmap"
         }
 
     @staticmethod
