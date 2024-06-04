@@ -80,6 +80,7 @@ class MapUploaderTask(QgsTask):
         self._workspace_id = workspace_id
 
         self.unsupported_layers: List[Tuple[str, str]] = []
+        self.unsupported_styles: List[Tuple[str, List[str]]] = []
         if layers:
             self.current_map_crs = QgsCoordinateReferenceSystem('EPSG:4326')
             self.current_map_extent = QgsMapLayerUtils.combinedExtent(
@@ -119,6 +120,18 @@ class MapUploaderTask(QgsTask):
             self._build_unsupported_layer_details(project, visible_layers)
 
         for layer_details in self.layers:
+            fsl_conversion_context = ConversionContext()
+            LayerExporter.representative_layer_style(
+                layer_details.layer, fsl_conversion_context)
+            if fsl_conversion_context.warnings:
+                warnings = []
+                for warning in fsl_conversion_context.warnings:
+                    message = warning.get('message')
+                    if message and message not in warnings:
+                        warnings.append(message)
+                self.unsupported_styles.append((layer_details.layer.name(),
+                                                warnings))
+
             layer_details.layer.moveToThread(None)
 
         self.transform_context = project.transformContext()
@@ -265,19 +278,38 @@ class MapUploaderTask(QgsTask):
         of unsupported map layers or other properties which cannot be
         exported
         """
-        if not self.unsupported_layers:
+        if not self.unsupported_layers and not self.unsupported_styles:
             return None
 
-        msg = '<p>' + self.tr('The following layers are not supported '
-                              'and won\'t be uploaded:') + '</p><ul><li>'
+        msg = ''
+        if self.unsupported_layers:
+            msg += '<p>' + self.tr('The following layers are not supported '
+                                   'and won\'t be uploaded:') + '</p><ul>'
 
-        for layer_name, reason in self.unsupported_layers:
-            if reason:
-                msg += '<li>{}: {}</li>'.format(layer_name, reason)
-            else:
-                msg += '<li>{}</li>'.format(layer_name)
+            for layer_name, reason in self.unsupported_layers:
+                if reason:
+                    msg += '<li><b>{}</b>: {}</li>'.format(layer_name, reason)
+                else:
+                    msg += '<li><b>{}</b></li>'.format(layer_name)
 
-        msg += '</ul>'
+            msg += '</ul>'
+
+        if self.unsupported_styles:
+            msg += ('<p>' + self.tr('The following layer styles cannot '
+                                    'be fully converted to Felt:') +
+                    '</p><ul>')
+
+            for layer_name, reasons in self.unsupported_styles:
+                if len(reasons) > 1:
+                    msg += '<li><b>{}</b>:<ul>'.format(layer_name)
+                    for reason in reasons:
+                        msg += '<li>{}</li>'.format(reason)
+                    msg += '</ul></li>'
+                else:
+                    msg += '<li><b>{}</b>: {}</li>'.format(layer_name,
+                                                           reasons[0])
+
+            msg += '</ul>'
         return msg
 
     # QgsTask interface
