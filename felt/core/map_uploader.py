@@ -120,6 +120,11 @@ class MapUploaderTask(QgsTask):
             self._build_unsupported_layer_details(project, visible_layers)
 
         for layer_details in self.layers:
+            if LayerExporter.layer_import_url(layer_details.layer):
+                # This is a direct import URL (eg XYZ layer), so ignore
+                # FSL conversion issues
+                continue
+
             fsl_conversion_context = ConversionContext()
             LayerExporter.representative_layer_style(
                 layer_details.layer, fsl_conversion_context)
