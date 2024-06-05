@@ -23,8 +23,8 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtXml import (
     QDomDocument
 )
-
 from qgis.core import (
+    Qgis,
     QgsDataSourceUri,
     QgsFeedback,
     QgsMapLayer,
@@ -54,13 +54,13 @@ from .enums import (
     LayerSupport
 )
 from .exceptions import LayerPackagingException
-from .layer_style import LayerStyle
-from .logger import Logger
-from .map import Map
 from .fsl_converter import (
     FslConverter,
     ConversionContext
 )
+from .layer_style import LayerStyle
+from .logger import Logger
+from .map import Map
 
 
 @dataclass
@@ -333,7 +333,9 @@ class LayerExporter(QObject):
             self,
             layer: QgsVectorLayer,
             conversion_context: ConversionContext,
-            feedback: Optional[QgsFeedback] = None) -> LayerExportDetails:
+            feedback: Optional[QgsFeedback] = None,
+            force_rewrite_fid: bool = False
+    ) -> LayerExportDetails:
         """
         Exports a vector layer into a format acceptable for Felt
         """
@@ -349,7 +351,9 @@ class LayerExporter(QObject):
             self.transform_context
         )
         writer_options.feedback = feedback
-        writer_options.forceMulti = True
+        writer_options.forceMulti = QgsWkbTypes.geometryType(
+            layer.wkbType()) in (QgsWkbTypes.LineGeometry,
+                                 QgsWkbTypes.PolygonGeometry)
         writer_options.overrideGeometryType = QgsWkbTypes.dropM(
             QgsWkbTypes.dropZ(layer.wkbType())
         )
@@ -366,13 +370,21 @@ class LayerExporter(QObject):
         writer_options.attributes = fields.allAttributesList()
         if fid_index >= 0:
             fid_type = fields.field(fid_index).type()
-            if fid_type not in (QVariant.Int,
-                                QVariant.UInt,
-                                QVariant.LongLong,
-                                QVariant.ULongLong):
+            needs_rewrite = force_rewrite_fid or fid_type not in (
+                QVariant.Int,
+                QVariant.UInt,
+                QVariant.LongLong,
+                QVariant.ULongLong)
+            if Qgis.QGIS_VERSION_INT < 32400 and needs_rewrite:
+                # older QGIS, can't rename attributes during export, so
+                # drop FID
                 writer_options.attributes = [a for a in
                                              writer_options.attributes if
                                              a != fid_index]
+            elif needs_rewrite:
+                writer_options.attributesExportNames = [
+                    f.name() if f.name().lower() != 'fid' else 'old_fid'
+                    for f in fields]
 
         # pylint: disable=unused-variable
         res, error_message, new_filename, new_layer_name = \
@@ -384,8 +396,15 @@ class LayerExporter(QObject):
             )
         # pylint: enable=unused-variable
 
-        if res not in (QgsVectorFileWriter.WriterError.NoError,
-                       QgsVectorFileWriter.WriterError.Canceled):
+        if (not force_rewrite_fid and
+                res == QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed):
+            # could not write attributes -- possibly eg due to duplicate
+            # FIDs. Let's try with renaming FID
+            return self.export_vector_layer(
+                layer, conversion_context, feedback, True
+            )
+        elif res not in (QgsVectorFileWriter.WriterError.NoError,
+                         QgsVectorFileWriter.WriterError.Canceled):
             Logger.instance().log_error_json(
                 {
                     'type': Logger.PACKAGING_VECTOR,
