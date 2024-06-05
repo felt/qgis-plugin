@@ -2241,20 +2241,23 @@ class FslConversionTest(unittest.TestCase):
 
         # no labels
         label_settings.drawLabels = False
-        self.assertIsNone(
-            FslConverter.label_settings_to_fsl(label_settings, context)
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'label': {'isClickable': False, 'isHoverable': False}}
         )
         label_settings.drawLabels = True
         label_settings.fieldName = ''
-        self.assertIsNone(
-            FslConverter.label_settings_to_fsl(label_settings, context)
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'label': {'isClickable': False, 'isHoverable': False}}
         )
 
         # expression labels, unsupported
         label_settings.fieldName = '1 + 2'
         label_settings.isExpression = True
-        self.assertIsNone(
-            FslConverter.label_settings_to_fsl(label_settings, context)
+        self.assertEqual(
+            FslConverter.label_settings_to_fsl(label_settings, context),
+            {'label': {'isClickable': False, 'isHoverable': False}}
         )
 
         # simple field

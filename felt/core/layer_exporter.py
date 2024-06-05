@@ -230,7 +230,8 @@ class LayerExporter(QObject):
                         LayerExporter.merge_dicts(fsl, label_def)
                     else:
                         fsl = label_def
-
+            elif fsl:
+                fsl['label'] = {"isClickable": False, "isHoverable": False}
         elif isinstance(layer, QgsRasterLayer):
             fsl = FslConverter.raster_layer_to_fsl(
                 layer, conversion_context

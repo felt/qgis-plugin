@@ -1860,7 +1860,9 @@ class FslConverter:
         Converts label settings to FSL
         """
         if not settings.drawLabels or not settings.fieldName:
-            return None
+            return {
+                'label': {"isClickable": False, "isHoverable": False}
+            }
 
         if settings.isExpression:
             context.push_warning('Expression based labels are not supported',
@@ -1870,8 +1872,9 @@ class FslConverter:
                                      'cause': 'expression_based_label',
                                      'summary': 'expression based label'
                                  })
-
-            return None
+            return {
+                'label': {"isClickable": False, "isHoverable": False}
+            }
 
         converted_format = FslConverter.text_format_to_fsl(
             settings.format(), context
