@@ -225,10 +225,10 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
         if Qgis.QGIS_VERSION_INT >= 32400:
             self.assertEqual([f.name() for f in out_layer.fields()],
-                         ['fid', 'old_fid', 'name', 'intval', 'floatval'])
+                             ['fid', 'old_fid', 'name', 'intval', 'floatval'])
         else:
             self.assertEqual([f.name() for f in out_layer.fields()],
-                         ['fid', 'name', 'intval', 'floatval'])
+                             ['fid', 'name', 'intval', 'floatval'])
 
     def test_layer_conversion_string_fid(self):
         """
@@ -268,19 +268,19 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.Point)
         if Qgis.QGIS_VERSION_INT >= 32400:
             self.assertEqual([f.name() for f in out_layer.fields()],
-                         ['fid', 'old_fid', 'label'])
+                             ['fid', 'old_fid', 'label'])
         else:
             self.assertEqual([f.name() for f in out_layer.fields()],
                              ['fid', 'label'])
         features = list(out_layer.getFeatures())
         if Qgis.QGIS_VERSION_INT >= 32400:
             self.assertEqual([feature.attributes() for feature in features],
-            [[1, 'abc', 'def'],
-            [2, '15', 'ghi']])
+                             [[1, 'abc', 'def'],
+                              [2, '15', 'ghi']])
         else:
             self.assertEqual([feature.attributes() for feature in features],
-                     [[1, 'def'],
-                      [2, 'ghi']])
+                             [[1, 'def'],
+                              [2, 'ghi']])
 
     def test_layer_conversion_duplicate_fid(self):
         """
@@ -320,10 +320,10 @@ class LayerExporterTest(unittest.TestCase):
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.Point)
         if Qgis.QGIS_VERSION_INT >= 32400:
             self.assertEqual([f.name() for f in out_layer.fields()],
-                         ['fid', 'old_fid', 'label'])
+                             ['fid', 'old_fid', 'label'])
         else:
             self.assertEqual([f.name() for f in out_layer.fields()],
-                         ['fid', 'label'])
+                             ['fid', 'label'])
 
         features = list(out_layer.getFeatures())
         if Qgis.QGIS_VERSION_INT >= 32400:
