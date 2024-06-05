@@ -806,7 +806,12 @@ class FslConverter:
         converted_symbols = []
         range_breaks = []
         legend_text = {}
-        for idx, _range in enumerate(renderer.ranges()):
+
+        # we have to sort ranges in ascending order for FSL compatiblity
+        ranges = renderer.ranges()
+        ranges.sort(key=lambda r: r.lowerValue())
+
+        for idx, _range in enumerate(ranges):
             converted_symbol = FslConverter.symbol_to_fsl(_range.symbol(),
                                                           context,
                                                           layer_opacity)

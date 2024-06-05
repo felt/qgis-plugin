@@ -1951,6 +1951,38 @@ class FslConversionTest(unittest.TestCase):
              'type': 'numeric'}
         )
 
+        # with out of order ranges
+        ranges = [
+            QgsRendererRange(3, 4, line_symbol3.clone(), 'third range'),
+            QgsRendererRange(1, 2, line_symbol.clone(), 'first range'),
+            QgsRendererRange(2, 3, line_symbol2.clone(), 'second range'),
+        ]
+
+        renderer = QgsGraduatedSymbolRenderer('my_field',
+                                              ranges)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
+            {'config': {'numericAttribute': 'my_field',
+                        'steps': [1.0, 2.0, 3.0, 4.0]},
+             'legend': {'displayName': {'0': 'first range',
+                                        '1': 'second range',
+                                        '2': 'third range'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)',
+                                  'rgb(0, 255, 255)'],
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
+                        'size': [1, 23, 26]},
+                       {'color': 'rgb(255, 255, 0)',
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'isClickable': False,
+                        'isHoverable': False,
+                        'size': 19}],
+             'type': 'numeric'}
+        )
+
     def test_heatmap_renderer(self):
         """
         Test converting heatmap renderers
