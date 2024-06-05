@@ -1609,6 +1609,25 @@ class FslConversionTest(unittest.TestCase):
              'type': 'simple'}
         )
 
+        # layer with scale based rendering, but non-convertible rule based
+        # renderer
+        layer = QgsVectorLayer('x', '', 'memory')
+        layer.setRenderer(renderer)
+        layer.setScaleBasedVisibility(True)
+        layer.setMinimumScale(10000)
+        self.assertEqual(
+            FslConverter.vector_layer_to_fsl(layer, conversion_context),
+            {'legend': {},
+             'style': {'color': 'rgb(255, 0, 0)',
+                       'lineCap': 'square',
+                       'lineJoin': 'bevel',
+                       'minZoom': 15,
+                       'isClickable': False,
+                       'isHoverable': False,
+                       'size': 1},
+             'type': 'simple'}
+        )
+
     def test_categorical_rule_based_renderer(self):
         """
         Test converting rule based renderers which can be treated as
