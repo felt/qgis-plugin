@@ -370,21 +370,18 @@ class LayerExporter(QObject):
         writer_options.attributes = fields.allAttributesList()
         if fid_index >= 0:
             fid_type = fields.field(fid_index).type()
-            if (Qgis.QGIS_VERSION_INT < 32400 and
-                    fid_type not in (
-                            QVariant.Int,
-                            QVariant.UInt,
-                            QVariant.LongLong,
-                            QVariant.ULongLong)):
+            needs_rewrite = force_rewrite_fid or fid_type not in (
+                QVariant.Int,
+                QVariant.UInt,
+                QVariant.LongLong,
+                QVariant.ULongLong)
+            if Qgis.QGIS_VERSION_INT < 32400 and needs_rewrite:
                 # older QGIS, can't rename attributes during export, so
                 # drop FID
                 writer_options.attributes = [a for a in
                                              writer_options.attributes if
                                              a != fid_index]
-            elif force_rewrite_fid or fid_type not in (QVariant.Int,
-                                                       QVariant.UInt,
-                                                       QVariant.LongLong,
-                                                       QVariant.ULongLong):
+            elif needs_rewrite:
                 writer_options.attributesExportNames = [
                     f.name() if f.name().lower() != 'fid' else 'old_fid'
                     for f in fields]
@@ -399,7 +396,7 @@ class LayerExporter(QObject):
             )
         # pylint: enable=unused-variable
 
-        if (Qgis.QGIS_VERSION_INT >= 32400 and not force_rewrite_fid and
+        if (not force_rewrite_fid and
                 res == QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed):
             # could not write attributes -- possibly eg due to duplicate
             # FIDs. Let's try with renaming FID

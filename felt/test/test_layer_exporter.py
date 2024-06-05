@@ -223,8 +223,12 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.MultiPolygon)
-        self.assertEqual([f.name() for f in out_layer.fields()],
+        if Qgis.QGIS_VERSION_INT >= 32400:
+            self.assertEqual([f.name() for f in out_layer.fields()],
                          ['fid', 'old_fid', 'name', 'intval', 'floatval'])
+        else:
+            self.assertEqual([f.name() for f in out_layer.fields()],
+                         ['fid', 'name', 'intval', 'floatval'])
 
     def test_layer_conversion_string_fid(self):
         """
@@ -262,12 +266,21 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.Point)
-        self.assertEqual([f.name() for f in out_layer.fields()],
+        if Qgis.QGIS_VERSION_INT >= 32400:
+            self.assertEqual([f.name() for f in out_layer.fields()],
                          ['fid', 'old_fid', 'label'])
+        else:
+            self.assertEqual([f.name() for f in out_layer.fields()],
+                             ['fid', 'label'])
         features = list(out_layer.getFeatures())
-        self.assertEqual([feature.attributes() for feature in features],
-                         [[1, 'abc', 'def'],
-                          [2, '15', 'ghi']])
+        if Qgis.QGIS_VERSION_INT >= 32400:
+            self.assertEqual([feature.attributes() for feature in features],
+            [[1, 'abc', 'def'],
+            [2, '15', 'ghi']])
+        else:
+            self.assertEqual([feature.attributes() for feature in features],
+                     [[1, 'def'],
+                      [2, 'ghi']])
 
     def test_layer_conversion_duplicate_fid(self):
         """
@@ -305,11 +318,20 @@ class LayerExporterTest(unittest.TestCase):
         self.assertTrue(out_layer.isValid())
         self.assertEqual(out_layer.featureCount(), layer.featureCount())
         self.assertEqual(out_layer.wkbType(), QgsWkbTypes.Point)
-        self.assertEqual([f.name() for f in out_layer.fields()],
+        if Qgis.QGIS_VERSION_INT >= 32400:
+            self.assertEqual([f.name() for f in out_layer.fields()],
                          ['fid', 'old_fid', 'label'])
+        else:
+            self.assertEqual([f.name() for f in out_layer.fields()],
+                         ['fid', 'label'])
+
         features = list(out_layer.getFeatures())
-        self.assertEqual([feature.attributes() for feature in features],
-                         [[1, 15, 'abc'], [2, 15, 'def']])
+        if Qgis.QGIS_VERSION_INT >= 32400:
+            self.assertEqual([feature.attributes() for feature in features],
+                             [[1, 15, 'abc'], [2, 15, 'def']])
+        else:
+            self.assertEqual([feature.attributes() for feature in features],
+                             [[1, 'abc'], [2, 'def']])
 
     def test_raster_conversion_raw(self):
         """
