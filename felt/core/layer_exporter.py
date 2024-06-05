@@ -396,7 +396,7 @@ class LayerExporter(QObject):
                 layer, conversion_context, feedback, True
             )
         elif res not in (QgsVectorFileWriter.WriterError.NoError,
-                       QgsVectorFileWriter.WriterError.Canceled):
+                         QgsVectorFileWriter.WriterError.Canceled):
             Logger.instance().log_error_json(
                 {
                     'type': Logger.PACKAGING_VECTOR,
