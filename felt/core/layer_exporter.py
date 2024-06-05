@@ -23,8 +23,8 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtXml import (
     QDomDocument
 )
-
 from qgis.core import (
+    Qgis,
     QgsDataSourceUri,
     QgsFeedback,
     QgsMapLayer,
@@ -54,13 +54,13 @@ from .enums import (
     LayerSupport
 )
 from .exceptions import LayerPackagingException
-from .layer_style import LayerStyle
-from .logger import Logger
-from .map import Map
 from .fsl_converter import (
     FslConverter,
     ConversionContext
 )
+from .layer_style import LayerStyle
+from .logger import Logger
+from .map import Map
 
 
 @dataclass
@@ -370,10 +370,21 @@ class LayerExporter(QObject):
         writer_options.attributes = fields.allAttributesList()
         if fid_index >= 0:
             fid_type = fields.field(fid_index).type()
-            if force_rewrite_fid or fid_type not in (QVariant.Int,
-                                                     QVariant.UInt,
-                                                     QVariant.LongLong,
-                                                     QVariant.ULongLong):
+            if (Qgis.QGIS_VERSION_INT < 32400 and
+                    fid_type not in (
+                            QVariant.Int,
+                            QVariant.UInt,
+                            QVariant.LongLong,
+                            QVariant.ULongLong)):
+                # older QGIS, can't rename attributes during export, so
+                # drop FID
+                writer_options.attributes = [a for a in
+                                             writer_options.attributes if
+                                             a != fid_index]
+            elif force_rewrite_fid or fid_type not in (QVariant.Int,
+                                                       QVariant.UInt,
+                                                       QVariant.LongLong,
+                                                       QVariant.ULongLong):
                 writer_options.attributesExportNames = [
                     f.name() if f.name().lower() != 'fid' else 'old_fid'
                     for f in fields]
@@ -388,7 +399,7 @@ class LayerExporter(QObject):
             )
         # pylint: enable=unused-variable
 
-        if (not force_rewrite_fid and
+        if (Qgis.QGIS_VERSION_INT >= 32400 and not force_rewrite_fid and
                 res == QgsVectorFileWriter.WriterError.ErrFeatureWriteFailed):
             # could not write attributes -- possibly eg due to duplicate
             # FIDs. Let's try with renaming FID
