@@ -20,6 +20,7 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     NULL,
+    QgsMapLayer,
     QgsVectorLayer,
     QgsRasterLayer,
     QgsSymbol,
@@ -291,31 +292,13 @@ class FslConverter:
             layer.renderer(), context, layer.opacity()
         )
         if not fsl:
-            return None
+            fsl = {}
 
-        if layer.hasScaleBasedVisibility():
-            if layer.minimumScale():
-                if isinstance(fsl['style'], list):
-                    for style in fsl['style']:
-                        style['minZoom'] = (
-                            MapUtils.map_scale_to_leaflet_tile_zoom(
-                                layer.minimumScale()))
-                else:
-                    fsl['style']['minZoom'] = (
-                        MapUtils.map_scale_to_leaflet_tile_zoom(
-                            layer.minimumScale()))
-            if layer.maximumScale():
-                if isinstance(fsl['style'], list):
-                    for style in fsl['style']:
-                        style['maxZoom'] = (
-                            MapUtils.map_scale_to_leaflet_tile_zoom(
-                                layer.maximumScale()))
-                else:
-                    fsl['style']['maxZoom'] = (
-                        MapUtils.map_scale_to_leaflet_tile_zoom(
-                            layer.maximumScale()))
+        FslConverter.add_common_layer_properties_to_fsl(
+            layer, fsl, context
+        )
 
-        return fsl
+        return fsl or None
 
     @staticmethod
     def vector_renderer_to_fsl(renderer: QgsFeatureRenderer,
@@ -1983,6 +1966,40 @@ class FslConverter:
         return res
 
     @staticmethod
+    def add_common_layer_properties_to_fsl(
+            layer: QgsMapLayer,
+            fsl: Dict[str, object],
+            context: ConversionContext,
+    ):
+        """
+        Modifies FSL dict in place to add common layer properties
+        """
+        if layer.hasScaleBasedVisibility():
+            if 'style' not in fsl:
+                fsl['style'] = {}
+
+            if layer.minimumScale():
+                if isinstance(fsl['style'], list):
+                    for style in fsl['style']:
+                        style['minZoom'] = (
+                            MapUtils.map_scale_to_leaflet_tile_zoom(
+                                layer.minimumScale()))
+                else:
+                    fsl['style']['minZoom'] = (
+                        MapUtils.map_scale_to_leaflet_tile_zoom(
+                            layer.minimumScale()))
+            if layer.maximumScale():
+                if isinstance(fsl['style'], list):
+                    for style in fsl['style']:
+                        style['maxZoom'] = (
+                            MapUtils.map_scale_to_leaflet_tile_zoom(
+                                layer.maximumScale()))
+                else:
+                    fsl['style']['maxZoom'] = (
+                        MapUtils.map_scale_to_leaflet_tile_zoom(
+                            layer.maximumScale()))
+
+    @staticmethod
     def raster_layer_to_fsl(
             layer: QgsRasterLayer,
             context: ConversionContext
@@ -1994,7 +2011,7 @@ class FslConverter:
             layer.renderer(), context, layer.opacity()
         )
         if not fsl:
-            return None
+            fsl = {}
 
         # resampling only applies to numeric rasters
         if fsl.get('type') == 'numeric':
@@ -2009,17 +2026,11 @@ class FslConverter:
             else:
                 fsl['config']['rasterResampling'] = "nearest"
 
-        if layer.hasScaleBasedVisibility():
-            if layer.minimumScale():
-                fsl['style']['minZoom'] = (
-                    MapUtils.map_scale_to_leaflet_tile_zoom(
-                        layer.minimumScale()))
-            if layer.maximumScale():
-                fsl['style']['maxZoom'] = (
-                    MapUtils.map_scale_to_leaflet_tile_zoom(
-                        layer.maximumScale()))
+        FslConverter.add_common_layer_properties_to_fsl(
+            layer, fsl, context
+        )
 
-        return fsl
+        return fsl or None
 
     @staticmethod
     def raster_renderer_to_fsl(
