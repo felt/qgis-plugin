@@ -1744,7 +1744,7 @@ class FslConversionTest(unittest.TestCase):
                         'isClickable': False,
                         'isHoverable': False,
                         'size': [19, 23, 26]},
-             {'color': 'rgb(255, 0, 0)',
+                       {'color': 'rgb(255, 0, 0)',
                         'lineCap': 'square',
                         'lineJoin': 'bevel',
                         'isClickable': False,
