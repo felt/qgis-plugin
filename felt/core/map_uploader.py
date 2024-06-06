@@ -215,6 +215,12 @@ class MapUploaderTask(QgsTask):
 
         return res
 
+    def workspace_id(self) -> Optional[str]:
+        """
+        Returns the target workspace ID
+        """
+        return self._workspace_id
+
     def set_workspace_id(self, workspace_id: Optional[str]):
         """
         Sets the target workspace ID
