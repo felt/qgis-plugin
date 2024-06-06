@@ -167,8 +167,12 @@ class LayerExporter(QObject):
                 ds.setEncodedUri(layer.source())
                 if ds.param('type') == 'xyz':
                     url = ds.param('url')
-                    if '{q}' not in url:
-                        return url
+                    if '{q}' in url:
+                        return None
+                    # older QGIS projects can use http eg for OSM servers,
+                    # silently upgrade to https
+                    url = url.replace('http://', 'https://')
+                    return url
 
         return None
 
