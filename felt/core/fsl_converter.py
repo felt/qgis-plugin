@@ -849,6 +849,16 @@ class FslConverter:
                                                  symbol_opacity)
             )
 
+        if fsl_layers and symbol.hasDataDefinedProperties():
+            context.push_warning(
+                'Data defined properties cannot be converted',
+                LogLevel.Warning,
+                detail={
+                    'object': 'symbol',
+                    'cause': 'symbol_data_defined_properties',
+                    'summary': 'symbol data defined properties'
+                })
+
         return fsl_layers
 
     @staticmethod
@@ -899,6 +909,15 @@ class FslConverter:
 
         for _class, converter in SYMBOL_LAYER_CONVERTERS.items():
             if isinstance(layer, _class):
+                if layer.hasDataDefinedProperties():
+                    context.push_warning(
+                        'Data defined properties cannot be converted',
+                        LogLevel.Warning,
+                        detail={
+                            'object': 'symbol_layer',
+                            'cause': 'layer_data_defined_properties',
+                            'summary': 'symbol layer data defined properties'
+                        })
                 return converter(layer, context, symbol_opacity)
 
         context.push_warning('{} symbol layers cannot be converted yet'.format(
