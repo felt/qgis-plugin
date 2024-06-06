@@ -219,13 +219,14 @@ class FeltApiClient:
         Prepares a layer upload
         """
         request = self._build_request(
-            self.URL_IMPORT_ENDPOINT.format(map_id),
-            {'Content-Type': 'application/json'}
+            self.UPLOAD_V2_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'},
+            version=2
         )
 
         request_params = {
             'name': name,
-            'layer_url': layer_url
+            'import_url': layer_url
         }
 
         json_data = json.dumps(request_params)
