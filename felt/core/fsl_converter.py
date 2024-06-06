@@ -839,6 +839,8 @@ class FslConverter:
         if not enabled_layers:
             return []
 
+        enabled_layers.reverse()
+
         symbol_opacity = opacity * symbol.opacity()
         fsl_layers = []
         for layer in enabled_layers:
