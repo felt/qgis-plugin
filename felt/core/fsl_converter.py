@@ -126,6 +126,7 @@ class ConversionContext:
 class FslConverter:
     NULL_COLOR = "rgba(0, 0, 0, 0)"
     COLOR_RAMP_INTERPOLATION_STEPS = 30
+    SOLID_LINE_DASH_HACK = [1, 0]
 
     @staticmethod
     def create_symbol_dict() -> Dict[str, object]:
@@ -655,6 +656,12 @@ class FslConverter:
         if len(styles) < 1:
             return []
 
+        any_has_dash_array = False
+        for symbol in styles:
+            for layer in symbol:
+                if 'dashArray' in layer:
+                    any_has_dash_array = True
+
         result = []
         # upgrade all properties in first symbol to lists
         first_symbol = styles[0]
@@ -662,6 +669,9 @@ class FslConverter:
             list_dict = {}
             for key, value in layer.items():
                 list_dict[key] = [value]
+
+            if any_has_dash_array and 'dashArray' not in list_dict:
+                list_dict['dashArray'] = [FslConverter.SOLID_LINE_DASH_HACK]
             result.append(list_dict)
 
         for symbol in styles[1:]:
@@ -676,6 +686,8 @@ class FslConverter:
                     # symbol
                     if source_layer and key in source_layer:
                         value.append(source_layer[key])
+                    elif key == 'dashArray':
+                        value.append(FslConverter.SOLID_LINE_DASH_HACK)
                     else:
                         value.append(value[0])
 

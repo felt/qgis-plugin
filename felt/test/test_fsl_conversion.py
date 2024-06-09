@@ -1891,6 +1891,71 @@ class FslConversionTest(unittest.TestCase):
              'type': 'categorical'}
         )
 
+    def test_categorized_dash_array_for_one(self):
+        """
+        Test categorized renderer with dashes on one category only
+        """
+        conversion_context = ConversionContext()
+
+        line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
+        line.setPenStyle(Qt.DashLine)
+        line_symbol = QgsLineSymbol()
+        line_symbol.changeSymbolLayer(0, line.clone())
+
+        line_symbol2 = QgsLineSymbol()
+        line.setColor(QColor(255, 0, 255))
+        line.setPenStyle(Qt.SolidLine)
+        line_symbol2.changeSymbolLayer(0, line.clone())
+
+        categories = [
+            QgsRendererCategory(1, line_symbol.clone(), 'first cat'),
+            QgsRendererCategory(2, line_symbol2.clone(), 'second cat')
+        ]
+
+        renderer = QgsCategorizedSymbolRenderer('my_field',
+                                                categories)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer,
+                                                conversion_context),
+            {'config': {'categoricalAttribute': 'my_field',
+                        'categories': ['1', '2'],
+                        'showOther': False},
+             'legend': {'displayName': {'1': 'first cat', '2': 'second cat'}},
+             'style': [{'color': ['rgb(255, 0, 0)', 'rgb(255, 0, 255)'],
+                        'dashArray': [[2.5, 2], [1, 0]],
+                        'isClickable': False,
+                        'isHoverable': False,
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 1}],
+             'type': 'categorical'}
+        )
+
+        # flip category order and re-test
+        categories = [
+            QgsRendererCategory(1, line_symbol2.clone(), 'first cat'),
+            QgsRendererCategory(2, line_symbol.clone(), 'second cat')
+        ]
+
+        renderer = QgsCategorizedSymbolRenderer('my_field',
+                                                categories)
+        self.assertEqual(
+            FslConverter.vector_renderer_to_fsl(renderer,
+                                                conversion_context),
+            {'config': {'categoricalAttribute': 'my_field',
+                        'categories': ['1', '2'],
+                        'showOther': False},
+             'legend': {'displayName': {'1': 'first cat', '2': 'second cat'}},
+             'style': [{'color': ['rgb(255, 0, 255)', 'rgb(255, 0, 0)'],
+                        'dashArray': [[1, 0], [2.5, 2]],
+                        'isClickable': False,
+                        'isHoverable': False,
+                        'lineCap': 'square',
+                        'lineJoin': 'bevel',
+                        'size': 1}],
+             'type': 'categorical'}
+        )
+
     def test_graduated_renderer(self):
         """
         Test converting graduated renderers
