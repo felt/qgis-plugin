@@ -257,9 +257,8 @@ class FeltPlugin(QObject):
         """
         Updates the enabled state of export actions
         """
-        has_layers = bool(QgsProject.instance().mapLayers())
         is_authorizing = AUTHORIZATION_MANAGER.status == AuthState.Authorizing
-        allowed_to_export = has_layers and not is_authorizing
+        allowed_to_export = not is_authorizing
         if self.share_map_to_felt_action:
             self.share_map_to_felt_action.setEnabled(allowed_to_export)
         if self.create_map_action:
