@@ -19,15 +19,25 @@ class WorkspacesComboBox(QComboBox):
 
     workspace_changed = pyqtSignal(str)
     no_workspaces_found = pyqtSignal()
+    workspaces_loaded = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
         self._model = WorkspacesModel(self)
         self._model.no_workspaces_found.connect(self.no_workspaces_found)
+        self._model.workspaces_loaded.connect(self.workspaces_loaded)
         self.setModel(self._model)
 
         self.currentIndexChanged.connect(self._index_changed)
+
+    def set_workspace(self, workspace: str):
+        """
+        Sets the current workspace to show
+        """
+        idx = self.findData(workspace, WorkspacesModel.IdRole)
+        if idx >= 0:
+            self.setCurrentIndex(idx)
 
     def current_workspace_id(self) -> Optional[str]:
         """

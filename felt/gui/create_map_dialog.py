@@ -224,6 +224,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.maps_widget = RecentMapsWidget()
         self.workspace_combo = WorkspacesComboBox()
         self.workspace_combo.no_workspaces_found.connect(self._no_workspace)
+        self.workspace_combo.workspaces_loaded.connect(self._workspaces_loaded)
         self.workspace_combo.workspace_changed.connect(self._workspace_changed)
         self.workspace_combo.setFixedHeight(
             int(QFontMetrics(self.workspace_combo.font()).height() * 1.5)
@@ -323,6 +324,18 @@ class CreateMapDialog(QDialog, WIDGET):
                     "or create your own workspace."
                     )
         )
+
+    def _workspaces_loaded(self):
+        """
+        Called when available workspaces have been loaded
+        """
+        last_workspace = QgsSettings().value(
+            "felt/last_workspace", '', str, QgsSettings.Plugins
+        )
+        if not last_workspace:
+            return
+
+        self.workspace_combo.set_workspace(last_workspace)
 
     def _validate_initial(self):
         """
@@ -433,6 +446,12 @@ class CreateMapDialog(QDialog, WIDGET):
         """
         Starts the map upload process
         """
+        QgsSettings().setValue(
+            "felt/last_workspace",
+            self.map_uploader_task.workspace_id(),
+            QgsSettings.Plugins
+        )
+
         self.started = True
         self.button_box.button(QDialogButtonBox.Cancel).setText(
             self.tr('Cancel')

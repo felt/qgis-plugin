@@ -35,6 +35,7 @@ class WorkspacesModel(QAbstractItemModel):
     IdRole = Qt.UserRole + 4
 
     no_workspaces_found = pyqtSignal()
+    workspaces_loaded = pyqtSignal()
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -82,6 +83,8 @@ class WorkspacesModel(QAbstractItemModel):
 
         if not self.workspaces:
             self.no_workspaces_found.emit()
+        else:
+            self.workspaces_loaded.emit()
 
     # Qt model interface
 
