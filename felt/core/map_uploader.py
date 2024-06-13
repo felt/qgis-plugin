@@ -36,7 +36,8 @@ from qgis.core import (
     QgsBlockingNetworkRequest,
     QgsReferencedRectangle,
     QgsRasterLayer,
-    QgsLayerTree
+    QgsLayerTree,
+    QgsLayerTreeGroup
 )
 from qgis.utils import iface
 
@@ -170,6 +171,12 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+        self.ordered_top_level_groups: List[str] = []
+        if project:
+            for child in project.layerTreeRoot().children():
+                if isinstance(child, QgsLayerTreeGroup):
+                    self.ordered_top_level_groups.append(child.name())
+            self.ordered_top_level_groups.reverse()
 
     @staticmethod
     def layer_and_group(project: QgsProject, layer: QgsMapLayer) \
@@ -479,6 +486,11 @@ class MapUploaderTask(QgsTask):
         rate_limit_counter = 0
 
         if all_group_names:
+            # ensure group names match their order in the QGIS project
+            all_group_names = sorted(
+                all_group_names,
+                key=lambda x: self.ordered_top_level_groups.index(x)
+            )
             reply = API_CLIENT.create_layer_groups(
                 map_id=self.associated_map.id,
                 layer_group_names=all_group_names
