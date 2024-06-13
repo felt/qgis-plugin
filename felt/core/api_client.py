@@ -484,7 +484,8 @@ class FeltApiClient:
         )
 
         group_post_data = [
-            {'name': g} for g in layer_group_names
+            {'name': g,
+             'ordering_key': i} for i, g in enumerate(layer_group_names)
         ]
 
         return QgsNetworkAccessManager.instance().blockingPost(
