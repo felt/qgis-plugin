@@ -472,7 +472,8 @@ class FeltApiClient:
 
     def create_layer_groups(self,
                             map_id: str,
-                            layer_group_names: List[str]) \
+                            layer_group_names: List[str],
+                            ordering_keys: Optional[Dict[str, int]] = None) \
             -> QgsNetworkReplyContent:
         """
         Creates layer groups for a map
@@ -483,10 +484,17 @@ class FeltApiClient:
             version=2
         )
 
-        group_post_data = [
-            {'name': g,
-             'ordering_key': i} for i, g in enumerate(layer_group_names)
-        ]
+        if not ordering_keys:
+            group_post_data = [
+                {'name': g,
+                 'ordering_key': i} for i, g in enumerate(layer_group_names)
+            ]
+        else:
+            group_post_data = [
+                {'name': g,
+                 'ordering_key': ordering_keys[g] or 0} for g in
+                layer_group_names
+            ]
 
         return QgsNetworkAccessManager.instance().blockingPost(
             request,

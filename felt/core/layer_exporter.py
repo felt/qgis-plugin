@@ -87,6 +87,7 @@ class ZippedExportResult:
     qgis_style_xml: str
     style: Optional[LayerStyle] = None
     group_name: Optional[str] = None
+    ordering_key: Optional[int] = None
 
 
 class LayerExporter(QObject):
