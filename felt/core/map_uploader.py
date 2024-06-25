@@ -517,6 +517,7 @@ class MapUploaderTask(QgsTask):
             return False
 
         to_upload = {}
+        imported_by_url = {}
 
         all_group_names = []
         for layer_details in self.layers:
@@ -532,17 +533,20 @@ class MapUploaderTask(QgsTask):
                     self.associated_map,
                     multi_step_feedback)
 
-                if 'errors' in result:
+                if result.error_message:
                     self.error_string = self.tr(
                         'Error occurred while exporting layer {}: {}').format(
                         layer.name(),
-                        result['errors'][0]['detail']
+                        result.error_message
                     )
                     self.status_changed.emit(self.error_string)
 
                     return False
-
                 layer.moveToThread(None)
+
+                result.ordering_key = layer_details.ordering_key
+                result.group_name = layer_details.destination_group_name
+                imported_by_url[layer] = result
             else:
 
                 self.status_changed.emit(
@@ -752,6 +756,43 @@ class MapUploaderTask(QgsTask):
                 reply = API_CLIENT.update_layer_details(
                     map_id=self.associated_map.id,
                     layer_id=layer_id,
+                    ordering_key=details.ordering_key,
+                )
+
+            if reply and reply.error() != QNetworkReply.NoError:
+                self.error_string = reply.errorString()
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error updating layer details: {}'.format(
+                            self.error_string)
+                    }
+                )
+                return False
+
+            multi_step_feedback.step_finished()
+
+        for layer, details in imported_by_url.items():
+            if self.isCanceled():
+                return False
+
+            self.status_changed.emit(
+                self.tr('Updating {}').format(layer.name())
+            )
+
+            reply = None
+            if details.group_name:
+                group_id = group_ids[details.group_name]
+                reply = API_CLIENT.update_layer_details(
+                    map_id=self.associated_map.id,
+                    layer_id=details.layer_id,
+                    layer_group_id=group_id,
+                    ordering_key=details.ordering_key,
+                )
+            elif details.ordering_key is not None:
+                reply = API_CLIENT.update_layer_details(
+                    map_id=self.associated_map.id,
+                    layer_id=details.layer_id,
                     ordering_key=details.ordering_key,
                 )
 
