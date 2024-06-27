@@ -8,6 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
+    Dict,
     Optional,
     List,
     Tuple
@@ -37,6 +38,7 @@ from qgis.core import (
     QgsReferencedRectangle,
     QgsRasterLayer,
     QgsLayerTree,
+    QgsLayerTreeLayer,
     QgsLayerTreeGroup
 )
 from qgis.utils import iface
@@ -60,6 +62,108 @@ class LayerDetails:
     """
     layer: QgsMapLayer
     destination_group_name: Optional[str] = None
+    ordering_key: Optional[int] = None
+
+
+@dataclass
+class ProjectComponent:
+    """
+    Encapsulates details of a project component
+    """
+    object_index: Optional[int] = None
+    group_name: Optional[str] = None
+    layer: Optional[LayerDetails] = None
+
+
+class SimplifiedProjectStructure:
+    """
+    Represents a simplified structure of a QGIS project
+    """
+    def __init__(self):
+        self.components: List[ProjectComponent] = []
+        self._current_index: int = 0
+
+    def append_component(self, component: ProjectComponent):
+        """
+        Adds a component to the project structure
+        """
+        component.object_index = self._current_index
+        self.components.append(component)
+        self._current_index += 1
+
+    def group_ordering_key(self, group_name: str) -> Optional[int]:
+        """
+        Returns the ordering key for a group name
+        """
+        all_group_keys = self.group_ordering_keys()
+        return all_group_keys.get(group_name, None)
+
+    def group_ordering_keys(self) -> Dict[str, int]:
+        """
+        Returns a dictionary of group name to ordering key
+        """
+        res = {}
+        for i, component in enumerate(self.components):
+            if component.group_name:
+                res[component.group_name] = len(self.components) - i
+        return res
+
+    def has_groups(self) -> bool:
+        """
+        Returns TRUE if there are any layer groups in the project
+        """
+        return any(bool(component.group_name) for component in self.components)
+
+    def find_layer(self, layer: QgsMapLayer) -> Optional[ProjectComponent]:
+        """
+        Finds a layer in the project structure
+        """
+        for component in self.components:
+            if component.layer and component.layer.layer == layer:
+                return component
+        return None
+
+    @staticmethod
+    def from_project(project: QgsProject) -> 'SimplifiedProjectStructure':
+        """
+        Creates a simplified structure of a QGIS project
+        """
+        tree = project.layerTreeRoot()
+        res = SimplifiedProjectStructure()
+
+        def traverse_group(group: QgsLayerTreeGroup,
+                           top_level_group_name: str):
+            for _child in group.children():
+                if isinstance(_child, QgsLayerTreeGroup):
+                    traverse_group(_child, top_level_group_name)
+                elif isinstance(_child, QgsLayerTreeLayer):
+                    res.append_component(
+                        ProjectComponent(
+                            layer=LayerDetails(
+                                layer=_child.layer(),
+                                destination_group_name=top_level_group_name
+                            )
+                        )
+                    )
+
+        for child in tree.children():
+            if isinstance(child, QgsLayerTreeGroup):
+                res.append_component(
+                    ProjectComponent(
+                        group_name=child.name()
+                    )
+                )
+                traverse_group(child, child.name())
+            elif isinstance(child, QgsLayerTreeLayer):
+                res.append_component(
+                    ProjectComponent(
+                        layer=LayerDetails(
+                            layer=child.layer(),
+                        )
+                    )
+                )
+
+        return res
 
 
 class MapUploaderTask(QgsTask):
@@ -82,6 +186,10 @@ class MapUploaderTask(QgsTask):
 
         self.unsupported_layers: List[Tuple[str, str]] = []
         self.unsupported_styles: List[Tuple[str, List[str]]] = []
+        self.project_structure = SimplifiedProjectStructure.from_project(
+                project
+            )
+
         if layers:
             self.current_map_crs = QgsCoordinateReferenceSystem('EPSG:4326')
             self.current_map_extent = QgsMapLayerUtils.combinedExtent(
@@ -171,19 +279,18 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
-        self.ordered_top_level_groups: List[str] = []
-        if project:
-            for child in project.layerTreeRoot().children():
-                if isinstance(child, QgsLayerTreeGroup):
-                    self.ordered_top_level_groups.append(child.name())
-            self.ordered_top_level_groups.reverse()
 
     @staticmethod
-    def layer_and_group(project: QgsProject, layer: QgsMapLayer) \
+    def layer_and_group(
+            project: QgsProject,
+            layer: QgsMapLayer) \
             -> LayerDetails:
         """
         Clones a layer, and returns the layer details
         """
+        simplified_project = SimplifiedProjectStructure.from_project(project)
+        simplified_project_layer = simplified_project.find_layer(layer)
+
         res = MapUploaderTask.clone_layer(layer)
 
         layer_tree_root = project.layerTreeRoot()
@@ -200,9 +307,16 @@ class MapUploaderTask(QgsTask):
         if parent != layer_tree_root and QgsLayerTree.isGroup(parent):
             group_name = parent.name()
 
+        ordering_key = None
+        if (simplified_project_layer and
+                simplified_project_layer.object_index is not None):
+            object_index = simplified_project_layer.object_index
+            ordering_key = len(simplified_project.components) - object_index
+
         return LayerDetails(
             layer=res,
-            destination_group_name=group_name
+            destination_group_name=group_name,
+            ordering_key=ordering_key
         )
 
     @staticmethod
@@ -349,7 +463,9 @@ class MapUploaderTask(QgsTask):
         total_steps = (
                 1 +  # create map call
                 len(self.layers) +  # layer exports
-                len(self.layers)  # layer uploads
+                len(self.layers) +  # layer uploads
+                (1 if self.project_structure.has_groups()
+                 else 0)  # for final group update
         )
 
         self.feedback = QgsFeedback()
@@ -418,11 +534,10 @@ class MapUploaderTask(QgsTask):
             return False
 
         to_upload = {}
+        imported_by_url = {}
 
-        all_group_names = []
         for layer_details in self.layers:
             layer = layer_details.layer
-            group_name = layer_details.destination_group_name
 
             if self.isCanceled():
                 return False
@@ -433,17 +548,20 @@ class MapUploaderTask(QgsTask):
                     self.associated_map,
                     multi_step_feedback)
 
-                if 'errors' in result:
+                if result.error_message:
                     self.error_string = self.tr(
                         'Error occurred while exporting layer {}: {}').format(
                         layer.name(),
-                        result['errors'][0]['detail']
+                        result.error_message
                     )
                     self.status_changed.emit(self.error_string)
 
                     return False
-
                 layer.moveToThread(None)
+
+                result.ordering_key = layer_details.ordering_key
+                result.group_name = layer_details.destination_group_name
+                imported_by_url[layer] = result
             else:
 
                 self.status_changed.emit(
@@ -466,12 +584,10 @@ class MapUploaderTask(QgsTask):
 
                     return False
 
-                result.group_name = group_name
+                result.group_name = layer_details.destination_group_name
+                result.ordering_key = layer_details.ordering_key
                 layer.moveToThread(None)
                 to_upload[layer] = result
-
-            if group_name and group_name not in all_group_names:
-                all_group_names.append(group_name)
 
             multi_step_feedback.step_finished()
 
@@ -485,22 +601,20 @@ class MapUploaderTask(QgsTask):
 
         rate_limit_counter = 0
 
-        if all_group_names:
+        all_group_ordering_keys = self.project_structure.group_ordering_keys()
+        if all_group_ordering_keys:
             # ensure group names match their order in the QGIS project
-            all_group_names = sorted(
-                all_group_names,
-                key=lambda x: self.ordered_top_level_groups.index(x)
-            )
-            reply = API_CLIENT.create_layer_groups(
+            created_groups = API_CLIENT.create_layer_groups(
                 map_id=self.associated_map.id,
-                layer_group_names=all_group_names
+                layer_group_names=list(all_group_ordering_keys.keys()),
+                ordering_keys=all_group_ordering_keys
             )
-            group_details = json.loads(reply.content().data().decode())
-            group_ids = {
-                group['name']: group['id'] for group in group_details
+            created_group_details = {
+                group.name: group
+                for group in created_groups
             }
         else:
-            group_ids = {}
+            created_group_details = {}
 
         for layer, details in to_upload.items():
             if self.isCanceled():
@@ -638,24 +752,78 @@ class MapUploaderTask(QgsTask):
                     reply.finished.connect(loop.exit)
                     loop.exec()
 
+            reply = None
             if details.group_name:
-                group_id = group_ids[details.group_name]
+                group_id = created_group_details[details.group_name].group_id
                 reply = API_CLIENT.update_layer_details(
                     map_id=self.associated_map.id,
                     layer_id=layer_id,
-                    layer_group_id=group_id
+                    layer_group_id=group_id,
+                    ordering_key=details.ordering_key,
                 )
-                if reply.error() != QNetworkReply.NoError:
-                    self.error_string = reply.errorString()
-                    Logger.instance().log_error_json(
-                        {
-                            'type': Logger.MAP_EXPORT,
-                            'error': 'Error updating layer group: {}'.format(
-                                self.error_string)
-                        }
-                    )
-                    return False
+            elif details.ordering_key is not None:
+                reply = API_CLIENT.update_layer_details(
+                    map_id=self.associated_map.id,
+                    layer_id=layer_id,
+                    ordering_key=details.ordering_key,
+                )
 
+            if reply and reply.error() != QNetworkReply.NoError:
+                self.error_string = reply.errorString()
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error updating layer details: {}'.format(
+                            self.error_string)
+                    }
+                )
+                return False
+
+            multi_step_feedback.step_finished()
+
+        for layer, details in imported_by_url.items():
+            if self.isCanceled():
+                return False
+
+            self.status_changed.emit(
+                self.tr('Updating {}').format(layer.name())
+            )
+
+            reply = None
+            if details.group_name:
+                group_id = created_group_details[details.group_name].group_id
+                reply = API_CLIENT.update_layer_details(
+                    map_id=self.associated_map.id,
+                    layer_id=details.layer_id,
+                    layer_group_id=group_id,
+                    ordering_key=details.ordering_key,
+                )
+            elif details.ordering_key is not None:
+                reply = API_CLIENT.update_layer_details(
+                    map_id=self.associated_map.id,
+                    layer_id=details.layer_id,
+                    ordering_key=details.ordering_key,
+                )
+
+            if reply and reply.error() != QNetworkReply.NoError:
+                self.error_string = reply.errorString()
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error updating layer details: {}'.format(
+                            self.error_string)
+                    }
+                )
+                return False
+
+            multi_step_feedback.step_finished()
+
+        # do this a second time because the order gets overwritten!
+        if created_group_details:
+            API_CLIENT.apply_layer_groups_updates(
+                map_id=self.associated_map.id,
+                group_details=created_group_details.values()
+            )
             multi_step_feedback.step_finished()
 
         return True

@@ -10,6 +10,7 @@ from typing import (
     Union,
     Tuple
 )
+from dataclasses import dataclass
 
 from qgis.PyQt.QtCore import (
     QUrl,
@@ -36,6 +37,16 @@ from .constants import (
 )
 
 PLUGIN_VERSION = "0.7.0"
+
+
+@dataclass
+class CreatedGroupDetails:
+    """
+    Encapsulates details of a created layer group
+    """
+    group_id: Optional[str] = None
+    name: Optional[str] = None
+    ordering_key: Optional[int] = None
 
 
 class FeltApiClient:
@@ -472,8 +483,9 @@ class FeltApiClient:
 
     def create_layer_groups(self,
                             map_id: str,
-                            layer_group_names: List[str]) \
-            -> QgsNetworkReplyContent:
+                            layer_group_names: List[str],
+                            ordering_keys: Optional[Dict[str, int]] = None) \
+            -> List[CreatedGroupDetails]:
         """
         Creates layer groups for a map
         """
@@ -483,9 +495,49 @@ class FeltApiClient:
             version=2
         )
 
+        if not ordering_keys:
+            group_post_data = [
+                {'name': g,
+                 'ordering_key': i} for i, g in enumerate(layer_group_names)
+            ]
+        else:
+            group_post_data = [
+                {'name': g,
+                 'ordering_key': ordering_keys[g] or 0} for g in
+                layer_group_names
+            ]
+
+        reply = QgsNetworkAccessManager.instance().blockingPost(
+            request,
+            json.dumps(group_post_data).encode()
+        )
+
+        return [
+            CreatedGroupDetails(
+                group_id=group['id'],
+                name=group['name'],
+                ordering_key=ordering_keys.get(group['name']))
+            for group in json.loads(reply.content().data().decode())
+        ]
+
+    def apply_layer_groups_updates(self,
+                                   map_id: str,
+                                   group_details: List[CreatedGroupDetails]) \
+            -> QgsNetworkReplyContent:
+        """
+        Updates layer group details
+        """
+        request = self._build_request(
+            self.LAYER_GROUPS_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'},
+            version=2
+        )
+
         group_post_data = [
-            {'name': g,
-             'ordering_key': i} for i, g in enumerate(layer_group_names)
+            {'id': g.group_id,
+             'name': g.name,
+             'ordering_key': g.ordering_key} for g in
+            group_details
         ]
 
         return QgsNetworkAccessManager.instance().blockingPost(

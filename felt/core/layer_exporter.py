@@ -87,6 +87,18 @@ class ZippedExportResult:
     qgis_style_xml: str
     style: Optional[LayerStyle] = None
     group_name: Optional[str] = None
+    ordering_key: Optional[int] = None
+
+
+@dataclass
+class ImportByUrlResult:
+    """
+    Results of an import by URL operation
+    """
+    layer_id: Optional[str] = None
+    error_message: Optional[str] = None
+    group_name: Optional[str] = None
+    ordering_key: Optional[int] = None
 
 
 class LayerExporter(QObject):
@@ -178,7 +190,8 @@ class LayerExporter(QObject):
 
     @staticmethod
     def import_from_url(layer: QgsMapLayer, target_map: Map,
-                        feedback: Optional[QgsFeedback] = None) -> Dict:
+                        feedback: Optional[QgsFeedback] = None) \
+            -> ImportByUrlResult:
         """
         Imports a layer from URI to the given map
         """
@@ -191,7 +204,16 @@ class LayerExporter(QObject):
             blocking=True,
             feedback=feedback
         )
-        return json.loads(reply.content().data().decode())
+        response = json.loads(reply.content().data().decode())
+
+        res = ImportByUrlResult()
+
+        if 'errors' in response:
+            res.error_message = response['errors'][0]['detail']
+            return res
+
+        res.layer_id = response['layer_id']
+        return res
 
     @staticmethod
     def merge_dicts(tgt: Dict, enhancer: Dict) -> Dict:
