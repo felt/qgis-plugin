@@ -520,6 +520,26 @@ class FeltApiClient:
             for group in json.loads(reply.content().data().decode())
         ]
 
+    def apply_layer_groups_updates(self,
+                            map_id: str,
+                            group_details: List[CreatedGroupDetails]) \
+            -> QgsNetworkReplyContent:
+        """
+        Updates layer group details
+        """
+        request = self._build_request(
+            self.LAYER_GROUPS_ENDPOINT.format(map_id),
+            {'Content-Type': 'application/json'},
+            version=2
+        )
+
+        group_post_data = [
+            {'id': g.group_id,
+             'name': g.name,
+             'ordering_key': g.ordering_key} for g in
+            group_details
+        ]
+
         return QgsNetworkAccessManager.instance().blockingPost(
             request,
             json.dumps(group_post_data).encode()

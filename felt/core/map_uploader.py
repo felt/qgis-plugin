@@ -463,7 +463,8 @@ class MapUploaderTask(QgsTask):
         total_steps = (
                 1 +  # create map call
                 len(self.layers) +  # layer exports
-                len(self.layers)  # layer uploads
+                len(self.layers) +  # layer uploads
+                (1 if self.project_structure.has_groups() else 0)  # for final group update
         )
 
         self.feedback = QgsFeedback()
@@ -814,6 +815,14 @@ class MapUploaderTask(QgsTask):
                 )
                 return False
 
+            multi_step_feedback.step_finished()
+
+        # do this a second time because the order gets overwritten!
+        if created_group_details:
+            API_CLIENT.apply_layer_groups_updates(
+                map_id=self.associated_map.id,
+                group_details=created_group_details.values()
+            )
             multi_step_feedback.step_finished()
 
         return True
