@@ -10,6 +10,7 @@ from typing import (
     Union,
     Tuple
 )
+from dataclasses import dataclass
 
 from qgis.PyQt.QtCore import (
     QUrl,
@@ -36,6 +37,16 @@ from .constants import (
 )
 
 PLUGIN_VERSION = "0.7.0"
+
+
+@dataclass
+class CreatedGroupDetails:
+    """
+    Encapsulates details of a created layer group
+    """
+    group_id: Optional[str] = None
+    name: Optional[str] = None
+    ordering_key: Optional[int] = None
 
 
 class FeltApiClient:
@@ -474,7 +485,7 @@ class FeltApiClient:
                             map_id: str,
                             layer_group_names: List[str],
                             ordering_keys: Optional[Dict[str, int]] = None) \
-            -> QgsNetworkReplyContent:
+            -> List[CreatedGroupDetails]:
         """
         Creates layer groups for a map
         """
@@ -495,6 +506,19 @@ class FeltApiClient:
                  'ordering_key': ordering_keys[g] or 0} for g in
                 layer_group_names
             ]
+
+        reply = QgsNetworkAccessManager.instance().blockingPost(
+            request,
+            json.dumps(group_post_data).encode()
+        )
+
+        return [
+            CreatedGroupDetails(
+                group_id=group['id'],
+                name=group['name'],
+                ordering_key=ordering_keys.get(group['name']))
+            for group in json.loads(reply.content().data().decode())
+        ]
 
         return QgsNetworkAccessManager.instance().blockingPost(
             request,

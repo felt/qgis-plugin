@@ -8,6 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
+    Dict,
     Optional,
     List,
     Tuple
@@ -519,10 +520,8 @@ class MapUploaderTask(QgsTask):
         to_upload = {}
         imported_by_url = {}
 
-        all_group_names = []
         for layer_details in self.layers:
             layer = layer_details.layer
-            group_name = layer_details.destination_group_name
 
             if self.isCanceled():
                 return False
@@ -569,13 +568,10 @@ class MapUploaderTask(QgsTask):
 
                     return False
 
-                result.group_name = group_name
+                result.group_name = layer_details.destination_group_name
                 result.ordering_key = layer_details.ordering_key
                 layer.moveToThread(None)
                 to_upload[layer] = result
-
-            if group_name and group_name not in all_group_names:
-                all_group_names.append(group_name)
 
             multi_step_feedback.step_finished()
 
@@ -591,21 +587,17 @@ class MapUploaderTask(QgsTask):
 
         if all_group_names:
             # ensure group names match their order in the QGIS project
-            ordering_keys = {
-                group: self.project_structure.group_ordering_key(group)
-                for group in all_group_names
-            }
-            reply = API_CLIENT.create_layer_groups(
+            created_groups = API_CLIENT.create_layer_groups(
                 map_id=self.associated_map.id,
                 layer_group_names=all_group_names,
                 ordering_keys=ordering_keys
             )
-            group_details = json.loads(reply.content().data().decode())
-            group_ids = {
-                group['name']: group['id'] for group in group_details
+            created_group_details = {
+                group.name: group
+                for group in created_groups
             }
         else:
-            group_ids = {}
+            created_group_details = {}
 
         for layer, details in to_upload.items():
             if self.isCanceled():
@@ -745,7 +737,7 @@ class MapUploaderTask(QgsTask):
 
             reply = None
             if details.group_name:
-                group_id = group_ids[details.group_name]
+                group_id = created_group_details[details.group_name].group_id
                 reply = API_CLIENT.update_layer_details(
                     map_id=self.associated_map.id,
                     layer_id=layer_id,
@@ -782,7 +774,7 @@ class MapUploaderTask(QgsTask):
 
             reply = None
             if details.group_name:
-                group_id = group_ids[details.group_name]
+                group_id = created_group_details[details.group_name].group_id
                 reply = API_CLIENT.update_layer_details(
                     map_id=self.associated_map.id,
                     layer_id=details.layer_id,
