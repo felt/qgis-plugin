@@ -95,10 +95,24 @@ class SimplifiedProjectStructure:
         """
         Returns the ordering key for a group name
         """
+        all_group_keys = self.group_ordering_keys()
+        return all_group_keys.get(group_name, None)
+
+    def group_ordering_keys(self) -> Dict[str, int]:
+        """
+        Returns a dictionary of group name to ordering key
+        """
+        res = {}
         for i, component in enumerate(self.components):
-            if component.group_name == group_name:
-                return len(self.components) - i
-        return None
+            if component.group_name:
+                res[component.group_name] = len(self.components) - i
+        return res
+
+    def has_groups(self) -> bool:
+        """
+        Returns TRUE if there are any layer groups in the project
+        """
+        return any(bool(component.group_name) for component in self.components)
 
     def find_layer(self, layer: QgsMapLayer) -> Optional[ProjectComponent]:
         """
@@ -585,12 +599,13 @@ class MapUploaderTask(QgsTask):
 
         rate_limit_counter = 0
 
-        if all_group_names:
+        all_group_ordering_keys = self.project_structure.group_ordering_keys()
+        if all_group_ordering_keys:
             # ensure group names match their order in the QGIS project
             created_groups = API_CLIENT.create_layer_groups(
                 map_id=self.associated_map.id,
-                layer_group_names=all_group_names,
-                ordering_keys=ordering_keys
+                layer_group_names=list(all_group_ordering_keys.keys()),
+                ordering_keys=all_group_ordering_keys
             )
             created_group_details = {
                 group.name: group

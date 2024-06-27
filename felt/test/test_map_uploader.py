@@ -113,6 +113,9 @@ class MapUploaderTest(unittest.TestCase):
         self.assertEqual(structure.find_layer(layer3).object_index, 4)
         self.assertEqual(structure.find_layer(layer4).object_index, 5)
 
+        self.assertEqual(structure.group_ordering_keys(),
+                         {'Environment': 3, 'Transport': 6})
+
     def test_group_names(self):
         """
         Test destination group name logic
