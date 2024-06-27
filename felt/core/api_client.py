@@ -521,8 +521,8 @@ class FeltApiClient:
         ]
 
     def apply_layer_groups_updates(self,
-                            map_id: str,
-                            group_details: List[CreatedGroupDetails]) \
+                                   map_id: str,
+                                   group_details: List[CreatedGroupDetails]) \
             -> QgsNetworkReplyContent:
         """
         Updates layer group details

@@ -464,7 +464,8 @@ class MapUploaderTask(QgsTask):
                 1 +  # create map call
                 len(self.layers) +  # layer exports
                 len(self.layers) +  # layer uploads
-                (1 if self.project_structure.has_groups() else 0)  # for final group update
+                (1 if self.project_structure.has_groups()
+                 else 0)  # for final group update
         )
 
         self.feedback = QgsFeedback()
