@@ -21,6 +21,8 @@ class S3UploadParameters:
         """
         Returns all form fields including the presigned attributes required
         for the upload
+        Presigned attributes must be returned in the same order they
+        appeared in the original JSON
         """
         return {**self._presigned_attributes}
 
