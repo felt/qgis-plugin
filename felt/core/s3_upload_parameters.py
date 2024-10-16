@@ -1,69 +1,40 @@
 """
 Felt API s3 upload parameters
 """
-
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Dict
-)
+from typing import Dict
 
 
 @dataclass
 class S3UploadParameters:
     """
-    Encapsulates parameters for uploading to S3
+    Encapsulates parameters for uploading to S3, including all presigned
+    attributes
     """
 
-    aws_access_key_id: Optional[str]
-    acl: Optional[str]
-    key: Optional[str]
-    policy: Optional[str]
-    signature: Optional[str]
-    success_action_status: Optional[str]
-    x_amz_meta_features_flags: Optional[str]
-    x_amz_meta_file_count: Optional[str]
-    x_amz_security_token: Optional[str]
-    url: Optional[str]
-    layer_id: Optional[str]
-    type: Optional[str]
+    url: str
+    layer_id: str
+    type: str
+    _presigned_attributes: Dict[str, str]
 
     def to_form_fields(self) -> Dict:
         """
-        Returns the form fields required for the upload
+        Returns all form fields including the presigned attributes required
+        for the upload
+        Presigned attributes must be returned in the same order they
+        appeared in the original JSON
         """
-        return {
-            'AWSAccessKeyId': self.aws_access_key_id,
-            'key': self.key,
-            'policy': self.policy,
-            'signature': self.signature,
-            'success_action_status': self.success_action_status,
-            'x-amz-meta-feature-flags': self.x_amz_meta_features_flags,
-            'x-amz-meta-file-count': self.x_amz_meta_file_count,
-            'x-amz-security-token': self.x_amz_security_token,
-        }
+        return {**self._presigned_attributes}
 
     @staticmethod
-    def from_json(res: str) -> 'S3UploadParameters':
+    def from_json(res: Dict[str, str]) -> 'S3UploadParameters':
         """
-        Creates upload parameters from a JSON string
+        Creates upload parameters from a JSON response, capturing all
+        presigned attributes
         """
         return S3UploadParameters(
-            type=res.get('data', {}).get('type'),
-            aws_access_key_id=res.get('presigned_attributes', {}).get(
-                'AWSAccessKeyId'),
-            acl=res.get('presigned_attributes', {}).get('acl'),
-            key=res.get('presigned_attributes', {}).get('key'),
-            policy=res.get('presigned_attributes', {}).get('policy'),
-            signature=res.get('presigned_attributes', {}).get('signature'),
-            success_action_status=res.get('presigned_attributes', {}).get(
-                'success_action_status'),
-            x_amz_meta_features_flags=res.get('presigned_attributes', {}).get(
-                'x-amz-meta-feature-flags'),
-            x_amz_meta_file_count=res.get('presigned_attributes', {}).get(
-                'x-amz-meta-file-count'),
-            x_amz_security_token=res.get('presigned_attributes', {}).get(
-                'x-amz-security-token'),
             url=res.get('url'),
             layer_id=res.get('layer_id'),
+            type=res.get('data', {}).get('type'),
+            _presigned_attributes=res.get('presigned_attributes', {})
         )
