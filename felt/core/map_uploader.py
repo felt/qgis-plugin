@@ -43,7 +43,7 @@ from qgis.core import (
 )
 from qgis.utils import iface
 
-from .api_client import API_CLIENT
+from .api_client import API_CLIENT, PaidPlanRequiredError
 from .enums import LayerSupport
 from .exceptions import LayerPackagingException
 from .layer_exporter import LayerExporter
@@ -279,6 +279,7 @@ class MapUploaderTask(QgsTask):
         self.error_string: Optional[str] = None
         self.feedback: Optional[QgsFeedback] = None
         self.was_canceled = False
+        self.paid_plan_error = False
 
     @staticmethod
     def layer_and_group(
@@ -507,6 +508,8 @@ class MapUploaderTask(QgsTask):
             )
 
             if reply.error() != QNetworkReply.NoError:
+                if reply.error() == QNetworkReply.ContentAccessDenied:
+                    self.paid_plan_error = True
                 self.error_string = reply.errorString()
                 Logger.instance().log_error_json(
                     {
@@ -604,15 +607,27 @@ class MapUploaderTask(QgsTask):
         all_group_ordering_keys = self.project_structure.group_ordering_keys()
         if all_group_ordering_keys:
             # ensure group names match their order in the QGIS project
-            created_groups = API_CLIENT.create_layer_groups(
-                map_id=self.associated_map.id,
-                layer_group_names=list(all_group_ordering_keys.keys()),
-                ordering_keys=all_group_ordering_keys
-            )
-            created_group_details = {
-                group.name: group
-                for group in created_groups
-            }
+            try:
+                created_groups = API_CLIENT.create_layer_groups(
+                    map_id=self.associated_map.id,
+                    layer_group_names=list(all_group_ordering_keys.keys()),
+                    ordering_keys=all_group_ordering_keys
+                )
+                created_group_details = {
+                    group.name: group
+                    for group in created_groups
+                }
+            except PaidPlanRequiredError:
+                self.paid_plan_error = True
+                self.error_string = 'Paid plan required for layer groups'
+                Logger.instance().log_error_json(
+                    {
+                        'type': Logger.MAP_EXPORT,
+                        'error': 'Error creating layer groups: {}'.format(
+                            self.error_string)
+                    }
+                )
+                return False
         else:
             created_group_details = {}
 
@@ -655,6 +670,8 @@ class MapUploaderTask(QgsTask):
                     continue
 
                 if reply.error() != QNetworkReply.NoError:
+                    if reply.error() == QNetworkReply.ContentAccessDenied:
+                        self.paid_plan_error = True
                     self.error_string = reply.errorString()
                     Logger.instance().log_error_json(
                         {
@@ -663,7 +680,6 @@ class MapUploaderTask(QgsTask):
                                 self.error_string)
                         }
                     )
-
                     return False
                 break
 
@@ -769,6 +785,8 @@ class MapUploaderTask(QgsTask):
                 )
 
             if reply and reply.error() != QNetworkReply.NoError:
+                if reply.error() == QNetworkReply.ContentAccessDenied:
+                    self.paid_plan_error = True
                 self.error_string = reply.errorString()
                 Logger.instance().log_error_json(
                     {
@@ -806,6 +824,8 @@ class MapUploaderTask(QgsTask):
                 )
 
             if reply and reply.error() != QNetworkReply.NoError:
+                if reply.error() == QNetworkReply.ContentAccessDenied:
+                    self.paid_plan_error = True
                 self.error_string = reply.errorString()
                 Logger.instance().log_error_json(
                     {
