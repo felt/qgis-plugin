@@ -540,9 +540,10 @@ class CreateMapDialog(QDialog, WIDGET):
 
             if self.map_uploader_task.paid_plan_error:
                 error_message = self.tr(
-                    "Uploading files to Felt requires a paid plan, please visit "
-                    "<a href='https://felt.com/pricing'>felt.com/pricing</a> or contact "
-                    "<a href='mailto:sales@felt.com'>sales@felt.com</a>."
+                    'Uploading files to Felt requires a paid plan, please visit'
+                    ' <a href=\'https://felt.com/pricing\'>felt.com/pricing</a>'
+                    ' or contact <a href=\'mailto:sales@felt.com\'>'
+                    'sales@felt.com</a>.'
                 )
             else:
                 error_message = \
