@@ -49,6 +49,11 @@ class CreatedGroupDetails:
     ordering_key: Optional[int] = None
 
 
+class PaidPlanRequiredError(Exception):
+    """Raised when an API operation requires a paid plan"""
+    pass
+
+
 class FeltApiClient:
     """
     Client for the Felt API
@@ -511,6 +516,9 @@ class FeltApiClient:
             request,
             json.dumps(group_post_data).encode()
         )
+
+        if reply.error() == QNetworkReply.ContentAccessDenied:
+            raise PaidPlanRequiredError("Upload requires a paid plan")
 
         return [
             CreatedGroupDetails(

@@ -538,16 +538,25 @@ class CreateMapDialog(QDialog, WIDGET):
                     self._map_title)
             )
 
-            error_message = \
-                self.tr('There was an error uploading this file, please '
-                        'contact <a href="mailto:support@felt.com">'
-                        'support@felt.com</a> '
-                        'for help fixing the issue')
-
-            if self.map_uploader_task.error_string:
-                error_message += '<p><b>{}</b></p>'.format(
-                    self.map_uploader_task.error_string
+            if self.map_uploader_task.paid_plan_error:
+                error_message = self.tr(
+                    'Uploading files to Felt requires a paid plan, '
+                    'please visit '
+                    '<a href=\'https://felt.com/pricing\'>felt.com/pricing</a>'
+                    ' or contact <a href=\'mailto:sales@felt.com\'>'
+                    'sales@felt.com</a>.'
                 )
+            else:
+                error_message = \
+                    self.tr('There was an error uploading this file, please '
+                            'contact <a href="mailto:support@felt.com">'
+                            'support@felt.com</a> '
+                            'for help fixing the issue')
+
+                if self.map_uploader_task.error_string:
+                    error_message += '<p><b>{}</b></p>'.format(
+                        self.map_uploader_task.error_string
+                    )
 
             self.progress_label.setText(
                 GuiUtils.set_link_color(
