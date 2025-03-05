@@ -9,4 +9,4 @@ Install via QGIS' plugin repository here: https://plugins.qgis.org/plugins/felt/
 
 ## Docs
 
-Visit Felt's Help Center [here](https://help.felt.com/Using-The-Add-To-Felt-QGIS-Plugin-cda366f83d5f47ecb63b45de749b0c3c) for documentation on getting started.
+Visit Felt's Help Center [here](https://help.felt.com/upload-anything/qgis-plugin) for documentation on getting started.
