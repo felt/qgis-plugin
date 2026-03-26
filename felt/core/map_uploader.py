@@ -26,6 +26,7 @@ from qgis.PyQt.QtNetwork import (
     QNetworkRequest
 )
 from qgis.core import (
+    Qgis,
     QgsMapLayer,
     QgsMapLayerUtils,
     QgsProject,
@@ -368,7 +369,7 @@ class MapUploaderTask(QgsTask):
                 continue
 
             unsupported_layer_names.add(layer.name())
-            if layer.type() == QgsMapLayer.PluginLayer:
+            if layer.type() == Qgis.LayerType.Plugin:
                 id_string = layer.pluginLayerType()
             else:
                 id_string = '{}:{}'.format(
@@ -507,8 +508,8 @@ class MapUploaderTask(QgsTask):
                 feedback=self.feedback
             )
 
-            if reply.error() != QNetworkReply.NoError:
-                if reply.error() == QNetworkReply.ContentAccessDenied:
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
                     self.paid_plan_error = True
                 self.error_string = reply.errorString()
                 Logger.instance().log_error_json(
@@ -647,7 +648,7 @@ class MapUploaderTask(QgsTask):
                 )
 
                 if reply.attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute) == 429:
+                        QNetworkRequest.Attribute.HttpStatusCodeAttribute) == 429:
                     rate_limit_counter += 1
                     if rate_limit_counter > 3:
                         self.error_string = \
@@ -669,8 +670,8 @@ class MapUploaderTask(QgsTask):
                     QThread.sleep(5)
                     continue
 
-                if reply.error() != QNetworkReply.NoError:
-                    if reply.error() == QNetworkReply.ContentAccessDenied:
+                if reply.error() != QNetworkReply.NetworkError.NoError:
+                    if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
                         self.paid_plan_error = True
                     self.error_string = reply.errorString()
                     Logger.instance().log_error_json(
@@ -734,7 +735,7 @@ class MapUploaderTask(QgsTask):
                                   form_content,
                                   feedback=self.feedback)
 
-            if blocking_request.reply().error() != QNetworkReply.NoError:
+            if blocking_request.reply().error() != QNetworkReply.NetworkError.NoError:
                 self.error_string = blocking_request.reply().errorString()
                 Logger.instance().log_error_json(
                     {
@@ -784,8 +785,8 @@ class MapUploaderTask(QgsTask):
                     ordering_key=details.ordering_key,
                 )
 
-            if reply and reply.error() != QNetworkReply.NoError:
-                if reply.error() == QNetworkReply.ContentAccessDenied:
+            if reply and reply.error() != QNetworkReply.NetworkError.NoError:
+                if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
                     self.paid_plan_error = True
                 self.error_string = reply.errorString()
                 Logger.instance().log_error_json(
@@ -823,8 +824,8 @@ class MapUploaderTask(QgsTask):
                     ordering_key=details.ordering_key,
                 )
 
-            if reply and reply.error() != QNetworkReply.NoError:
-                if reply.error() == QNetworkReply.ContentAccessDenied:
+            if reply and reply.error() != QNetworkReply.NetworkError.NoError:
+                if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
                     self.paid_plan_error = True
                 self.error_string = reply.errorString()
                 Logger.instance().log_error_json(

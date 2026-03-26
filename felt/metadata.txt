@@ -10,6 +10,7 @@
 [general]
 name=Add to Felt
 qgisMinimumVersion=3.22
+qgisMaximumVersion=4.99
 description=Create a collaborative Felt (felt.com) map from QGIS
 version=1.0.0
 author=Felt

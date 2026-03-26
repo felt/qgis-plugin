@@ -47,10 +47,10 @@ class AsyncThumbnailManager(QObject):
 
         request = QNetworkRequest(QUrl(url))
         request.setAttribute(
-            QNetworkRequest.CacheLoadControlAttribute,
-            QNetworkRequest.PreferCache)
+            QNetworkRequest.Attribute.CacheLoadControlAttribute,
+            QNetworkRequest.CacheLoadControl.PreferCache)
         request.setAttribute(
-            QNetworkRequest.CacheSaveControlAttribute,
+            QNetworkRequest.Attribute.CacheSaveControlAttribute,
             True
         )
         reply = QgsNetworkAccessManager.instance().get(request)
@@ -66,7 +66,7 @@ class AsyncThumbnailManager(QObject):
         Triggered when a thumbnail download is complete
         """
         self.queued_replies.remove(reply)
-        if reply.error() == QNetworkReply.NoError:
+        if reply.error() == QNetworkReply.NetworkError.NoError:
             url = reply.url().toString()
             img = QImage()
             img.loadFromData(reply.readAll())

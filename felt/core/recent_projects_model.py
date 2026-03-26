@@ -33,13 +33,13 @@ class RecentMapsModel(QAbstractItemModel):
     Qt model for recent maps
     """
 
-    TitleRole = Qt.UserRole + 1
-    UrlRole = Qt.UserRole + 2
-    ThumbnailRole = Qt.UserRole + 3
-    IdRole = Qt.UserRole + 4
-    MapRole = Qt.UserRole + 5
-    SubTitleRole = Qt.UserRole + 6
-    IsNewMapRole = Qt.UserRole + 7
+    TitleRole = Qt.ItemDataRole.UserRole + 1
+    UrlRole = Qt.ItemDataRole.UserRole + 2
+    ThumbnailRole = Qt.ItemDataRole.UserRole + 3
+    IdRole = Qt.ItemDataRole.UserRole + 4
+    MapRole = Qt.ItemDataRole.UserRole + 5
+    SubTitleRole = Qt.ItemDataRole.UserRole + 6
+    IsNewMapRole = Qt.ItemDataRole.UserRole + 7
 
     LIMIT = 100
 
@@ -131,11 +131,11 @@ class RecentMapsModel(QAbstractItemModel):
 
         self._current_reply = None
 
-        if reply.error() == QNetworkReply.ContentNotFoundError:
+        if reply.error() == QNetworkReply.NetworkError.ContentNotFoundError:
             self._next_page = None
             return
 
-        if reply.error() != QNetworkReply.NoError:
+        if reply.error() != QNetworkReply.NetworkError.NoError:
             return
 
         result = json.loads(reply.readAll().data().decode())
@@ -250,14 +250,14 @@ class RecentMapsModel(QAbstractItemModel):
     # pylint:disable=too-many-return-statements,too-many-branches
     def data(self,
              index,
-             role=Qt.DisplayRole):
+             role=Qt.ItemDataRole.DisplayRole):
         if index.row() == 0 and not index.parent().isValid():
             # special "New map" item
-            if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):
+            if role in (self.TitleRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.ToolTipRole):
                 return self._new_map_title
             if role == self.SubTitleRole:
                 return self.tr('New map')
-            if role in (self.ThumbnailRole, Qt.DecorationRole):
+            if role in (self.ThumbnailRole, Qt.ItemDataRole.DecorationRole):
                 # pylint: disable=import-outside-toplevel
                 from ..gui import GuiUtils
                 # pylint: enable=import-outside-toplevel
@@ -271,7 +271,7 @@ class RecentMapsModel(QAbstractItemModel):
         if _map:
             if role == self.MapRole:
                 return _map
-            if role in (self.TitleRole, Qt.DisplayRole, Qt.ToolTipRole):
+            if role in (self.TitleRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.ToolTipRole):
                 return _map.title
             if role == self.SubTitleRole and _map.last_visited:
                 date_string = self.pretty_format_date(_map.last_visited)
@@ -280,7 +280,7 @@ class RecentMapsModel(QAbstractItemModel):
                 return _map.url
             if role == self.IdRole:
                 return _map.id
-            if role in (self.ThumbnailRole, Qt.DecorationRole):
+            if role in (self.ThumbnailRole, Qt.ItemDataRole.DecorationRole):
                 return self._thumbnail_manager.thumbnail(
                     _map.thumbnail_url)
             if role == self.IsNewMapRole:
@@ -295,7 +295,7 @@ class RecentMapsModel(QAbstractItemModel):
         if not index.isValid():
             return f
 
-        return f | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        return f | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
     def canFetchMore(self, index: QModelIndex):
         if self._no_results_found:

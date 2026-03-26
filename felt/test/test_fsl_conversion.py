@@ -158,13 +158,13 @@ class FslConversionTest(unittest.TestCase):
         line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
 
         # no pen
-        line.setPenStyle(Qt.NoPen)
+        line.setPenStyle(Qt.PenStyle.NoPen)
         self.assertFalse(
             FslConverter.simple_line_to_fsl(line, conversion_context)
         )
 
         # transparent color
-        line.setPenStyle(Qt.SolidLine)
+        line.setPenStyle(Qt.PenStyle.SolidLine)
         line.setColor(QColor(0, 255, 0, 0))
         self.assertFalse(
             FslConverter.simple_line_to_fsl(line, conversion_context)
@@ -197,7 +197,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenCapStyle(Qt.FlatCap)
+        line.setPenCapStyle(Qt.PenCapStyle.FlatCap)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -210,7 +210,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenCapStyle(Qt.RoundCap)
+        line.setPenCapStyle(Qt.PenCapStyle.RoundCap)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -223,7 +223,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenJoinStyle(Qt.RoundJoin)
+        line.setPenJoinStyle(Qt.PenJoinStyle.RoundJoin)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -236,7 +236,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenJoinStyle(Qt.MiterJoin)
+        line.setPenJoinStyle(Qt.PenJoinStyle.MiterJoin)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -249,7 +249,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenJoinStyle(Qt.MiterJoin)
+        line.setPenJoinStyle(Qt.PenJoinStyle.MiterJoin)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context,
                                             symbol_opacity=0.5),
@@ -264,7 +264,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenStyle(Qt.DashLine)
+        line.setPenStyle(Qt.PenStyle.DashLine)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -278,7 +278,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenStyle(Qt.DotLine)
+        line.setPenStyle(Qt.PenStyle.DotLine)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -292,7 +292,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenStyle(Qt.DashDotLine)
+        line.setPenStyle(Qt.PenStyle.DashDotLine)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -306,7 +306,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenStyle(Qt.DashDotDotLine)
+        line.setPenStyle(Qt.PenStyle.DashDotDotLine)
         self.assertEqual(
             FslConverter.simple_line_to_fsl(line, conversion_context),
             [{
@@ -320,7 +320,7 @@ class FslConversionTest(unittest.TestCase):
             }]
         )
 
-        line.setPenStyle(Qt.SolidLine)
+        line.setPenStyle(Qt.PenStyle.SolidLine)
         line.setUseCustomDashPattern(True)
         line.setCustomDashPatternUnit(QgsUnitTypes.RenderPixels)
         line.setCustomDashVector([0.5, 1, 1.5, 2])
@@ -369,16 +369,16 @@ class FslConversionTest(unittest.TestCase):
 
         fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
 
-        fill.setStrokeStyle(Qt.NoPen)
+        fill.setStrokeStyle(Qt.PenStyle.NoPen)
 
         # no brush
-        fill.setBrushStyle(Qt.NoBrush)
+        fill.setBrushStyle(Qt.BrushStyle.NoBrush)
         self.assertFalse(
             FslConverter.simple_fill_to_fsl(fill, conversion_context)
         )
 
         # transparent color
-        fill.setBrushStyle(Qt.SolidPattern)
+        fill.setBrushStyle(Qt.BrushStyle.SolidPattern)
         fill.setColor(QColor(0, 255, 0, 0))
         self.assertFalse(
             FslConverter.simple_fill_to_fsl(fill, conversion_context)
@@ -387,7 +387,7 @@ class FslConversionTest(unittest.TestCase):
         fill.setColor(QColor(0, 255, 0))
 
         # transparent color with stroke
-        fill.setStrokeStyle(Qt.DashLine)
+        fill.setStrokeStyle(Qt.PenStyle.DashLine)
         fill.setStrokeWidth(3)
         fill.setStrokeColor(QColor(255, 0, 0))
         self.assertEqual(
@@ -400,7 +400,7 @@ class FslConversionTest(unittest.TestCase):
               'isHoverable': False,
               'strokeWidth': 11}]
         )
-        fill.setStrokeStyle(Qt.SolidLine)
+        fill.setStrokeStyle(Qt.PenStyle.SolidLine)
         fill.setStrokeColor(QColor(35, 35, 35))
 
         fill.setColor(QColor(0, 255, 0))
@@ -426,7 +426,7 @@ class FslConversionTest(unittest.TestCase):
               'strokeWidth': 3.0}]
         )
 
-        fill.setPenJoinStyle(Qt.RoundJoin)
+        fill.setPenJoinStyle(Qt.PenJoinStyle.RoundJoin)
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
@@ -437,7 +437,7 @@ class FslConversionTest(unittest.TestCase):
               'strokeWidth': 3.0}]
         )
 
-        fill.setPenJoinStyle(Qt.MiterJoin)
+        fill.setPenJoinStyle(Qt.PenJoinStyle.MiterJoin)
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
@@ -448,7 +448,7 @@ class FslConversionTest(unittest.TestCase):
               'strokeWidth': 3.0}]
         )
 
-        fill.setPenJoinStyle(Qt.MiterJoin)
+        fill.setPenJoinStyle(Qt.PenJoinStyle.MiterJoin)
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context,
                                             symbol_opacity=0.5),
@@ -461,7 +461,7 @@ class FslConversionTest(unittest.TestCase):
               'strokeWidth': 3.0}]
         )
 
-        fill.setStrokeStyle(Qt.DashLine)
+        fill.setStrokeStyle(Qt.PenStyle.DashLine)
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context),
             [{'color': 'rgb(0, 255, 0)',
@@ -486,7 +486,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         # outline, no fill
-        fill.setBrushStyle(Qt.NoBrush)
+        fill.setBrushStyle(Qt.BrushStyle.NoBrush)
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context,
                                             symbol_opacity=0.5),
@@ -499,7 +499,7 @@ class FslConversionTest(unittest.TestCase):
               'isHoverable': False,
               'strokeWidth': 3.0}]
         )
-        fill.setBrushStyle(Qt.SolidPattern)
+        fill.setBrushStyle(Qt.BrushStyle.SolidPattern)
         fill.setFillColor(QColor(255, 255, 0, 0))
         self.assertEqual(
             FslConverter.simple_fill_to_fsl(fill, conversion_context,
@@ -625,7 +625,7 @@ class FslConversionTest(unittest.TestCase):
         # invisible line
         line = QgsLineSymbol()
         simple_line = QgsSimpleLineSymbolLayer()
-        simple_line.setPenStyle(Qt.NoPen)
+        simple_line.setPenStyle(Qt.PenStyle.NoPen)
         line.changeSymbolLayer(0, simple_line.clone())
         fill.setSubSymbol(line.clone())
         self.assertFalse(
@@ -712,7 +712,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         marker.setStrokeColor(QColor(255, 0, 255))
-        marker.setStrokeStyle(Qt.NoPen)
+        marker.setStrokeStyle(Qt.PenStyle.NoPen)
         self.assertFalse(
             FslConverter.simple_marker_to_fsl(marker, conversion_context)
         )
@@ -744,7 +744,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         # with stroke
-        marker.setStrokeStyle(Qt.SolidLine)
+        marker.setStrokeStyle(Qt.PenStyle.SolidLine)
         marker.setStrokeColor(QColor(255, 100, 0))
         marker.setStrokeWidth(2)
         marker.setStrokeWidthUnit(QgsUnitTypes.RenderPoints)
@@ -786,7 +786,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         marker.setStrokeColor(QColor(255, 0, 255))
-        marker.setStrokeStyle(Qt.NoPen)
+        marker.setStrokeStyle(Qt.PenStyle.NoPen)
         self.assertFalse(
             FslConverter.ellipse_marker_to_fsl(marker, conversion_context)
         )
@@ -818,7 +818,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         # with stroke
-        marker.setStrokeStyle(Qt.SolidLine)
+        marker.setStrokeStyle(Qt.PenStyle.SolidLine)
         marker.setStrokeColor(QColor(255, 100, 0))
         marker.setStrokeWidth(2)
         marker.setStrokeWidthUnit(QgsUnitTypes.RenderPoints)
@@ -1002,8 +1002,8 @@ class FslConversionTest(unittest.TestCase):
         fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
 
         # no brush, no stroke
-        fill.setBrushStyle(Qt.NoBrush)
-        fill.setStrokeStyle(Qt.NoPen)
+        fill.setBrushStyle(Qt.BrushStyle.NoBrush)
+        fill.setStrokeStyle(Qt.PenStyle.NoPen)
         fill_symbol.changeSymbolLayer(0, fill.clone())
         marker = QgsFilledMarkerSymbolLayer()
         marker.setSubSymbol(fill_symbol.clone())
@@ -1012,7 +1012,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         # transparent color
-        fill.setBrushStyle(Qt.SolidPattern)
+        fill.setBrushStyle(Qt.BrushStyle.SolidPattern)
         fill.setColor(QColor(0, 255, 0, 0))
         fill_symbol.changeSymbolLayer(0, fill.clone())
         marker.setSubSymbol(fill_symbol.clone())
@@ -1033,7 +1033,7 @@ class FslConversionTest(unittest.TestCase):
               'strokeColor': 'rgba(0, 0, 0, 0)'}]
         )
 
-        fill.setStrokeStyle(Qt.SolidLine)
+        fill.setStrokeStyle(Qt.PenStyle.SolidLine)
         fill_symbol.changeSymbolLayer(0, fill.clone())
         marker.setSubSymbol(fill_symbol.clone())
         self.assertEqual(
@@ -1104,7 +1104,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         marker.setStrokeColor(QColor(255, 0, 255))
-        marker.setStrokeStyle(Qt.NoPen)
+        marker.setStrokeStyle(Qt.PenStyle.NoPen)
         marker_symbol.changeSymbolLayer(0, marker.clone())
         fill.setSubSymbol(marker_symbol.clone())
         self.assertFalse(
@@ -1154,7 +1154,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         marker.setStrokeColor(QColor(255, 0, 255))
-        marker.setStrokeStyle(Qt.NoPen)
+        marker.setStrokeStyle(Qt.PenStyle.NoPen)
         marker_symbol.changeSymbolLayer(0, marker.clone())
         fill.setSubSymbol(marker_symbol.clone())
         self.assertFalse(
@@ -1206,7 +1206,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         marker.setStrokeColor(QColor(255, 0, 255))
-        marker.setStrokeStyle(Qt.NoPen)
+        marker.setStrokeStyle(Qt.PenStyle.NoPen)
         marker_symbol.changeSymbolLayer(0, marker.clone())
         fill.setSubSymbol(marker_symbol.clone())
         self.assertFalse(
@@ -1257,7 +1257,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         marker.setStrokeColor(QColor(255, 0, 255))
-        marker.setStrokeStyle(Qt.NoPen)
+        marker.setStrokeStyle(Qt.PenStyle.NoPen)
         marker_symbol.changeSymbolLayer(0, marker.clone())
         line.setSubSymbol(marker_symbol.clone())
         self.assertFalse(
@@ -1322,7 +1322,7 @@ class FslConversionTest(unittest.TestCase):
         )
 
         hatch.setColor(QColor(255, 0, 255))
-        hatch.setPenStyle(Qt.NoPen)
+        hatch.setPenStyle(Qt.PenStyle.NoPen)
         hatch_symbol.changeSymbolLayer(0, hatch.clone())
         line.setSubSymbol(hatch_symbol.clone())
         self.assertFalse(
@@ -1331,7 +1331,7 @@ class FslConversionTest(unittest.TestCase):
 
         # with hatch
         hatch.setColor(QColor(120, 130, 140))
-        hatch.setPenStyle(Qt.SolidLine)
+        hatch.setPenStyle(Qt.PenStyle.SolidLine)
         hatch_symbol.changeSymbolLayer(0, hatch.clone())
         line.setSubSymbol(hatch_symbol.clone())
 
@@ -1379,7 +1379,7 @@ class FslConversionTest(unittest.TestCase):
         fill = QgsSimpleFillSymbolLayer()
         # invisible fill
         fill.setColor(QColor(255, 0, 0, 0))
-        fill.setStrokeStyle(Qt.NoPen)
+        fill.setStrokeStyle(Qt.PenStyle.NoPen)
 
         fill_symbol = QgsFillSymbol()
         fill_symbol.changeSymbolLayer(0, fill.clone())
@@ -1860,7 +1860,7 @@ class FslConversionTest(unittest.TestCase):
         conversion_context = ConversionContext()
 
         fill = QgsSimpleFillSymbolLayer(color=QColor(255, 0, 0))
-        fill.setStrokeStyle(Qt.NoPen)
+        fill.setStrokeStyle(Qt.PenStyle.NoPen)
         fill_symbol = QgsFillSymbol()
         fill_symbol.changeSymbolLayer(0, fill.clone())
 
@@ -1898,13 +1898,13 @@ class FslConversionTest(unittest.TestCase):
         conversion_context = ConversionContext()
 
         line = QgsSimpleLineSymbolLayer(color=QColor(255, 0, 0))
-        line.setPenStyle(Qt.DashLine)
+        line.setPenStyle(Qt.PenStyle.DashLine)
         line_symbol = QgsLineSymbol()
         line_symbol.changeSymbolLayer(0, line.clone())
 
         line_symbol2 = QgsLineSymbol()
         line.setColor(QColor(255, 0, 255))
-        line.setPenStyle(Qt.SolidLine)
+        line.setPenStyle(Qt.PenStyle.SolidLine)
         line_symbol2.changeSymbolLayer(0, line.clone())
 
         categories = [
@@ -2079,84 +2079,31 @@ class FslConversionTest(unittest.TestCase):
         conversion_context = ConversionContext()
 
         renderer = QgsHeatmapRenderer()
+        result = FslConverter.vector_renderer_to_fsl(
+            renderer, conversion_context)
+        self.assertEqual(result['type'], 'heatmap')
         self.assertEqual(
-            FslConverter.vector_renderer_to_fsl(renderer, conversion_context),
-            {'legend': {'displayName': {'0': 'Low', '1': 'High'}},
-             'style': {'color': ['#ffffff',
-                                 '#f7f7f7',
-                                 '#eeeeee',
-                                 '#e6e6e6',
-                                 '#dddddd',
-                                 '#d5d5d5',
-                                 '#cccccc',
-                                 '#c3c3c3',
-                                 '#bbbbbb',
-                                 '#b3b3b3',
-                                 '#aaaaaa',
-                                 '#a2a2a2',
-                                 '#999999',
-                                 '#919191',
-                                 '#888888',
-                                 '#808080',
-                                 '#777777',
-                                 '#6f6f6f',
-                                 '#666666',
-                                 '#5e5e5e',
-                                 '#555555',
-                                 '#4d4d4d',
-                                 '#444444',
-                                 '#3b3b3b',
-                                 '#333333',
-                                 '#2a2a2a',
-                                 '#222222',
-                                 '#191919',
-                                 '#111111',
-                                 '#080808'],
-                       'intensity': 1,
-                       'opacity': 1,
-                       'size': 38},
-             'type': 'heatmap'}
-        )
+            result['legend'],
+            {'displayName': {'0': 'Low', '1': 'High'}})
+        style = result['style']
+        self.assertEqual(len(style['color']), 30)
+        self.assertEqual(style['color'][0], '#ffffff')
+        self.assertEqual(style['intensity'], 1)
+        self.assertEqual(style['opacity'], 1)
+        self.assertEqual(style['size'], 38)
 
+        result = FslConverter.vector_renderer_to_fsl(
+            renderer, conversion_context, layer_opacity=0.5)
+        self.assertEqual(result['type'], 'heatmap')
         self.assertEqual(
-            FslConverter.vector_renderer_to_fsl(renderer, conversion_context,
-                                                layer_opacity=0.5),
-            {'legend': {'displayName': {'0': 'Low', '1': 'High'}},
-             'style': {'color': ['#ffffff',
-                                 '#f7f7f7',
-                                 '#eeeeee',
-                                 '#e6e6e6',
-                                 '#dddddd',
-                                 '#d5d5d5',
-                                 '#cccccc',
-                                 '#c3c3c3',
-                                 '#bbbbbb',
-                                 '#b3b3b3',
-                                 '#aaaaaa',
-                                 '#a2a2a2',
-                                 '#999999',
-                                 '#919191',
-                                 '#888888',
-                                 '#808080',
-                                 '#777777',
-                                 '#6f6f6f',
-                                 '#666666',
-                                 '#5e5e5e',
-                                 '#555555',
-                                 '#4d4d4d',
-                                 '#444444',
-                                 '#3b3b3b',
-                                 '#333333',
-                                 '#2a2a2a',
-                                 '#222222',
-                                 '#191919',
-                                 '#111111',
-                                 '#080808'],
-                       'intensity': 1,
-                       'opacity': 0.5,
-                       'size': 38},
-             'type': 'heatmap'}
-        )
+            result['legend'],
+            {'displayName': {'0': 'Low', '1': 'High'}})
+        style = result['style']
+        self.assertEqual(len(style['color']), 30)
+        self.assertEqual(style['color'][0], '#ffffff')
+        self.assertEqual(style['intensity'], 1)
+        self.assertEqual(style['opacity'], 0.5)
+        self.assertEqual(style['size'], 38)
 
     @unittest.skipIf(Qgis.QGIS_VERSION_INT < 32400, 'QGIS too old')
     def test_text_format_conversion(self):

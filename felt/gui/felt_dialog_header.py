@@ -5,6 +5,7 @@ Felt Authorization dialog
 from typing import Optional
 
 from qgis.PyQt.QtCore import (
+    Qt,
     QSize,
     QRectF
 )
@@ -12,7 +13,7 @@ from qgis.PyQt.QtGui import (
     QPainter,
     QImage
 )
-from qgis.PyQt.QtSvg import QSvgWidget
+from qgis.PyQt.QtSvg import QSvgRenderer
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -23,6 +24,23 @@ from qgis.PyQt.QtWidgets import (
 from .gui_utils import (
     GuiUtils
 )
+
+
+class _SvgWidget(QWidget):
+    """
+    A simple widget that renders an SVG file, replacing QSvgWidget
+    which is not available through qgis.PyQt in QGIS 4.
+    """
+
+    def __init__(self, path: str, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self._renderer = QSvgRenderer(path)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+    def paintEvent(self, event):  # pylint: disable=unused-argument
+        painter = QPainter(self)
+        self._renderer.render(painter, QRectF(self.rect()))
+        painter.end()
 
 
 class FeltDialogHeader(QWidget):
@@ -39,16 +57,15 @@ class FeltDialogHeader(QWidget):
         self._cached_image: Optional[QImage] = None
 
         self.setSizePolicy(
-            QSizePolicy.Minimum,
-            QSizePolicy.Fixed
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Fixed
         )
 
-        svg_logo_widget = QSvgWidget()
+        svg_logo_widget = _SvgWidget(
+            GuiUtils.get_icon_svg('felt_logo_white.svg'))
         fixed_size = QSize(self.LOGO_WIDTH_PIXELS,
                            self.LOGO_HEIGHT_PIXELS)
         svg_logo_widget.setFixedSize(fixed_size)
-        svg_logo_widget.load(GuiUtils.get_icon_svg('felt_logo_white.svg'))
-        svg_logo_widget.setStyleSheet('background: transparent;')
         svg_logo_container = QVBoxLayout()
         svg_logo_container.setContentsMargins(0, 0, 0, 4)
         svg_logo_container.addWidget(svg_logo_widget)
@@ -78,7 +95,7 @@ class FeltDialogHeader(QWidget):
 
     def paintEvent(self, event):  # pylint: disable=unused-argument
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         # image has 437 x 107 aspect ratio
         if not self._cached_image or \

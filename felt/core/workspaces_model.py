@@ -30,9 +30,9 @@ class WorkspacesModel(QAbstractItemModel):
     Qt model for workspaces
     """
 
-    NameRole = Qt.UserRole + 1
-    UrlRole = Qt.UserRole + 2
-    IdRole = Qt.UserRole + 4
+    NameRole = Qt.ItemDataRole.UserRole + 1
+    UrlRole = Qt.ItemDataRole.UserRole + 2
+    IdRole = Qt.ItemDataRole.UserRole + 4
 
     no_workspaces_found = pyqtSignal()
     workspaces_loaded = pyqtSignal()
@@ -61,11 +61,11 @@ class WorkspacesModel(QAbstractItemModel):
 
         self._current_reply = None
 
-        if reply.error() == QNetworkReply.ContentNotFoundError:
+        if reply.error() == QNetworkReply.NetworkError.ContentNotFoundError:
             self._next_page = None
             return
 
-        if reply.error() != QNetworkReply.NoError:
+        if reply.error() != QNetworkReply.NetworkError.NoError:
             return
 
         result = json.loads(reply.readAll().data().decode())
@@ -113,11 +113,11 @@ class WorkspacesModel(QAbstractItemModel):
     # pylint:disable=too-many-return-statements,too-many-branches
     def data(self,
              index,
-             role=Qt.DisplayRole):
+             role=Qt.ItemDataRole.DisplayRole):
 
         _workspace = self.index2workspace(index)
         if _workspace:
-            if role in (self.NameRole, Qt.DisplayRole, Qt.ToolTipRole):
+            if role in (self.NameRole, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.ToolTipRole):
                 return _workspace.name
             if role == self.UrlRole:
                 return _workspace.url
@@ -133,7 +133,7 @@ class WorkspacesModel(QAbstractItemModel):
         if not index.isValid():
             return f
 
-        return f | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        return f | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
     # pylint: enable=missing-docstring,unused-argument
     def index2workspace(self, index: QModelIndex) -> Optional[Workspace]:

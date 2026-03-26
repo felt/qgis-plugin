@@ -26,7 +26,7 @@ class MultiStepFeedback(QgsFeedback):
         self.current_step = 0
         self._feedback = feedback
 
-        self._feedback.canceled.connect(self.cancel, Qt.DirectConnection)
+        self._feedback.canceled.connect(self.cancel, Qt.ConnectionType.DirectConnection)
         self.progressChanged.connect(self._update_overall_progress)
 
     def step_finished(self):

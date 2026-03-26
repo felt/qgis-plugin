@@ -33,7 +33,6 @@ from qgis.core import (
     QgsCoordinateTransformContext,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
-    QgsWkbTypes,
     QgsRasterLayer,
     QgsRasterFileWriter,
     QgsRasterBlockFeedback,
@@ -47,6 +46,25 @@ from qgis.core import (
     QgsRasterNuller,
     QgsRasterRange
 )
+
+try:
+    from qgis.core import QgsWkbTypes  # sketchy: removed in QGIS 4
+
+    def _force_multi(layer):
+        return QgsWkbTypes.geometryType(layer.wkbType()) in (
+            QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry)
+
+    def _drop_zm(layer):
+        return QgsWkbTypes.dropM(QgsWkbTypes.dropZ(layer.wkbType()))
+except ImportError:
+    def _force_multi(layer):
+        return layer.geometryType() in (
+            Qgis.GeometryType.Line, Qgis.GeometryType.Polygon)
+
+    def _drop_zm(layer):
+        wkb = layer.wkbType()
+        flat = Qgis.WkbType(int(wkb) % 1000)
+        return flat
 
 from .api_client import API_CLIENT
 from .enums import (
@@ -377,12 +395,8 @@ class LayerExporter(QObject):
             self.transform_context
         )
         writer_options.feedback = feedback
-        writer_options.forceMulti = QgsWkbTypes.geometryType(
-            layer.wkbType()) in (QgsWkbTypes.LineGeometry,
-                                 QgsWkbTypes.PolygonGeometry)
-        writer_options.overrideGeometryType = QgsWkbTypes.dropM(
-            QgsWkbTypes.dropZ(layer.wkbType())
-        )
+        writer_options.forceMulti = _force_multi(layer)
+        writer_options.overrideGeometryType = _drop_zm(layer)
         writer_options.includeZ = False
         writer_options.layerOptions = [
             'GEOMETRY_NAME=geom',
@@ -396,11 +410,19 @@ class LayerExporter(QObject):
         writer_options.attributes = fields.allAttributesList()
         if fid_index >= 0:
             fid_type = fields.field(fid_index).type()
-            needs_rewrite = force_rewrite_fid or fid_type not in (
-                QVariant.Int,
-                QVariant.UInt,
-                QVariant.LongLong,
-                QVariant.ULongLong)
+            try:
+                int_types = (
+                    QVariant.Type.Int,
+                    QVariant.Type.UInt,
+                    QVariant.Type.LongLong,
+                    QVariant.Type.ULongLong)
+            except AttributeError:
+                int_types = (
+                    QVariant.Int,
+                    QVariant.UInt,
+                    QVariant.LongLong,
+                    QVariant.ULongLong)
+            needs_rewrite = force_rewrite_fid or fid_type not in int_types
             if Qgis.QGIS_VERSION_INT < 32400 and needs_rewrite:
                 # older QGIS, can't rename attributes during export, so
                 # drop FID

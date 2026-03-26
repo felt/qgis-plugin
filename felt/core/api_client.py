@@ -344,26 +344,28 @@ class FeltApiClient:
 
         form_content = QByteArray()
         for name, value in parameters.to_form_fields().items():
-            form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
-            form_content.append("Content-Disposition: form-data; ")
-            form_content.append(f"name=\"{name}\"")
-            form_content.append("\r\n")
-            form_content.append("\r\n")
-            form_content.append(value)
-            form_content.append("\r\n")
+            form_content.append(b"--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
+            form_content.append(b"Content-Disposition: form-data; ")
+            form_content.append(f"name=\"{name}\"".encode())
+            form_content.append(b"\r\n")
+            form_content.append(b"\r\n")
+            form_content.append(value.encode() if isinstance(value, str)
+                                else value)
+            form_content.append(b"\r\n")
 
-        form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
-        form_content.append("Content-Disposition: ")
+        form_content.append(b"--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
+        form_content.append(b"Content-Disposition: ")
         form_content.append(
-            f"form-data; name=\"file\"; filename=\"{filename}\"\r\n")
+            f"form-data; name=\"file\"; filename=\"{filename}\"\r\n"
+            .encode())
         form_content.append(
-            "Content-Type: application/octet-stream\r\n")
-        form_content.append("\r\n")
+            b"Content-Type: application/octet-stream\r\n")
+        form_content.append(b"\r\n")
 
         form_content.append(content)
 
-        form_content.append("\r\n")
-        form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n")
+        form_content.append(b"\r\n")
+        form_content.append(b"--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n")
 
         content_length = form_content.length()
         network_request.setRawHeader(
@@ -517,7 +519,7 @@ class FeltApiClient:
             json.dumps(group_post_data).encode()
         )
 
-        if reply.error() == QNetworkReply.ContentAccessDenied:
+        if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
             raise PaidPlanRequiredError("Upload requires a paid plan")
 
         return [

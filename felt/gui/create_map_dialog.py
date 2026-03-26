@@ -77,13 +77,13 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setStyleSheet(FELT_STYLESHEET)
         self.page.setStyleSheet(FELT_STYLESHEET)
         self.page_2.setStyleSheet(FELT_STYLESHEET)
-        self.button_box.button(QDialogButtonBox.Ok).setStyleSheet(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setStyleSheet(
             FELT_STYLESHEET)
-        self.button_box.button(QDialogButtonBox.Cancel).setStyleSheet(
+        self.button_box.button(QDialogButtonBox.StandardButton.Cancel).setStyleSheet(
             FELT_STYLESHEET)
 
         self.progress_label.setTextInteractionFlags(
-            Qt.TextBrowserInteraction
+            Qt.TextInteractionFlag.TextBrowserInteraction
         )
         self.progress_label.setOpenExternalLinks(True)
 
@@ -119,23 +119,23 @@ class CreateMapDialog(QDialog, WIDGET):
         self.setWindowTitle(self.tr('Add to Felt'))
 
         self.footer_label.setMinimumWidth(
-            QFontMetrics(self.footer_label.font()).width('x') * 40
+            QFontMetrics(self.footer_label.font()).horizontalAdvance('x') * 40
         )
 
         self.stacked_widget.setCurrentIndex(0)
 
         self.layers = layers
 
-        self.button_box.button(QDialogButtonBox.Ok).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setText(
             self.tr('Add to Felt')
         )
-        self.button_box.button(QDialogButtonBox.Ok).clicked.connect(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(
             self._start
         )
-        self.button_box.button(QDialogButtonBox.Cancel).clicked.connect(
+        self.button_box.button(QDialogButtonBox.StandardButton.Cancel).clicked.connect(
             self._cancel
         )
-        self.button_box.button(QDialogButtonBox.Cancel).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Cancel).setText(
             self.tr('Close')
         )
 
@@ -146,11 +146,11 @@ class CreateMapDialog(QDialog, WIDGET):
 
         self.setting_menu = QMenu(self)
         palette = self.setting_menu.palette()
-        palette.setColor(QPalette.Active, QPalette.Base, QColor(255, 255, 255))
-        palette.setColor(QPalette.Active, QPalette.Text, QColor(0, 0, 0))
-        palette.setColor(QPalette.Active, QPalette.Highlight,
+        palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.Base, QColor(255, 255, 255))
+        palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.Text, QColor(0, 0, 0))
+        palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.Highlight,
                          QColor('#3d521e'))
-        palette.setColor(QPalette.Active, QPalette.HighlightedText,
+        palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.HighlightedText,
                          QColor(255, 255, 255))
         self.setting_menu.setPalette(palette)
 
@@ -186,12 +186,12 @@ class CreateMapDialog(QDialog, WIDGET):
         self.logout_action.triggered.connect(self._logout)
 
         palette = self.setting_button.palette()
-        palette.setColor(QPalette.Active, QPalette.Button, QColor('#ececec'))
+        palette.setColor(QPalette.ColorGroup.Active, QPalette.ColorRole.Button, QColor('#ececec'))
         self.setting_button.setPalette(palette)
 
         self.setting_button.setMenu(self.setting_menu)
         self.setting_button.setIcon(GuiUtils.get_icon('setting_icon.svg'))
-        self.setting_button.setPopupMode(QToolButton.InstantPopup)
+        self.setting_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setting_button.setStyleSheet(
             """QToolButton::menu-indicator { image: none }
             QToolButton {
@@ -201,7 +201,7 @@ class CreateMapDialog(QDialog, WIDGET):
             """
         )
         self.setting_button.setFixedHeight(
-            self.button_box.button(QDialogButtonBox.Cancel).height()
+            self.button_box.button(QDialogButtonBox.StandardButton.Cancel).height()
         )
         self.setting_button.setFixedWidth(
             int(self.setting_button.size().height() * 1.8)
@@ -213,7 +213,7 @@ class CreateMapDialog(QDialog, WIDGET):
         # setting the setting button to a fixed height doesn't always
         # guarantee that the height exactly matches the Close/Add buttons.
         # So let's play it safe and force them to match always:
-        for b in (QDialogButtonBox.Cancel, QDialogButtonBox.Ok):
+        for b in (QDialogButtonBox.StandardButton.Cancel, QDialogButtonBox.StandardButton.Ok):
             self.button_box.button(b).setFixedHeight(
                 self.setting_button.size().height()
             )
@@ -312,7 +312,7 @@ class CreateMapDialog(QDialog, WIDGET):
         """
         self.stacked_widget.setCurrentIndex(2)
         self.error_label.setText(error)
-        self.button_box.button(QDialogButtonBox.Ok).deleteLater()
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).deleteLater()
 
     def _no_workspace(self):
         """
@@ -431,7 +431,7 @@ class CreateMapDialog(QDialog, WIDGET):
         """
         Validates the dialog
         """
-        self.button_box.button(QDialogButtonBox.Ok).setEnabled(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(
             self._is_valid()
         )
 
@@ -453,13 +453,13 @@ class CreateMapDialog(QDialog, WIDGET):
         )
 
         self.started = True
-        self.button_box.button(QDialogButtonBox.Cancel).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Cancel).setText(
             self.tr('Cancel')
         )
-        self.button_box.button(QDialogButtonBox.Ok).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setText(
             self.tr('Uploading')
         )
-        self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
 
         target_map = self.maps_widget.selected_map()
         self.map_uploader_task.associated_map = target_map
@@ -480,7 +480,7 @@ class CreateMapDialog(QDialog, WIDGET):
         self.map_uploader_task.taskTerminated.connect(self._upload_terminated)
         self.map_uploader_task.progressChanged.connect(self.set_progress)
 
-        self.button_box.button(QDialogButtonBox.Ok).clicked.disconnect(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).clicked.disconnect(
             self._start
         )
 
@@ -504,14 +504,14 @@ class CreateMapDialog(QDialog, WIDGET):
         self.map_uploader_task = None
         self.started = False
 
-        self.button_box.button(QDialogButtonBox.Cancel).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Cancel).setText(
             self.tr('Close')
         )
-        self.button_box.button(QDialogButtonBox.Ok).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setText(
             self.tr('Open Map')
         )
-        self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
-        self.button_box.button(QDialogButtonBox.Ok).clicked.connect(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(
             self._view_map
         )
 
@@ -525,7 +525,7 @@ class CreateMapDialog(QDialog, WIDGET):
                 self.tr('Upload canceled — {}').format(
                     self._map_title)
             )
-            self.button_box.button(QDialogButtonBox.Ok).setText(
+            self.button_box.button(QDialogButtonBox.StandardButton.Ok).setText(
                 self.tr('Canceled')
             )
             self.progress_label.hide()
@@ -566,14 +566,14 @@ class CreateMapDialog(QDialog, WIDGET):
             )
 
         self.map_uploader_task = None
-        self.button_box.button(QDialogButtonBox.Cancel).setText(
+        self.button_box.button(QDialogButtonBox.StandardButton.Cancel).setText(
             self.tr('Close')
         )
 
-        self.button_box.button(QDialogButtonBox.Ok).setEnabled(
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(
             False
         )
-        self.button_box.button(QDialogButtonBox.Ok).hide()
+        self.button_box.button(QDialogButtonBox.StandardButton.Ok).hide()
 
     def _view_map(self):
         """

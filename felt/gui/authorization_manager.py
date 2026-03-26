@@ -231,7 +231,7 @@ class AuthorizationManager(QObject):
         process
         """
         dlg = AuthorizeDialog()
-        if dlg.exec_():
+        if dlg.exec():
             self.start_authorization_workflow()
         else:
             self.queued_callbacks = []
@@ -332,13 +332,13 @@ class AuthorizationManager(QObject):
             return
 
         if self._user_reply.attribute(
-                QNetworkRequest.HttpStatusCodeAttribute) == 401:
+                QNetworkRequest.Attribute.HttpStatusCodeAttribute) == 401:
             self._user_reply = None
             self.deauthorize()
             self.attempt_authorize()
             return
 
-        if self._user_reply.error() != QNetworkReply.NoError:
+        if self._user_reply.error() != QNetworkReply.NetworkError.NoError:
             self._user_reply = None
             return
 

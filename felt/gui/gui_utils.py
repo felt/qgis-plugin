@@ -149,10 +149,10 @@ class GuiUtils:
         renderer = QSvgRenderer(path)
         image = QImage(int(width * device_pixel_ratio),
                        int(height * device_pixel_ratio),
-                       QImage.Format_ARGB32)
+                       QImage.Format.Format_ARGB32)
         image.setDevicePixelRatio(device_pixel_ratio)
         if not background_color:
-            image.fill(Qt.transparent)
+            image.fill(Qt.GlobalColor.transparent)
         else:
             image.fill(background_color)
 
