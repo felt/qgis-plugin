@@ -35,7 +35,8 @@ jobs:
       - name: Docker pull and create qgis-testing-environment
         run: |
           docker pull "$DOCKER_IMAGE":${{ matrix.docker_tags }}
-          docker run -d --name qgis-testing-environment -v "$GITHUB_WORKSPACE":/tests_directory -e QT_QPA_PLATFORM=offscreen "$DOCKER_IMAGE":${{ matrix.docker_tags }}
+          # -t keeps the newer images' shell entrypoint alive
+          docker run -d -t --name qgis-testing-environment -v "$GITHUB_WORKSPACE":/tests_directory -e QT_QPA_PLATFORM=offscreen "$DOCKER_IMAGE":${{ matrix.docker_tags }}
 
       - name: Docker install test requirements
         run: |
