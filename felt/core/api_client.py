@@ -517,7 +517,7 @@ class FeltApiClient:
             json.dumps(group_post_data).encode()
         )
 
-        if reply.error() == QNetworkReply.ContentAccessDenied:
+        if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
             raise PaidPlanRequiredError("Upload requires a paid plan")
 
         return [

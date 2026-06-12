@@ -128,7 +128,7 @@ class LogToFeltLogger(Logger):
         QMetaObject.invokeMethod(
             self,
             "_submit_usage",
-            Qt.QueuedConnection,
+            Qt.ConnectionType.QueuedConnection,
             Q_ARG(str, message),
             Q_ARG(str, UsageType.Info.to_string()))
 
@@ -137,7 +137,7 @@ class LogToFeltLogger(Logger):
         QMetaObject.invokeMethod(
             self,
             "_submit_usage",
-            Qt.QueuedConnection,
+            Qt.ConnectionType.QueuedConnection,
             Q_ARG(str, message_str),
             Q_ARG(str, UsageType.Info.to_string()))
 
@@ -152,7 +152,7 @@ class LogToFeltLogger(Logger):
         QMetaObject.invokeMethod(
             self,
             "_submit_usage",
-            Qt.QueuedConnection,
+            Qt.ConnectionType.QueuedConnection,
             Q_ARG(str, message),
             Q_ARG(str, UsageType.Error.to_string()))
 
@@ -167,7 +167,7 @@ class LogToFeltLogger(Logger):
         QMetaObject.invokeMethod(
             self,
             "_submit_usage",
-            Qt.QueuedConnection,
+            Qt.ConnectionType.QueuedConnection,
             Q_ARG(str, json.dumps(error)),
             Q_ARG(str, UsageType.Error.to_string()))
 

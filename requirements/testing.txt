@@ -1,4 +1,5 @@
 # For tests execution:
+coverage
 deepdiff
 mock
 flake8

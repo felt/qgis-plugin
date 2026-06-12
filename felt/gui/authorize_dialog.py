@@ -67,7 +67,8 @@ class AuthorizeDialog(QDialog, WIDGET):
         )
 
         self.footer_label.setMinimumWidth(
-            QFontMetrics(self.footer_label.font()).width('x') * 40
+            QFontMetrics(self.footer_label.font()).horizontalAdvance('x') *
+            40
         )
 
     def _sign_up(self):

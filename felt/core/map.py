@@ -47,7 +47,7 @@ class Map:
         last_visited_string = res.get('attributes', {}).get('visited_at')
         if last_visited_string:
             last_visited = QDateTime.fromString(
-                last_visited_string, Qt.ISODate
+                last_visited_string, Qt.DateFormat.ISODate
             )
         else:
             last_visited = None

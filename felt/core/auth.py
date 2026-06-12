@@ -93,8 +93,9 @@ class _Handler(BaseHTTPRequestHandler):
         token_body = urllib.parse.urlencode(body).encode()
 
         network_request = QNetworkRequest(QUrl(TOKEN_URL))
-        network_request.setHeader(QNetworkRequest.ContentTypeHeader,
-                                  'application/x-www-form-urlencoded')
+        network_request.setHeader(
+            QNetworkRequest.KnownHeaders.ContentTypeHeader,
+            'application/x-www-form-urlencoded')
 
         result_code = request.post(network_request,
                                    data=token_body,

@@ -29,18 +29,20 @@ class ColorBar(QProgressBar):
         option = QStyleOptionProgressBar()
         self.initStyleOption(option)
 
-        option.textAlignment = Qt.AlignHCenter
-        option.palette.setColor(QPalette.Highlight, QColor("#3d521e"))
+        option.textAlignment = Qt.AlignmentFlag.AlignHCenter
+        option.palette.setColor(QPalette.ColorRole.Highlight,
+                                QColor("#3d521e"))
         if self.value() > 45:
-            option.palette.setColor(QPalette.HighlightedText,
+            option.palette.setColor(QPalette.ColorRole.HighlightedText,
                                     QColor(255, 255, 255))
         else:
-            option.palette.setColor(QPalette.Text,
+            option.palette.setColor(QPalette.ColorRole.Text,
                                     QColor(0, 0, 0))
-            option.palette.setColor(QPalette.HighlightedText,
+            option.palette.setColor(QPalette.ColorRole.HighlightedText,
                                     QColor(0, 0, 0))
 
         painter = QPainter(self)
-        self.style().drawControl(QStyle.CE_ProgressBar, option, painter, self)
+        self.style().drawControl(QStyle.ControlElement.CE_ProgressBar,
+                                 option, painter, self)
 
     # pylint: enable=missing-function-docstring,unused-argument

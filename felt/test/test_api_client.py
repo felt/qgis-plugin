@@ -117,8 +117,9 @@ class ApiClientTest(unittest.TestCase):
 
         spy.wait()
 
-        self.assertEqual(reply.error(),
-                         QNetworkReply.AuthenticationRequiredError)
+        self.assertEqual(
+            reply.error(),
+            QNetworkReply.NetworkError.AuthenticationRequiredError)
 
         # an authenticated client
         reply = CLIENT.user()
@@ -130,7 +131,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         user = User.from_json(reply.readAll().data().decode())
         self.assertEqual(user.name, 'Nyall Dawson')
@@ -152,8 +153,9 @@ class ApiClientTest(unittest.TestCase):
 
         spy.wait()
 
-        self.assertEqual(reply.error(),
-                         QNetworkReply.AuthenticationRequiredError)
+        self.assertEqual(
+            reply.error(),
+            QNetworkReply.NetworkError.AuthenticationRequiredError)
 
         # an authenticated client
         reply = CLIENT.create_map(
@@ -166,7 +168,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         created_map = Map.from_json(reply.readAll().data().decode())
         self.assertEqual(created_map.type, ObjectType.Map)
@@ -184,7 +186,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         created_map = Map.from_json(reply.readAll().data().decode())
 
@@ -200,7 +202,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         json_params = reply.readAll().data().decode()
         params = S3UploadParameters.from_json(json.loads(json_params))
@@ -228,7 +230,7 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         spy.wait()
 
-        self.assertEqual(reply.error(), QNetworkReply.NoError)
+        self.assertEqual(reply.error(), QNetworkReply.NetworkError.NoError)
 
         reply = CLIENT.finalize_layer_upload(
             created_map.id,
@@ -239,7 +241,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         json_params = reply.readAll().data().decode()
         print(json_params)
@@ -257,7 +259,7 @@ class ApiClientTest(unittest.TestCase):
 
         # reply should be empty response
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         self.assertFalse(reply.readAll())
 
