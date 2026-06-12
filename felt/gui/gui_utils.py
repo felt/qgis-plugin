@@ -152,7 +152,7 @@ class GuiUtils:
                        QImage.Format.Format_ARGB32)
         image.setDevicePixelRatio(device_pixel_ratio)
         if not background_color:
-            image.fill(Qt.transparent)
+            image.fill(Qt.GlobalColor.transparent)
         else:
             image.fill(background_color)
 

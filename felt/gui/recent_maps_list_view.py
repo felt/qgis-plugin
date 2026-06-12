@@ -79,7 +79,7 @@ class RecentMapDelegate(QStyledItemDelegate):
         im_out = QImage(int(target_size.width() * device_pixel_ratio),
                         int(target_size.height() * device_pixel_ratio),
                         QImage.Format.Format_ARGB32)
-        im_out.fill(Qt.transparent)
+        im_out.fill(Qt.GlobalColor.transparent)
         painter = QPainter(im_out)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         painter.setPen(Qt.PenStyle.NoPen)
