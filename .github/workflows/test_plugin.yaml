@@ -11,8 +11,6 @@ on:
 env:
   # plugin name/directory where the code for the plugin is stored
   PLUGIN_NAME: felt
-  # python notation to test running inside plugin
-  TESTS_RUN_FUNCTION: felt.test_suite.test_package
   # Docker settings
   DOCKER_IMAGE: qgis/qgis
 
@@ -24,26 +22,26 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        docker_tags: [release-3_22, release-3_28, release-3_34, release-3_36]
+        # oldest supported version, recent LTRs, and latest QGIS 4 (Qt6)
+        docker_tags: [release-3_22, release-3_34, "3.40", "3.44", "4.0"]
 
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Docker pull and create qgis-testing-environment
         run: |
           docker pull "$DOCKER_IMAGE":${{ matrix.docker_tags }}
-          docker run -d --name qgis-testing-environment -v "$GITHUB_WORKSPACE":/tests_directory -e DISPLAY=:99 "$DOCKER_IMAGE":${{ matrix.docker_tags }}
+          # -t keeps the newer images' shell entrypoint alive
+          docker run -d -t --name qgis-testing-environment -v "$GITHUB_WORKSPACE":/tests_directory -e QT_QPA_PLATFORM=offscreen "$DOCKER_IMAGE":${{ matrix.docker_tags }}
 
-      - name: Docker set up QGIS
+      - name: Docker install test requirements
         run: |
-          docker exec qgis-testing-environment sh -c "qgis_setup.sh $PLUGIN_NAME"
-          docker exec qgis-testing-environment sh -c "rm -f /root/.local/share/QGIS/QGIS3/profiles/default/python/plugins/$PLUGIN_NAME"
-          docker exec qgis-testing-environment sh -c "ln -s /tests_directory/$PLUGIN_NAME /root/.local/share/QGIS/QGIS3/profiles/default/python/plugins/$PLUGIN_NAME"
-          docker exec qgis-testing-environment sh -c "pip3 install -r /tests_directory/requirements/testing.txt"
+          docker exec qgis-testing-environment sh -c "pip3 install --break-system-packages -r /tests_directory/requirements/testing.txt || pip3 install -r /tests_directory/requirements/testing.txt"
 
       - name: Docker run plugin tests
         run: |
-          docker exec qgis-testing-environment sh -c "qgis_testrunner.sh $TESTS_RUN_FUNCTION"
+          docker exec qgis-testing-environment sh -c "cd /tests_directory && python3 -c \"from felt.test_suite import run_tests_and_exit; run_tests_and_exit()\""

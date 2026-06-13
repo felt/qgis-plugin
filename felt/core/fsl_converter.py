@@ -1004,9 +1004,9 @@ class FslConverter:
         Convert a Qt cap style to FSL
         """
         return {
-            Qt.RoundCap: 'round',
-            Qt.SquareCap: 'square',
-            Qt.FlatCap: 'butt',
+            Qt.PenCapStyle.RoundCap: 'round',
+            Qt.PenCapStyle.SquareCap: 'square',
+            Qt.PenCapStyle.FlatCap: 'butt',
         }[style]
 
     @staticmethod
@@ -1015,10 +1015,10 @@ class FslConverter:
         Convert a Qt join style to FSL
         """
         return {
-            Qt.RoundJoin: 'round',
-            Qt.BevelJoin: 'bevel',
-            Qt.MiterJoin: 'miter',
-            Qt.SvgMiterJoin: 'miter',
+            Qt.PenJoinStyle.RoundJoin: 'round',
+            Qt.PenJoinStyle.BevelJoin: 'bevel',
+            Qt.PenJoinStyle.MiterJoin: 'miter',
+            Qt.PenJoinStyle.SvgMiterJoin: 'miter',
         }[style]
 
     @staticmethod
@@ -1027,12 +1027,12 @@ class FslConverter:
         Converts a Qt pen style to an array of dash/space lengths
         """
         return {
-            Qt.NoPen: [],
-            Qt.SolidLine: [],
-            Qt.DashLine: [2.5, 2],
-            Qt.DotLine: [0.5, 1.3],
-            Qt.DashDotLine: [0.5, 1.3, 2.5, 1.3],
-            Qt.DashDotDotLine: [0.5, 1.3, 0.5, 1.3, 2.5, 1.3]
+            Qt.PenStyle.NoPen: [],
+            Qt.PenStyle.SolidLine: [],
+            Qt.PenStyle.DashLine: [2.5, 2],
+            Qt.PenStyle.DotLine: [0.5, 1.3],
+            Qt.PenStyle.DashDotLine: [0.5, 1.3, 2.5, 1.3],
+            Qt.PenStyle.DashDotDotLine: [0.5, 1.3, 0.5, 1.3, 2.5, 1.3]
         }[style]
 
     @staticmethod
@@ -1043,7 +1043,7 @@ class FslConverter:
         """
         Converts a QGIS simple line symbol layer to FSL
         """
-        if (layer.penStyle() == Qt.NoPen or
+        if (layer.penStyle() == Qt.PenStyle.NoPen or
                 not layer.color().isValid() or
                 layer.color().alphaF() == 0):
             return []
@@ -1070,7 +1070,7 @@ class FslConverter:
                 part,
                 layer.customDashPatternUnit(), context, round_size=False) for
                 part in layer.customDashVector()]
-        elif layer.penStyle() != Qt.SolidLine:
+        elif layer.penStyle() != Qt.PenStyle.SolidLine:
             res['dashArray'] = FslConverter.convert_pen_style(layer.penStyle())
 
         # not supported:
@@ -1264,10 +1264,10 @@ class FslConverter:
         """
         Converts a QGIS simple fill symbol layer to FSL
         """
-        has_invisible_fill = (layer.brushStyle() == Qt.NoBrush or
+        has_invisible_fill = (layer.brushStyle() == Qt.BrushStyle.NoBrush or
                               not layer.color().isValid() or
                               layer.color().alphaF() == 0)
-        has_invisible_stroke = (layer.strokeStyle() == Qt.NoPen or
+        has_invisible_stroke = (layer.strokeStyle() == Qt.PenStyle.NoPen or
                                 not layer.strokeColor().isValid() or
                                 layer.strokeColor().alphaF() == 0)
         if has_invisible_fill and has_invisible_stroke:
@@ -1291,7 +1291,7 @@ class FslConverter:
             res['lineJoin'] = FslConverter.convert_join_style(
                 layer.penJoinStyle())
 
-            if layer.strokeStyle() != Qt.SolidLine:
+            if layer.strokeStyle() != Qt.PenStyle.SolidLine:
                 res['dashArray'] = FslConverter.convert_pen_style(
                     layer.strokeStyle())
         else:
@@ -1301,7 +1301,8 @@ class FslConverter:
         # - fill offset
         # - fill style
 
-        if layer.brushStyle() not in (Qt.SolidPattern, Qt.NoBrush):
+        if layer.brushStyle() not in (Qt.BrushStyle.SolidPattern,
+                                      Qt.BrushStyle.NoBrush):
             context.push_warning(
                 'Fill patterns are not supported, converting to a solid fill',
                 LogLevel.Warning,
@@ -1323,7 +1324,7 @@ class FslConverter:
         """
         has_fill = layer.color().isValid() and layer.color().alphaF() > 0
         has_stroke = (layer.strokeColor().alphaF() > 0 and
-                      layer.strokeStyle() != Qt.NoPen)
+                      layer.strokeStyle() != Qt.PenStyle.NoPen)
         if not has_fill and not has_stroke:
             return []
 
@@ -1378,7 +1379,7 @@ class FslConverter:
         """
         has_fill = layer.color().isValid() and layer.color().alphaF() > 0
         has_stroke = (layer.strokeColor().alphaF() > 0 and
-                      layer.strokeStyle() != Qt.NoPen)
+                      layer.strokeStyle() != Qt.PenStyle.NoPen)
         if not has_fill and not has_stroke:
             return []
 

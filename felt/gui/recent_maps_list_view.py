@@ -72,17 +72,17 @@ class RecentMapDelegate(QStyledItemDelegate):
                                         device_pixel_ratio)
         scaled = thumbnail.scaled(
             QSize(uncropped_thumbnail_width, int(height * device_pixel_ratio)),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
         )
 
         im_out = QImage(int(target_size.width() * device_pixel_ratio),
                         int(target_size.height() * device_pixel_ratio),
-                        QImage.Format_ARGB32)
-        im_out.fill(Qt.transparent)
+                        QImage.Format.Format_ARGB32)
+        im_out.fill(Qt.GlobalColor.transparent)
         painter = QPainter(im_out)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setPen(Qt.NoPen)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(QColor(0, 0, 0)))
         painter.drawRoundedRect(
             QRectF(1 * device_pixel_ratio,
@@ -106,7 +106,7 @@ class RecentMapDelegate(QStyledItemDelegate):
         pen.setWidthF(self.BORDER_WIDTH_PIXELS * device_pixel_ratio)
         pen.setCosmetic(True)
         painter.setPen(pen)
-        painter.setBrush(Qt.NoBrush)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(
             QRectF(device_pixel_ratio,
                    device_pixel_ratio,
@@ -145,16 +145,18 @@ class RecentMapDelegate(QStyledItemDelegate):
         device_pixel_ratio = 1.0 if option.widget is None else \
             option.widget.devicePixelRatioF()
 
-        option.palette.setColor(QPalette.Highlight, self.SELECTED_ROW_COLOR)
+        option.palette.setColor(QPalette.ColorRole.Highlight,
+                                self.SELECTED_ROW_COLOR)
 
         # draw background for item (i.e. selection background)
         style.drawPrimitive(
-            QStyle.PE_PanelItemViewItem, option, painter, option.widget)
+            QStyle.PrimitiveElement.PE_PanelItemViewItem, option, painter,
+            option.widget)
 
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.setRenderHint(QPainter.TextAntialiasing, True)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
 
         inner_rect = QRectF(option.rect)
         inner_rect.adjust(
@@ -205,7 +207,7 @@ class RecentMapDelegate(QStyledItemDelegate):
 
         line_heights = [1.0 * line_scale, 2.0 * line_scale]
 
-        painter.setBrush(Qt.NoBrush)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.setPen(QPen(self.HEADING_COLOR))
         painter.drawText(
             QPointF(
@@ -247,14 +249,15 @@ class RecentMapsListView(QListView):
         self.setItemDelegate(delegate)
 
         p = self.palette()
-        p.setColor(QPalette.Base, QColor(255, 255, 255))
+        p.setColor(QPalette.ColorRole.Base, QColor(255, 255, 255))
         self.setPalette(p)
 
         fm = QFontMetrics(self.font())
         self.setMinimumHeight(fm.height() * 12)
 
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self._model.first_results_found.connect(self._on_first_results_found)
         self._model.no_results_found.connect(self._on_no_results_found)
@@ -269,7 +272,7 @@ class RecentMapsListView(QListView):
             # option should get selected again
             self.selectionModel().select(
                 self._model.index(0, 0),
-                QItemSelectionModel.ClearAndSelect)
+                QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
     def set_workspace_id(self, workspace_id: Optional[str]):
         """
@@ -280,7 +283,7 @@ class RecentMapsListView(QListView):
         # option should get selected again
         self.selectionModel().select(
             self._model.index(0, 0),
-            QItemSelectionModel.ClearAndSelect)
+            QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
     def set_new_map_title(self, title: str):
         """
@@ -298,7 +301,7 @@ class RecentMapsListView(QListView):
         if self._model.filter_string():
             self.selectionModel().select(
                 self._model.index(1, 0),
-                QItemSelectionModel.ClearAndSelect)
+                QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
     def _on_no_results_found(self):
         """
@@ -309,7 +312,7 @@ class RecentMapsListView(QListView):
         # option should get selected again
         self.selectionModel().select(
             self._model.index(0, 0),
-            QItemSelectionModel.ClearAndSelect)
+            QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
 
 class RecentMapsWidget(QWidget):
@@ -372,7 +375,7 @@ class RecentMapsWidget(QWidget):
 
         self._view.selectionModel().select(
             self._view.model().index(0, 0),
-            QItemSelectionModel.ClearAndSelect)
+            QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
     def filter_line_edit(self) -> QgsFilterLineEdit:
         """

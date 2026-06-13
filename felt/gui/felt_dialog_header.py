@@ -12,7 +12,15 @@ from qgis.PyQt.QtGui import (
     QPainter,
     QImage
 )
-from qgis.PyQt.QtSvg import QSvgWidget
+try:
+    # Qt 5 and QGIS >= 3.99 builds wrap QSvgWidget in qgis.PyQt
+    from qgis.PyQt.QtSvg import QSvgWidget
+except ImportError:
+    try:
+        from qgis.PyQt.QtSvgWidgets import QSvgWidget
+    except ImportError:
+        # early QGIS 4 releases don't wrap QtSvgWidgets at all
+        from PyQt6.QtSvgWidgets import QSvgWidget
 from qgis.PyQt.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -39,8 +47,8 @@ class FeltDialogHeader(QWidget):
         self._cached_image: Optional[QImage] = None
 
         self.setSizePolicy(
-            QSizePolicy.Minimum,
-            QSizePolicy.Fixed
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Fixed
         )
 
         svg_logo_widget = QSvgWidget()
@@ -78,7 +86,7 @@ class FeltDialogHeader(QWidget):
 
     def paintEvent(self, event):  # pylint: disable=unused-argument
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         # image has 437 x 107 aspect ratio
         if not self._cached_image or \

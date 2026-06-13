@@ -342,35 +342,37 @@ class FeltApiClient:
             b"Content-Type",
             b"multipart/form-data; boundary=QGISFormBoundary2XCkqVRLJ5XMxfw5")
 
-        form_content = QByteArray()
+        # build the form content as bytes: PyQt6 does not permit appending
+        # strings to QByteArray
+        form_content = b''
         for name, value in parameters.to_form_fields().items():
-            form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
-            form_content.append("Content-Disposition: form-data; ")
-            form_content.append(f"name=\"{name}\"")
-            form_content.append("\r\n")
-            form_content.append("\r\n")
-            form_content.append(value)
-            form_content.append("\r\n")
+            form_content += b"--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n"
+            form_content += b"Content-Disposition: form-data; "
+            form_content += f"name=\"{name}\"".encode()
+            form_content += b"\r\n"
+            form_content += b"\r\n"
+            form_content += str(value).encode()
+            form_content += b"\r\n"
 
-        form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n")
-        form_content.append("Content-Disposition: ")
-        form_content.append(
-            f"form-data; name=\"file\"; filename=\"{filename}\"\r\n")
-        form_content.append(
-            "Content-Type: application/octet-stream\r\n")
-        form_content.append("\r\n")
+        form_content += b"--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n"
+        form_content += b"Content-Disposition: "
+        form_content += \
+            f"form-data; name=\"file\"; filename=\"{filename}\"\r\n".encode()
+        form_content += b"Content-Type: application/octet-stream\r\n"
+        form_content += b"\r\n"
 
-        form_content.append(content)
+        form_content += content
 
-        form_content.append("\r\n")
-        form_content.append("--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n")
+        form_content += b"\r\n"
+        form_content += b"--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n"
 
-        content_length = form_content.length()
+        form_data = QByteArray(form_content)
+        content_length = form_data.length()
         network_request.setRawHeader(
             b"Content-Length",
             str(content_length).encode()
         )
-        return network_request, form_content
+        return network_request, form_data
 
     def upload_file(self,
                     filename: str,
@@ -517,7 +519,7 @@ class FeltApiClient:
             json.dumps(group_post_data).encode()
         )
 
-        if reply.error() == QNetworkReply.ContentAccessDenied:
+        if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
             raise PaidPlanRequiredError("Upload requires a paid plan")
 
         return [

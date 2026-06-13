@@ -117,8 +117,9 @@ class ApiClientTest(unittest.TestCase):
 
         spy.wait()
 
-        self.assertEqual(reply.error(),
-                         QNetworkReply.AuthenticationRequiredError)
+        self.assertEqual(
+            reply.error(),
+            QNetworkReply.NetworkError.AuthenticationRequiredError)
 
         # an authenticated client
         reply = CLIENT.user()
@@ -130,7 +131,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         user = User.from_json(reply.readAll().data().decode())
         self.assertEqual(user.name, 'Nyall Dawson')
@@ -152,8 +153,9 @@ class ApiClientTest(unittest.TestCase):
 
         spy.wait()
 
-        self.assertEqual(reply.error(),
-                         QNetworkReply.AuthenticationRequiredError)
+        self.assertEqual(
+            reply.error(),
+            QNetworkReply.NetworkError.AuthenticationRequiredError)
 
         # an authenticated client
         reply = CLIENT.create_map(
@@ -166,7 +168,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         created_map = Map.from_json(reply.readAll().data().decode())
         self.assertEqual(created_map.type, ObjectType.Map)
@@ -184,7 +186,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         created_map = Map.from_json(reply.readAll().data().decode())
 
@@ -200,7 +202,7 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         json_params = reply.readAll().data().decode()
         params = S3UploadParameters.from_json(json.loads(json_params))
@@ -228,7 +230,7 @@ class ApiClientTest(unittest.TestCase):
         spy = QSignalSpy(reply.finished)
         spy.wait()
 
-        self.assertEqual(reply.error(), QNetworkReply.NoError)
+        self.assertEqual(reply.error(), QNetworkReply.NetworkError.NoError)
 
         reply = CLIENT.finalize_layer_upload(
             created_map.id,
@@ -239,10 +241,45 @@ class ApiClientTest(unittest.TestCase):
         spy.wait()
 
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         json_params = reply.readAll().data().decode()
         print(json_params)
+
+    def test_create_upload_file_request(self):
+        """
+        Test building file upload requests (no network access required)
+        """
+        params = S3UploadParameters.from_json(
+            {'url': 'https://test-bucket.s3.amazonaws.com/',
+             'layer_id': 'layer_1',
+             'data': {'type': 'presigned_upload'},
+             'presigned_attributes': {
+                 'key': 'some_key',
+                 'policy': 'some_policy'
+             }})
+
+        request, form_content = CLIENT.create_upload_file_request(
+            'test.gpkg', b'GPKG\x00\x01binary', params
+        )
+
+        self.assertEqual(request.url(),
+                         QUrl('https://test-bucket.s3.amazonaws.com/'))
+        self.assertEqual(request.rawHeader(b'Host'),
+                         b'test-bucket.s3.amazonaws.com')
+
+        body = bytes(form_content)
+        self.assertIn(b'Content-Disposition: form-data; name="key"', body)
+        self.assertIn(b'some_key\r\n', body)
+        self.assertIn(b'Content-Disposition: form-data; name="policy"', body)
+        self.assertIn(b'some_policy\r\n', body)
+        self.assertIn(
+            b'form-data; name="file"; filename="test.gpkg"', body)
+        self.assertIn(b'GPKG\x00\x01binary', body)
+        self.assertTrue(
+            body.endswith(b'--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n'))
+        self.assertEqual(request.rawHeader(b'Content-Length'),
+                         str(len(body)).encode())
 
     @unittest.skipIf(not CLIENT.token, 'Not authorized')
     def test_usage(self):
@@ -257,7 +294,7 @@ class ApiClientTest(unittest.TestCase):
 
         # reply should be empty response
         self.assertEqual(reply.error(),
-                         QNetworkReply.NoError)
+                         QNetworkReply.NetworkError.NoError)
 
         self.assertFalse(reply.readAll())
 
