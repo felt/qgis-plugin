@@ -12,7 +12,7 @@ name=Add to Felt
 qgisMinimumVersion=3.22
 qgisMaximumVersion=4.99
 description=Create a collaborative Felt (felt.com) map from QGIS
-version=1.1.0
+version=3.2.0
 author=Felt
 email=support@felt.com
 
@@ -25,7 +25,7 @@ repository=https://github.com/felt/qgis-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=changelog
+changelog=
 
 # Tags are comma separated with spaces allowed
 tags=shared,collaboration,sharing,maps,publishing,public,comments,data,layers,realtime,cloud,media,browser,online,publication,webmapping,internet,webgis,capture,catalog
