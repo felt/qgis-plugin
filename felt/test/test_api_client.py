@@ -277,7 +277,7 @@ class ApiClientTest(unittest.TestCase):
             b'form-data; name="file"; filename="test.gpkg"', body)
         self.assertIn(b'GPKG\x00\x01binary', body)
         self.assertTrue(
-            body.endswith(b'--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n'))
+            body.endswith(b'--QGISFeltPluginFormBoundary--\r\n'))
         self.assertEqual(request.rawHeader(b'Content-Length'),
                          str(len(body)).encode())
 
