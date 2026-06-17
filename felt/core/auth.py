@@ -181,9 +181,10 @@ class OAuthWorkflow(QThread):
         """
         # we have to dummy a dummy request in order to abort the
         # blocking handle_request() loop
-        # pylint: disable=missing-timeout
-        requests.get("http://127.0.0.1:{}".format(REDIRECT_PORT))
-        # pylint: enable=missing-timeout
+        requests.get(
+            "http://127.0.0.1:{}".format(REDIRECT_PORT),
+            timeout=10
+        )
 
     def close_server(self):
         """

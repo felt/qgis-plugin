@@ -72,6 +72,9 @@ class FeltApiClient:
     UPDATE_LAYER_ENDPOINT = '/maps/{}/layers'
     LAYER_GROUPS_ENDPOINT = '/maps/{}/layer_groups'
 
+    # boundary marker used when building multipart/form-data upload bodies
+    MULTIPART_BOUNDARY = 'QGISFeltPluginFormBoundary'
+
     def __init__(self):
         # default headers to add to all requests
         self.headers = {
@@ -338,15 +341,19 @@ class FeltApiClient:
             b'Host',
             parameters.url[len('https://'):-1].encode()
         )
+        boundary = self.MULTIPART_BOUNDARY
         network_request.setRawHeader(
             b"Content-Type",
-            b"multipart/form-data; boundary=QGISFormBoundary2XCkqVRLJ5XMxfw5")
+            "multipart/form-data; boundary={}".format(boundary).encode())
+
+        delimiter = "--{}\r\n".format(boundary).encode()
+        closing_delimiter = "--{}--\r\n".format(boundary).encode()
 
         # build the form content as bytes: PyQt6 does not permit appending
         # strings to QByteArray
         form_content = b''
         for name, value in parameters.to_form_fields().items():
-            form_content += b"--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n"
+            form_content += delimiter
             form_content += b"Content-Disposition: form-data; "
             form_content += f"name=\"{name}\"".encode()
             form_content += b"\r\n"
@@ -354,7 +361,7 @@ class FeltApiClient:
             form_content += str(value).encode()
             form_content += b"\r\n"
 
-        form_content += b"--QGISFormBoundary2XCkqVRLJ5XMxfw5\r\n"
+        form_content += delimiter
         form_content += b"Content-Disposition: "
         form_content += \
             f"form-data; name=\"file\"; filename=\"{filename}\"\r\n".encode()
@@ -364,7 +371,7 @@ class FeltApiClient:
         form_content += content
 
         form_content += b"\r\n"
-        form_content += b"--QGISFormBoundary2XCkqVRLJ5XMxfw5--\r\n"
+        form_content += closing_delimiter
 
         form_data = QByteArray(form_content)
         content_length = form_data.length()
