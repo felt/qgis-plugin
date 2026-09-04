@@ -15,6 +15,8 @@ from .user import User  # noqa
 from .s3_upload_parameters import S3UploadParameters  # noqa
 from .api_client import (  # noqa
     FeltApiClient,
+    FeltApiError,
+    PaidPlanRequiredError,
     API_CLIENT
 )
 from .map_uploader import MapUploaderTask  # noqa

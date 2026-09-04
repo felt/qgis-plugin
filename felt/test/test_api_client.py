@@ -21,6 +21,7 @@ from ..core import (
     # OAuthWorkflow,
     ObjectType,
     FeltApiClient,
+    FeltApiError,
     User,
     Map,
     S3UploadParameters
@@ -245,6 +246,140 @@ class ApiClientTest(unittest.TestCase):
 
         json_params = reply.readAll().data().decode()
         print(json_params)
+
+    def test_api_error_from_content(self):
+        """
+        Test parsing error responses returned by the API
+        """
+        # successful replies are not errors
+        self.assertIsNone(FeltApiError.from_content(200, b'{"id": "abc"}'))
+        self.assertIsNone(FeltApiError.from_content(None, b''))
+        self.assertIsNone(FeltApiError.from_content(None, None))
+
+        # standard API error envelope
+        error = FeltApiError.from_content(
+            404,
+            json.dumps({
+                'errors': [{
+                    'title': 'Not found',
+                    'detail': 'Map not found',
+                    'code': 'not_found',
+                    'source': {'parameter': 'map_id'}
+                }]
+            }).encode(),
+            'Error transferring - server replied: Not Found'
+        )
+        self.assertIsNotNone(error)
+        self.assertEqual(error.status_code, 404)
+        self.assertEqual(error.code, 'not_found')
+        self.assertEqual(error.title, 'Not found')
+        self.assertEqual(error.detail, 'Map not found')
+        self.assertEqual(
+            error.network_error_string,
+            'Error transferring - server replied: Not Found')
+        # detail is preferred for the message
+        self.assertEqual(error.message(), 'Map not found')
+        self.assertFalse(error.is_paid_plan_error())
+
+        # error envelope in a nominally successful reply
+        error = FeltApiError.from_content(
+            200,
+            b'{"errors": [{"detail": "Something went wrong"}]}'
+        )
+        self.assertIsNotNone(error)
+        self.assertEqual(error.detail, 'Something went wrong')
+        self.assertIsNone(error.code)
+
+        # http error without a parseable body falls back to Qt's message
+        error = FeltApiError.from_content(
+            500, b'<html>Internal Server Error</html>',
+            'Error transferring - server replied: Internal Server Error'
+        )
+        self.assertIsNotNone(error)
+        self.assertEqual(error.status_code, 500)
+        self.assertIsNone(error.detail)
+        self.assertEqual(
+            error.message(),
+            'Error transferring - server replied: Internal Server Error')
+
+        # network error with no http response at all
+        error = FeltApiError.from_content(None, b'', 'Host not found')
+        self.assertIsNotNone(error)
+        self.assertEqual(error.message(), 'Host not found')
+        self.assertFalse(error.is_paid_plan_error())
+
+    def test_api_error_paid_plan(self):
+        """
+        Test detection of errors caused by not having a paid plan
+        """
+        # 403 with no body (matches previous plugin behavior)
+        error = FeltApiError.from_content(
+            403, b'', 'Error transferring - server replied: Forbidden')
+        self.assertTrue(error.is_paid_plan_error())
+        # and no api detail is available
+        self.assertIsNone(error.detail)
+
+        # 403 with the documented plan limit codes
+        for code in ('forbidden', 'over_storage_limit',
+                     'over_processing_limit'):
+            error = FeltApiError.from_content(
+                403,
+                json.dumps({'errors': [{'code': code,
+                                        'detail': 'Limit reached'}]}).encode()
+            )
+            self.assertTrue(error.is_paid_plan_error(), code)
+            self.assertEqual(error.message(), 'Limit reached')
+
+        # 402 payment required
+        error = FeltApiError.from_content(402, b'')
+        self.assertTrue(error.is_paid_plan_error())
+
+        # plan related error code with an unexpected status
+        error = FeltApiError.from_content(
+            401,
+            b'{"errors": [{"code": "upgrade_required", "detail": "x"}]}'
+        )
+        self.assertTrue(error.is_paid_plan_error())
+
+        # plan related wording in the detail with an unexpected status
+        error = FeltApiError.from_content(
+            401,
+            json.dumps({'errors': [{
+                'code': 'unauthorized',
+                'detail': 'Uploading requires a paid plan. Start a trial '
+                          'to continue.'}]}).encode()
+        )
+        self.assertTrue(error.is_paid_plan_error())
+        self.assertEqual(
+            error.message(),
+            'Uploading requires a paid plan. Start a trial to continue.')
+
+        # unrelated errors are not paid plan errors
+        error = FeltApiError.from_content(
+            401,
+            b'{"errors": [{"code": "unauthorized", '
+            b'"detail": "Missing authorization header"}]}'
+        )
+        self.assertFalse(error.is_paid_plan_error())
+
+        error = FeltApiError.from_content(
+            422,
+            b'{"errors": [{"code": "invalid", "detail": "name is required"}]}'
+        )
+        self.assertFalse(error.is_paid_plan_error())
+
+        error = FeltApiError.from_content(
+            429,
+            b'{"errors": [{"code": "too_many_requests", '
+            b'"detail": "Rate limit exceeded"}]}'
+        )
+        self.assertFalse(error.is_paid_plan_error())
+
+        error = FeltApiError.from_content(404, b'')
+        self.assertFalse(error.is_paid_plan_error())
+
+        error = FeltApiError.from_content(500, b'')
+        self.assertFalse(error.is_paid_plan_error())
 
     def test_create_upload_file_request(self):
         """

@@ -557,12 +557,19 @@ class CreateMapDialog(QDialog, WIDGET):
 
             if self.map_uploader_task.paid_plan_error:
                 error_message = self.tr(
-                    'Uploading files to Felt requires a paid plan, '
-                    'please visit '
+                    'Uploading from QGIS to Felt requires a paid plan '
+                    '(or a free trial of a paid plan), and your Felt '
+                    'workspace does not currently have one.<p>'
+                    'To start a trial or upgrade your workspace, visit '
                     '<a href=\'https://felt.com/pricing\'>felt.com/pricing</a>'
                     ' or contact <a href=\'mailto:sales@felt.com\'>'
-                    'sales@felt.com</a>.'
+                    'sales@felt.com</a>.</p>'
                 )
+
+                if self.map_uploader_task.error_string:
+                    error_message += '<p>{}</p>'.format(
+                        self.map_uploader_task.error_string
+                    )
             else:
                 error_message = \
                     self.tr('There was an error uploading this file, please '
