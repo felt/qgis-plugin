@@ -72,13 +72,21 @@ class FeltApiError:
     detail: Optional[str] = None
     # Qt's description of the failure, used when the API gave no detail
     network_error_string: Optional[str] = None
+    # True if the API reported (via the x-api-limit-exceeded header) that
+    # the workspace's plan does not allow (more) API calls
+    api_limit_exceeded: bool = False
 
     # HTTP status codes used by the API when a workspace's plan does
     # not permit the operation
     PAID_PLAN_STATUS_CODES = (402, 403)
 
+    # response header set by the API when the workspace's plan does not
+    # allow (more) API calls
+    API_LIMIT_EXCEEDED_HEADER = b'x-api-limit-exceeded'
+
     # stable error codes the API uses for plan/billing restrictions
     PAID_PLAN_ERROR_CODES = (
+        'plan_upgrade_required',
         'forbidden',
         'payment_required',
         'paid_plan_required',
@@ -107,6 +115,11 @@ class FeltApiError:
                 FeltApiError.PAID_PLAN_ERROR_CODES:
             return True
 
+        # a 429 which is caused by the workspace's plan (as opposed to
+        # transient throttling) cannot be resolved by retrying
+        if self.status_code == 429 and self.api_limit_exceeded:
+            return True
+
         for text in (self.detail, self.title):
             if text and FeltApiError.PAID_PLAN_MESSAGE_PATTERN.search(text):
                 return True
@@ -123,7 +136,8 @@ class FeltApiError:
     @staticmethod
     def from_content(status_code: Optional[int],
                      content: Optional[bytes],
-                     network_error_string: Optional[str] = None) \
+                     network_error_string: Optional[str] = None,
+                     api_limit_exceeded: bool = False) \
             -> Optional['FeltApiError']:
         """
         Parses an error from the HTTP status code and body of a reply.
@@ -157,6 +171,10 @@ class FeltApiError:
                 elif isinstance(response.get('error'), str):
                     has_error_body = True
                     detail = response['error']
+                elif isinstance(response.get('message'), str):
+                    # legacy shape used by some API error responses
+                    has_error_body = True
+                    detail = response['message']
 
         is_http_error = status_code is not None and status_code >= 400
         if not is_http_error and not has_error_body \
@@ -168,7 +186,8 @@ class FeltApiError:
             code=code,
             title=title,
             detail=detail,
-            network_error_string=network_error_string
+            network_error_string=network_error_string,
+            api_limit_exceeded=api_limit_exceeded
         )
 
     @staticmethod
@@ -199,8 +218,14 @@ class FeltApiError:
         else:
             content = bytes(reply.readAll())
 
+        api_limit_exceeded = False
+        if reply.hasRawHeader(FeltApiError.API_LIMIT_EXCEEDED_HEADER):
+            api_limit_exceeded = bytes(reply.rawHeader(
+                FeltApiError.API_LIMIT_EXCEEDED_HEADER
+            )).decode().strip().lower() == 'true'
+
         return FeltApiError.from_content(
-            status_code, content, network_error_string)
+            status_code, content, network_error_string, api_limit_exceeded)
 
 
 class FeltApiClient:

@@ -459,17 +459,22 @@ class MapUploaderTask(QgsTask):
 
     def _handle_reply_error(self,
                             reply,
-                            context: str) -> bool:
+                            context: str,
+                            api_error: Optional[FeltApiError] = None) -> bool:
         """
         Inspects a reply from the Felt API. If the reply represents an
         error, records the error details (including whether the error
         was caused by the workspace not being on a paid plan) and
         returns True.
-        """
-        if reply.error() == QNetworkReply.NetworkError.NoError:
-            return False
 
-        api_error = FeltApiError.from_reply(reply)
+        An already parsed api_error can be passed, in which case the reply
+        is always treated as an error.
+        """
+        if api_error is None:
+            if reply.error() == QNetworkReply.NetworkError.NoError:
+                return False
+
+            api_error = FeltApiError.from_reply(reply)
         if api_error and api_error.is_paid_plan_error():
             self.paid_plan_error = True
             # only retain the message if the API gave a meaningful
@@ -683,6 +688,15 @@ class MapUploaderTask(QgsTask):
                 if reply.attribute(
                         QNetworkRequest.Attribute.HttpStatusCodeAttribute
                 ) == 429:
+                    api_error = FeltApiError.from_reply(reply)
+                    if api_error and api_error.is_paid_plan_error():
+                        # not transient throttling -- the workspace's plan
+                        # does not allow this, so retrying won't help
+                        self._handle_reply_error(
+                            reply, 'Error preparing layer upload',
+                            api_error=api_error)
+                        return False
+
                     rate_limit_counter += 1
                     if rate_limit_counter > 3:
                         self.error_string = \

@@ -4,8 +4,10 @@
 
 - Detect upload failures caused by the workspace not being on a paid
   plan (or a trial of one) more reliably, including failures reported
-  through the API's error body or during URL-based layer imports, and
-  show a clearer message explaining how to start a trial or upgrade
+  through the API's error body, API call limits which are caused by the
+  plan (which were previously retried as if they were transient
+  throttling), or during URL-based layer imports, and show a clearer
+  message explaining how to start a trial or upgrade
 - Show the error detail returned by the Felt API when an upload fails,
   instead of only Qt's generic network error string
 

@@ -308,6 +308,19 @@ class ApiClientTest(unittest.TestCase):
         self.assertEqual(error.message(), 'Host not found')
         self.assertFalse(error.is_paid_plan_error())
 
+        # legacy {"message": ...} shape
+        error = FeltApiError.from_content(
+            403,
+            b'{"message": "To access the Felt API, upgrade your plan: '
+            b'https://felt.com/maps/x/billing"}'
+        )
+        self.assertIsNotNone(error)
+        self.assertEqual(
+            error.message(),
+            'To access the Felt API, upgrade your plan: '
+            'https://felt.com/maps/x/billing')
+        self.assertTrue(error.is_paid_plan_error())
+
     def test_api_error_paid_plan(self):
         """
         Test detection of errors caused by not having a paid plan
@@ -333,6 +346,35 @@ class ApiClientTest(unittest.TestCase):
         # 402 payment required
         error = FeltApiError.from_content(402, b'')
         self.assertTrue(error.is_paid_plan_error())
+
+        # the dedicated plan_upgrade_required code
+        error = FeltApiError.from_content(
+            403,
+            json.dumps({'errors': [{
+                'code': 'plan_upgrade_required',
+                'title': 'Upgrade required',
+                'detail': 'Your workspace is on the Free plan, which does '
+                          'not include access to the Felt API.'}]}).encode()
+        )
+        self.assertTrue(error.is_paid_plan_error())
+        self.assertEqual(error.code, 'plan_upgrade_required')
+
+        # a 429 caused by the plan's API call limit is not transient
+        # throttling
+        error = FeltApiError.from_content(
+            429,
+            json.dumps({'errors': [{
+                'title': 'Monthly API call limit exceeded',
+                'detail': 'Your workspace has reached its monthly API call '
+                          'limit. Contact sales@felt.com to raise your '
+                          'limit.'}]}).encode(),
+            api_limit_exceeded=True
+        )
+        self.assertTrue(error.is_paid_plan_error())
+        self.assertEqual(
+            error.message(),
+            'Your workspace has reached its monthly API call limit. '
+            'Contact sales@felt.com to raise your limit.')
 
         # plan related error code with an unexpected status
         error = FeltApiError.from_content(
@@ -368,6 +410,7 @@ class ApiClientTest(unittest.TestCase):
         )
         self.assertFalse(error.is_paid_plan_error())
 
+        # ordinary throttling, without the plan limit header
         error = FeltApiError.from_content(
             429,
             b'{"errors": [{"code": "too_many_requests", '
