@@ -43,7 +43,11 @@ from qgis.core import (
 )
 from qgis.utils import iface
 
-from .api_client import API_CLIENT, PaidPlanRequiredError
+from .api_client import (
+    API_CLIENT,
+    FeltApiError,
+    PaidPlanRequiredError
+)
 from .enums import LayerSupport
 from .exceptions import LayerPackagingException
 from .layer_exporter import LayerExporter
@@ -453,6 +457,46 @@ class MapUploaderTask(QgsTask):
             self.feedback.cancel()
         super().cancel()
 
+    def _handle_reply_error(self,
+                            reply,
+                            context: str,
+                            api_error: Optional[FeltApiError] = None) -> bool:
+        """
+        Inspects a reply from the Felt API. If the reply represents an
+        error, records the error details (including whether the error
+        was caused by the workspace not being on a paid plan) and
+        returns True.
+
+        An already parsed api_error can be passed, in which case the reply
+        is always treated as an error.
+        """
+        if api_error is None:
+            if reply.error() == QNetworkReply.NetworkError.NoError:
+                return False
+
+            api_error = FeltApiError.from_reply(reply)
+        if api_error and api_error.is_paid_plan_error():
+            self.paid_plan_error = True
+            # only retain the message if the API gave a meaningful
+            # explanation -- Qt's generic transfer error is not helpful
+            # to show alongside the paid plan message
+            self.error_string = api_error.detail or api_error.title
+        elif api_error:
+            self.error_string = api_error.message()
+        else:
+            self.error_string = reply.errorString()
+
+        Logger.instance().log_error_json(
+            {
+                'type': Logger.MAP_EXPORT,
+                'error': '{}: {}'.format(
+                    context,
+                    self.error_string or reply.errorString()),
+                'paid_plan_error': self.paid_plan_error
+            }
+        )
+        return True
+
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-branches
@@ -507,18 +551,7 @@ class MapUploaderTask(QgsTask):
                 feedback=self.feedback
             )
 
-            if reply.error() != QNetworkReply.NetworkError.NoError:
-                if (reply.error() ==
-                        QNetworkReply.NetworkError.ContentAccessDenied):
-                    self.paid_plan_error = True
-                self.error_string = reply.errorString()
-                Logger.instance().log_error_json(
-                    {
-                        'type': Logger.MAP_EXPORT,
-                        'error': 'Error creating map: {}'.format(
-                            self.error_string)
-                    }
-                )
+            if self._handle_reply_error(reply, 'Error creating map'):
                 return False
 
             if self.isCanceled():
@@ -553,6 +586,8 @@ class MapUploaderTask(QgsTask):
                     multi_step_feedback)
 
                 if result.error_message:
+                    if result.paid_plan_error:
+                        self.paid_plan_error = True
                     self.error_string = self.tr(
                         'Error occurred while exporting layer {}: {}').format(
                         layer.name(),
@@ -618,14 +653,17 @@ class MapUploaderTask(QgsTask):
                     group.name: group
                     for group in created_groups
                 }
-            except PaidPlanRequiredError:
+            except PaidPlanRequiredError as e:
                 self.paid_plan_error = True
-                self.error_string = 'Paid plan required for layer groups'
+                # only retain the API's explanation, if it gave one
+                self.error_string = str(e) or None
                 Logger.instance().log_error_json(
                     {
                         'type': Logger.MAP_EXPORT,
                         'error': 'Error creating layer groups: {}'.format(
-                            self.error_string)
+                            self.error_string or
+                            'Paid plan required for layer groups'),
+                        'paid_plan_error': True
                     }
                 )
                 return False
@@ -650,6 +688,15 @@ class MapUploaderTask(QgsTask):
                 if reply.attribute(
                         QNetworkRequest.Attribute.HttpStatusCodeAttribute
                 ) == 429:
+                    api_error = FeltApiError.from_reply(reply)
+                    if api_error and api_error.is_paid_plan_error():
+                        # not transient throttling -- the workspace's plan
+                        # does not allow this, so retrying won't help
+                        self._handle_reply_error(
+                            reply, 'Error preparing layer upload',
+                            api_error=api_error)
+                        return False
+
                     rate_limit_counter += 1
                     if rate_limit_counter > 3:
                         self.error_string = \
@@ -671,18 +718,8 @@ class MapUploaderTask(QgsTask):
                     QThread.sleep(5)
                     continue
 
-                if reply.error() != QNetworkReply.NetworkError.NoError:
-                    if (reply.error() ==
-                            QNetworkReply.NetworkError.ContentAccessDenied):
-                        self.paid_plan_error = True
-                    self.error_string = reply.errorString()
-                    Logger.instance().log_error_json(
-                        {
-                            'type': Logger.MAP_EXPORT,
-                            'error': 'Error preparing layer upload: {}'.format(
-                                self.error_string)
-                        }
-                    )
+                if self._handle_reply_error(
+                        reply, 'Error preparing layer upload'):
                     return False
                 break
 
@@ -789,18 +826,8 @@ class MapUploaderTask(QgsTask):
                     ordering_key=details.ordering_key,
                 )
 
-            if reply and reply.error() != QNetworkReply.NetworkError.NoError:
-                if (reply.error() ==
-                        QNetworkReply.NetworkError.ContentAccessDenied):
-                    self.paid_plan_error = True
-                self.error_string = reply.errorString()
-                Logger.instance().log_error_json(
-                    {
-                        'type': Logger.MAP_EXPORT,
-                        'error': 'Error updating layer details: {}'.format(
-                            self.error_string)
-                    }
-                )
+            if reply and self._handle_reply_error(
+                    reply, 'Error updating layer details'):
                 return False
 
             multi_step_feedback.step_finished()
@@ -829,18 +856,8 @@ class MapUploaderTask(QgsTask):
                     ordering_key=details.ordering_key,
                 )
 
-            if reply and reply.error() != QNetworkReply.NetworkError.NoError:
-                if (reply.error() ==
-                        QNetworkReply.NetworkError.ContentAccessDenied):
-                    self.paid_plan_error = True
-                self.error_string = reply.errorString()
-                Logger.instance().log_error_json(
-                    {
-                        'type': Logger.MAP_EXPORT,
-                        'error': 'Error updating layer details: {}'.format(
-                            self.error_string)
-                    }
-                )
+            if reply and self._handle_reply_error(
+                    reply, 'Error updating layer details'):
                 return False
 
             multi_step_feedback.step_finished()

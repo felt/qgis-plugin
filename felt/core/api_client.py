@@ -3,6 +3,7 @@ Felt API client
 """
 
 import json
+import re
 from typing import (
     Dict,
     Optional,
@@ -52,6 +53,179 @@ class CreatedGroupDetails:
 class PaidPlanRequiredError(Exception):
     """Raised when an API operation requires a paid plan"""
     pass
+
+
+@dataclass
+class FeltApiError:
+    """
+    Encapsulates an error response returned by the Felt API.
+
+    The API returns errors as a JSON envelope of the form::
+
+        {"errors": [{"title": ..., "detail": ..., "code": ...}]}
+
+    Only the first error in the envelope is retained.
+    """
+    status_code: Optional[int] = None
+    code: Optional[str] = None
+    title: Optional[str] = None
+    detail: Optional[str] = None
+    # Qt's description of the failure, used when the API gave no detail
+    network_error_string: Optional[str] = None
+    # True if the API reported (via the x-api-limit-exceeded header) that
+    # the workspace's plan does not allow (more) API calls
+    api_limit_exceeded: bool = False
+
+    # HTTP status codes used by the API when a workspace's plan does
+    # not permit the operation
+    PAID_PLAN_STATUS_CODES = (402, 403)
+
+    # response header set by the API when the workspace's plan does not
+    # allow (more) API calls
+    API_LIMIT_EXCEEDED_HEADER = b'x-api-limit-exceeded'
+
+    # stable error codes the API uses for plan/billing restrictions
+    PAID_PLAN_ERROR_CODES = (
+        'plan_upgrade_required',
+        'forbidden',
+        'payment_required',
+        'paid_plan_required',
+        'plan_required',
+        'upgrade_required',
+        'over_storage_limit',
+        'over_processing_limit',
+    )
+
+    # fallback: keywords in the error text which indicate a plan problem
+    PAID_PLAN_MESSAGE_PATTERN = re.compile(
+        r'\b(plan|plans|trial|upgrade|upgraded|subscription|subscribe|'
+        r'billing|payment|paid)\b',
+        re.IGNORECASE
+    )
+
+    def is_paid_plan_error(self) -> bool:
+        """
+        Returns True if the error indicates that the operation requires
+        a paid plan (or a trial of a paid plan)
+        """
+        if self.status_code in FeltApiError.PAID_PLAN_STATUS_CODES:
+            return True
+
+        if self.code and self.code.lower() in \
+                FeltApiError.PAID_PLAN_ERROR_CODES:
+            return True
+
+        # a 429 which is caused by the workspace's plan (as opposed to
+        # transient throttling) cannot be resolved by retrying
+        if self.status_code == 429 and self.api_limit_exceeded:
+            return True
+
+        for text in (self.detail, self.title):
+            if text and FeltApiError.PAID_PLAN_MESSAGE_PATTERN.search(text):
+                return True
+
+        return False
+
+    def message(self) -> Optional[str]:
+        """
+        Returns a human readable message describing the error, preferring
+        the detail returned by the API over Qt's generic description
+        """
+        return self.detail or self.title or self.network_error_string
+
+    @staticmethod
+    def from_content(status_code: Optional[int],
+                     content: Optional[bytes],
+                     network_error_string: Optional[str] = None,
+                     api_limit_exceeded: bool = False) \
+            -> Optional['FeltApiError']:
+        """
+        Parses an error from the HTTP status code and body of a reply.
+
+        Returns None if the reply does not represent an error.
+        """
+        code = None
+        title = None
+        detail = None
+        has_error_body = False
+
+        if content:
+            try:
+                response = json.loads(
+                    content.decode() if isinstance(content, bytes)
+                    else str(content))
+            except (ValueError, UnicodeDecodeError):
+                response = None
+
+            if isinstance(response, dict):
+                errors = response.get('errors')
+                if isinstance(errors, list) and errors:
+                    has_error_body = True
+                    first = errors[0]
+                    if isinstance(first, dict):
+                        code = first.get('code')
+                        title = first.get('title')
+                        detail = first.get('detail')
+                    elif isinstance(first, str):
+                        detail = first
+                elif isinstance(response.get('error'), str):
+                    has_error_body = True
+                    detail = response['error']
+                elif isinstance(response.get('message'), str):
+                    # legacy shape used by some API error responses
+                    has_error_body = True
+                    detail = response['message']
+
+        is_http_error = status_code is not None and status_code >= 400
+        if not is_http_error and not has_error_body \
+                and not network_error_string:
+            return None
+
+        return FeltApiError(
+            status_code=status_code,
+            code=code,
+            title=title,
+            detail=detail,
+            network_error_string=network_error_string,
+            api_limit_exceeded=api_limit_exceeded
+        )
+
+    @staticmethod
+    def from_reply(reply: Union[QNetworkReply, QgsNetworkReplyContent]) \
+            -> Optional['FeltApiError']:
+        """
+        Parses an error from a network reply.
+
+        Returns None if the reply does not represent an error.
+        """
+        status_code = reply.attribute(
+            QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        if status_code is not None:
+            try:
+                status_code = int(status_code)
+            except (TypeError, ValueError):
+                status_code = None
+
+        network_error_string = None
+        if reply.error() != QNetworkReply.NetworkError.NoError:
+            network_error_string = reply.errorString()
+            if status_code is None and reply.error() == \
+                    QNetworkReply.NetworkError.ContentAccessDenied:
+                status_code = 403
+
+        if isinstance(reply, QgsNetworkReplyContent):
+            content = bytes(reply.content())
+        else:
+            content = bytes(reply.readAll())
+
+        api_limit_exceeded = False
+        if reply.hasRawHeader(FeltApiError.API_LIMIT_EXCEEDED_HEADER):
+            api_limit_exceeded = bytes(reply.rawHeader(
+                FeltApiError.API_LIMIT_EXCEEDED_HEADER
+            )).decode().strip().lower() == 'true'
+
+        return FeltApiError.from_content(
+            status_code, content, network_error_string, api_limit_exceeded)
 
 
 class FeltApiClient:
@@ -526,8 +700,10 @@ class FeltApiClient:
             json.dumps(group_post_data).encode()
         )
 
-        if reply.error() == QNetworkReply.NetworkError.ContentAccessDenied:
-            raise PaidPlanRequiredError("Upload requires a paid plan")
+        api_error = FeltApiError.from_reply(reply)
+        if api_error and api_error.is_paid_plan_error():
+            raise PaidPlanRequiredError(
+                api_error.detail or api_error.title or '')
 
         return [
             CreatedGroupDetails(

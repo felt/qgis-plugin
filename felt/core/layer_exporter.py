@@ -48,7 +48,10 @@ from qgis.core import (
     QgsRasterRange
 )
 
-from .api_client import API_CLIENT
+from .api_client import (
+    API_CLIENT,
+    FeltApiError
+)
 from .enums import (
     LayerExportResult,
     LayerSupport
@@ -99,6 +102,8 @@ class ImportByUrlResult:
     error_message: Optional[str] = None
     group_name: Optional[str] = None
     ordering_key: Optional[int] = None
+    # True if the import failed because the workspace is not on a paid plan
+    paid_plan_error: bool = False
 
 
 class LayerExporter(QObject):
@@ -204,14 +209,15 @@ class LayerExporter(QObject):
             blocking=True,
             feedback=feedback
         )
-        response = json.loads(reply.content().data().decode())
-
         res = ImportByUrlResult()
 
-        if 'errors' in response:
-            res.error_message = response['errors'][0]['detail']
+        api_error = FeltApiError.from_reply(reply)
+        if api_error:
+            res.error_message = api_error.message()
+            res.paid_plan_error = api_error.is_paid_plan_error()
             return res
 
+        response = json.loads(reply.content().data().decode())
         res.layer_id = response['layer_id']
         return res
 
